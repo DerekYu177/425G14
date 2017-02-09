@@ -41,7 +41,6 @@ signal row_location : integer;
 signal dirty : std_logic;
 signal valid : std_logic;
 signal tag_equal : std_logic;
-signal blank_data : std_logic_vector(BLOCK_NUMBER-1 downto 0) := (others => '0');
 
 -- data transfer signal declaration
 signal read_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
@@ -74,7 +73,7 @@ signal command_read : std_logic;
 signal command_write : std_logic;
 
 -- FSM definition
-type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, LOAD_1, LOAD_2, LOAD_3, LOAD_FINISHED, WRITE_MISS);
+type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_READY, READ_FINISHED, WRITE_DATA, READ_MISS, LOAD_1, LOAD_2, LOAD_3, LOAD_FINISHED, WRITE_MISS, STORE_1, STORE_2, STORE_3, STORE_FINISHED);
 signal state : state_type;
 signal next_state : state_type;
 
@@ -124,11 +123,14 @@ begin
 
 		-- nominal state
 		when WAIT_READ_FROM_USER =>
+			s_waitrequest <= '1';
 
 			-- transitional logic
 			if (s_read == '1' or s_write == '1') then
 				next_state <= FIND_COMPARE;
 			end if;
+
+			next_state <= WAIT_READ_FROM_USER;
 
 		when FIND_COMPARE =>
 			row_location <= to_integer(unsigned(given_index));
@@ -162,7 +164,7 @@ begin
 			if command_read == '1' then
 				if tag_equal == '1' and valid == '1' then
 					hit <= '1';
-					next_state <= READ_TO_USER;
+					next_state <= READ_READY;
 				elsif valid == '0' and dirty == '1' then
 					NA <= '1';
 					next_state <= WAIT_READ_FROM_USER;
@@ -188,16 +190,22 @@ begin
 				FOO <= '1';
 			end if;
 
-		when READ_TO_USER =>
+		when READ_READY =>
+			s_waitrequest <= '0';
+
 			-- at this point, the data should be loaded into read_data already
 			s_readdata <= read_data;
 
+			next_state <= READ_FINISHED;
+
+		when READ_FINISHED
 			-- cleanup to prepare to return to nominal state
 			hit <= '0';
 			miss <= '0';
 			NA <= '0';
 			FOO <= '0';
 
+			s_waitrequest <= '1';
 			next_state <= WAIT_READ_FROM_USER;
 
 		when READ_MISS =>
@@ -208,11 +216,9 @@ begin
 
 		when LOAD_1 =>
 		  if m_waitrequest == '0' then
-		    m_read <= '0';
 		    -- we assume a mapping of left->right in cache to top->down in memory
 		    read_data(31 downto 23) <= m_writedata;
 		    m_addr <= to_integer(unsigned(s_addr) + 1);
-		    m_read <= '1';
 		    next_state <= LOAD_2;
 		  else
 		    next_state <= LOAD_1;
@@ -220,10 +226,8 @@ begin
 
 		when LOAD_2 =>
 		  if m_waitrequest == '0' then
-		    m_read <= '0';
 		    read_data(23 downto 15) <= m_writedata;
 		    m_addr <= to_integer(unsigned(s_addr) + 2);
-		    m_read <= '1';
 		    next_state <= LOAD_3;
 		  else
 		    next_state <= LOAD_2;
@@ -231,10 +235,8 @@ begin
 
 		when LOAD_3 =>
 		  if m_waitrequest == '0' then
-		    m_read <= '0';
 		    read_data(15 downto 7) <= m_writedata;
 		    m_addr <= to_integer(unsigned(s_addr) + 3);
-		    m_read <= '1';
 		    next_state <= LOAD_FINISHED;
 		  else
 		    next_state <= LOAD_3;
@@ -246,7 +248,7 @@ begin
 		    read_data(7 downto 0) <= m_writedata;
 		    -- we want to use the same process for reads AND writes
 		    if command_read == '1' then
-		      next_state <= READ_TO_USER;
+		      next_state <= READ_READY;
 		    else -- write
 		      next_state <= WRITE_MISS;
 		    end if;
@@ -256,8 +258,11 @@ begin
 
 
 		when WRITE_DATA =>
-			-- TODO: WHAT GOES HERE
+			-- write into the cache
+			cache_array(row_location)(BLOCK_NUMBER-1 downto 0) <= s_writedata;
+
 			-- transitional logic
+			s_waitrequest <= '0'; -- no longer busy
 			next_state <= WAIT_READ_FROM_USER;
 
 		when WRITE_MISS =>
@@ -266,9 +271,8 @@ begin
 		  -- write the block into the cache
 
 		  if dirty == '1' then
-
-		    store_cache_data <= cache_array(row_location)(BLOCK_NUMBER-1 downto 0)
-
+				-- pull dirty memory
+		    store_cache_data <= cache_array(row_location)(BLOCK_NUMBER-1 downto 0);
 		    -- store dirty memory into main memory
 		    m_addr <= to_integer(unsigned(s_addr));
 		    m_read <= '0';
