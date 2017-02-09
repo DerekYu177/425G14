@@ -6,11 +6,9 @@ when READ_MISS =>
 
 when LOAD_1 =>
   if m_waitrequest == '0' then
-    m_read <= '0';
     -- we assume a mapping of left->right in cache to top->down in memory
     read_data(31 downto 23) <= m_writedata;
     m_addr <= to_integer(unsigned(s_addr) + 1);
-    m_read <= '1';
     next_state <= LOAD_2;
   else
     next_state <= LOAD_1;
@@ -18,10 +16,8 @@ when LOAD_1 =>
 
 when LOAD_2 =>
   if m_waitrequest == '0' then
-    m_read <= '0';
     read_data(23 downto 15) <= m_writedata;
     m_addr <= to_integer(unsigned(s_addr) + 2);
-    m_read <= '1';
     next_state <= LOAD_3;
   else
     next_state <= LOAD_2;
@@ -29,10 +25,8 @@ when LOAD_2 =>
 
 when LOAD_3 =>
   if m_waitrequest == '0' then
-    m_read <= '0';
     read_data(15 downto 7) <= m_writedata;
     m_addr <= to_integer(unsigned(s_addr) + 3);
-    m_read <= '1';
     next_state <= LOAD_FINISHED;
   else
     next_state <= LOAD_3;
