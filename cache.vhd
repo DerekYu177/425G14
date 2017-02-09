@@ -37,6 +37,7 @@ signal tag : std_logic_vector(7 downto 0);
 signal row_location : integer;
 signal dirty : std_logic;
 signal valid : std_logic;
+signal tag_equal : std_logic;
 
 -- data transfer signal declaration
 signal read_data is std_logic_vector(31 downto 0);
@@ -58,14 +59,17 @@ type cache_valid_dirty_type is array (natural range 31 downto 0) of std_logic_ve
 signal cache_valid_dirty : cache_valid_dirty_type := (others => (others => '0'));
 
 -- control signal definition
-signal hit : std_logic;
-signal miss : std_logic;
-signal operation_finished : std_logic;
 signal command_read : std_logic;
 signal command_write : std_logic;
 
+-- debug signal definition
+signal hit : std_logic;
+signal miss : std_logic;
+signal NA : std_logic;
+signal FOO : std_logic;
+
 -- FSM definition
-type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, GO_TO_MM);
+type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, WRITE_MISS);
 signal state : state_type;
 signal next_state : state_type;
 
@@ -74,7 +78,7 @@ process (clk, reset)
 begin
 	if reset = '1' then
 
-		-- cache_array initialization, clears
+		-- TODO: CLEAR ALL $$$
 		For i in 0 to 31 loop
 			cache_array(i)(31 downto 0) <= (others => '0');
 		end loop;
@@ -103,53 +107,85 @@ begin
 			row_location <= to_integer(unsigned(given_index));
 			valid <= cache_valid_dirty(row_location)(1);
 			dirty <= cache_valid_dirty(row_location)(0);
-
-			case given_block_offset is
-				when "00" =>
-					tag <= cache_tag(row_location)(19 downto 14);
-				when "01" =>
-					tag <= cache_tag(row_location)(14 downto 9);
-				when "10" =>
-					tag <= cache_tag(row_location)(9 downto 4);
-				when others =>
-					-- this includes "11"
-					tag <= cache_tag(row_location)(4 downto 0);
-			end case;
-
 			command_read <= s_read;
 			command_write <= s_write;
 
+			case given_block_offset is
+				-- prefetch the data at that location if we think it is the correct one
+				when "00" =>
+					tag <= cache_tag(row_location)(19 downto 14);
+					read_data <= cache_data(row_location)(127 downto 95);
+				when "01" =>
+					tag <= cache_tag(row_location)(14 downto 9);
+					read_data <= cache_data(row_location)(95 downto 63);
+				when "10" =>
+					tag <= cache_tag(row_location)(9 downto 4);
+					read_data <= cache_data(row_location)(63 downto 31);
+				when others =>
+					-- this includes "11"
+					tag <= cache_tag(row_location)(4 downto 0);
+					read_data <= cache_data(row_location)(31 downto 0);
+			end case;
+
+			if tag == given_tag then
+				tag_equal <= '1'
+			end if;
+
 			-- transitional logic
-			if hit == '1' and command_read == '1' then
-				next_state <= READ_TO_USER;
-			elsif hit == '1' and command_write == '1' then
-				next_state <= WRITE_DATA;
-			elsif miss == '1' then
-				next_state <= GO_TO_MM;
+			if command_read == '1' then
+				if tag_equal == '1' and valid == '1' then
+					hit <= '1';
+					next_state <= READ_TO_USER;
+				elsif valid == '0' and dirty == '1' then
+					NA <= '1';
+					next_state <= WAIT_READ_FROM_USER;
+				else
+					miss <= '1';
+					next_state <= READ_MISS;
+				end if;
+
+			elsif command_write == '1' then
+				if tag_equal == '1' and valid == '1' then
+					hit <= '1';
+					cache_valid_dirty(row_location)(0) <= '1'; -- write dirty bit
+					next_state <= WRITE_DATA;
+				elsif valid == '0' and dirty == '1' then
+					NA <= '1';
+					next_state <= WAIT_READ_FROM_USER;
+				else
+					miss <= '1';
+					next_state <= WRITE_MISS;
+				end if;
+
+			else
+				FOO <= '1';
 			end if;
 
 		when READ_TO_USER =>
+			-- at this point, the data should be loaded into read_data already
+			s_readdata <= read_data;
 
-			-- transitional logic
-			if operation_finished == '1' then
-				next_state <= WAIT_READ_FROM_USER;
-			end if;
+			-- cleanup to prepare to return to nominal state
+			hit <= '0';
+			miss <= '0';
+			NA <= '0';
+			FOO <= '0';
+
+			next_state <= WAIT_READ_FROM_USER;
 
 		when WRITE_DATA =>
-
+			-- TODO: WHAT GOES HERE
 			-- transitional logic
-			if operation_finished == '1' then
-				next_state <= WAIT_READ_FROM_USER;
-			end if;
+			next_state <= WAIT_READ_FROM_USER;
 
-		when GO_TO_MM =>
-
+		when READ_MISS =>
 		-- transitional logic
 		-- we assume here that a waitrequest means that data is being processed.
 		-- we wait until the waitrequest 1 -> 0
 			if falling_edge(m_waitrequest) and command_read == '1' then
 				next_state <= WAIT_READ_FROM_USER
 			end if;
+
 	end case;
 end process;
 end arch;
