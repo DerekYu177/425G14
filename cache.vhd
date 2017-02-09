@@ -111,7 +111,7 @@ begin
 			wait until rising_edge(clock) and m_waitrequest = '0';
 			for i in 0 to 16 loop
 				m_addr <= to_integer(unsigned(std_logic_vector'(s_addr(31 downto 4) & "0000")))+i;
-				data(index_in_int)(127-i*8 downto 120-i*8) <= m_readdata;
+				data(index_in_int)(127-i*8 downto 120-i*8) <= m_readdata; --write into cache
 				wait until rising_edge(clock);
 			end loop;
 			m_read <= '0';
@@ -119,6 +119,7 @@ begin
 			dirty(index_in_int) <= '0';
 			valid(index_in_int) <= '1';
 			tag(index_in_int) <= tag_in;
+			s_readdata <= data(index_in_int)(127-32*offset_in_int downto 96-32*offset_in_int);-- RETURN VALUE
 		end if;
 		s_waitrequest <= '0';
 	end if;
