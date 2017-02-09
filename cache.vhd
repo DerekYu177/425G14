@@ -45,6 +45,13 @@ signal blank_data : std_logic_vector(BLOCK_NUMBER-1 downto 0) := (others => '0')
 
 -- data transfer signal declaration
 signal read_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
+signal store_cache_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
+
+-- debug signal definition
+signal hit : std_logic;
+signal miss : std_logic;
+signal NA : std_logic;
+signal FOO : std_logic;
 
 -- 2D data array declaration
 -- declare as an array with 32 rows and 128 bits per row (4 words = 32b)
@@ -65,16 +72,9 @@ signal cache_valid_dirty : cache_valid_dirty_type := (others => (others => '0'))
 -- control signal definition
 signal command_read : std_logic;
 signal command_write : std_logic;
--- signal READ_MISS_in_process : std_logic;
-
--- debug signal definition
-signal hit : std_logic;
-signal miss : std_logic;
-signal NA : std_logic;
-signal FOO : std_logic;
 
 -- FSM definition
-type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, READ_MISS_1, READ_MISS_2, READ_MISS_3, READ_MISS_4_FINISHED, WRITE_MISS);
+type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, LOAD_1, LOAD_2, LOAD_3, LOAD_FINISHED, WRITE_MISS);
 signal state : state_type;
 signal next_state : state_type;
 
@@ -200,75 +200,134 @@ begin
 
 			next_state <= WAIT_READ_FROM_USER;
 
+		when READ_MISS =>
+		    m_addr <= to_integer(unsigned(s_addr));
+		    m_read <= '1';
+		    m_write <= '0';
+		    next_state <= LOAD_1;
+
+		when LOAD_1 =>
+		  if m_waitrequest == '0' then
+		    m_read <= '0';
+		    -- we assume a mapping of left->right in cache to top->down in memory
+		    read_data(31 downto 23) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 1);
+		    m_read <= '1';
+		    next_state <= LOAD_2;
+		  else
+		    next_state <= LOAD_1;
+		  end if;
+
+		when LOAD_2 =>
+		  if m_waitrequest == '0' then
+		    m_read <= '0';
+		    read_data(23 downto 15) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 2);
+		    m_read <= '1';
+		    next_state <= LOAD_3;
+		  else
+		    next_state <= LOAD_2;
+		  end if;
+
+		when LOAD_3 =>
+		  if m_waitrequest == '0' then
+		    m_read <= '0';
+		    read_data(15 downto 7) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 3);
+		    m_read <= '1';
+		    next_state <= LOAD_FINISHED;
+		  else
+		    next_state <= LOAD_3;
+		  end if;
+
+		when LOAD_FINISHED =>
+		  if m_waitrequest == '0' then
+		    m_read <= '0';
+		    read_data(7 downto 0) <= m_writedata;
+		    -- we want to use the same process for reads AND writes
+		    if command_read == '1' then
+		      next_state <= READ_TO_USER;
+		    else -- write
+		      next_state <= WRITE_MISS;
+		    end if;
+		  else
+		    next_state <= LOAD_FINISHED;
+		  end if;
+
+
 		when WRITE_DATA =>
 			-- TODO: WHAT GOES HERE
 			-- transitional logic
 			next_state <= WAIT_READ_FROM_USER;
 
-		when READ_MISS =>
-		    m_addr <= to_integer(unsigned(s_addr));
-		    m_read <= '1';
-		    m_write <= '0';
-		    next_state <= READ_MISS_1;
-
-		when READ_MISS_1 =>
-		  if m_waitrequest'event and m_waitrequest == '1' then
-		    -- we assume a mapping of left->right in cache to top->down in memory
-		    read_data(31 downto 23) <= m_writedata;
-		    m_addr <= to_integer(unsigned(s_addr) + 1);
-		    next_state <= READ_MISS_2;
-		  else
-		    next_state <= READ_MISS_1;
-		  end if;
-
-		when READ_MISS_2 =>
-		  if m_waitrequest'event and m_waitrequest == '1' then
-		    -- we assume a mapping of left->right in cache to top->down in memory
-		    read_data(23 downto 15) <= m_writedata;
-		    m_addr <= to_integer(unsigned(s_addr) + 2);
-		    next_state <= READ_MISS_3;
-		  else
-		    next_state <= READ_MISS_2;
-		  end if;
-
-		when READ_MISS_3 =>
-		  if m_waitrequest'event and m_waitrequest == '1' then
-		    -- we assume a mapping of left->right in cache to top->down in memory
-		    read_data(15 downto 7) <= m_writedata;
-		    m_addr <= to_integer(unsigned(s_addr) + 3);
-		    next_state <= READ_MISS_4_FINISHED;
-		  else
-		    next_state <= READ_MISS_3;
-		  end if;
-
-		when READ_MISS_4_FINISHED =>
-		  if m_waitrequest'event and m_waitrequest == '1' then
-		    -- we assume a mapping of left->right in cache to top->down in memory
-		    read_data(7 downto 0) <= m_writedata;
-		    next_state <= READ_TO_USER;
-		  else
-		    next_state <= READ_MISS_4_FINISHED;
-		  end if;
-
 		when WRITE_MISS =>
-			-- implement write allocate here
+		  -- implement write allocate here
+		  -- write the value to main memory
+		  -- write the block into the cache
 
-			-- write the value to main memory
-			-- write the block into the cache
+		  if dirty == '1' then
 
-			if dirty == '1' then
-				-- store dirty memory into main memory
-				m_addr <= to_integer(unsigned(s_addr));
-			end if;
+		    store_cache_data <= cache_array(row_location)(BLOCK_NUMBER-1 downto 0)
 
-			-- store the block containing the valid address from main memory
+		    -- store dirty memory into main memory
+		    m_addr <= to_integer(unsigned(s_addr));
+		    m_read <= '0';
+		    m_write <= '1';
+		    m_writedata <= store_cache_data(31 downto 23);
+		    next_state <= STORE_1;
+		  end if;
 
-			m_write <= '1';
-			m_read <= '0';
-			m_writedata <= ;-- how do we map a 32 bit data set to a 8 bit data set?
+		  -- set dirty bit
+		  cache_valid_dirty(row_location)(0) <= '1';
 
-			-- set dirty bit
-			cache_valid_dirty(row_location)(0) <= '1';
+		  -- try the cache again
+		  next_state <= FIND_COMPARE;
+
+		when STORE_1 =>
+		  if m_waitrequest == '0' then
+		    m_write <= '0';
+		    m_addr <= to_integer(unsigned(s_addr) + 1);
+		    m_writedata <= store_cache_data(23 downto 15);
+
+		    m_write <= '1';
+		    next_state <= STORE_2;
+		  else
+		    next_state <= STORE_1;
+		  end if;
+
+		when STORE_2 =>
+		  if m_waitrequest == '0' then
+		    m_write <= '0';
+		    m_addr <= to_integer(unsigned(s_addr) + 2);
+		    m_writedata <= store_cache_data(15 downto 7);
+
+		    m_write <= '1';
+		    next_state <= STORE_3;
+		  else
+		    next_state <= STORE_2;
+		  end if;
+
+		when STORE_3 =>
+		  if m_waitrequest == '0' then
+		    m_write <= '0';
+		    m_addr <= to_integer(unsigned(s_addr) + 2);
+		    m_writedata <= store_cache_data(7 downto 0);
+
+		    m_write <= '1';
+		    next_state <= STORE_FINISHED;
+		  else
+		    next_state <= STORE_3;
+		  end if;
+
+		when STORE_FINISHED =>
+		  if m_waitrequest == '0' then
+		    m_write <= '0';
+
+		    -- TODO : Anything here?
+		    next_state <= FIND_COMPARE;
+		  else
+		    next_state <= STORE_FINISHED;
+		  end if;
 
 	end case;
 end process;
