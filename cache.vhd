@@ -29,6 +29,9 @@ end cache;
 
 architecture arch of cache is
 
+-- constant declaration
+constant BLOCK_NUMBER : integer := 32;
+
 -- signal declaration
 alias given_block_offset is s_addr(3 downto 1);
 alias given_index is s_addr(8 downto 3);
@@ -38,29 +41,31 @@ signal row_location : integer;
 signal dirty : std_logic;
 signal valid : std_logic;
 signal tag_equal : std_logic;
+signal blank_data : std_logic_vector(BLOCK_NUMBER-1 downto 0) := (others => '0');
 
 -- data transfer signal declaration
-signal read_data is std_logic_vector(31 downto 0);
+signal read_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
 
 -- 2D data array declaration
 -- declare as an array with 32 rows and 128 bits per row (4 words = 32b)
 -- to modify say the data bits in the second row:
--- cache_array(1)(31 downto 0) <= std_logic_vector( __new_data__ )
-type cache_data_type is array (natural range 31 downto 0) of std_logic_vector(127 downto 0);
+-- cache_array(1)(BLOCK_NUMBER-1 downto 0) <= std_logic_vector( __new_data__ )
+type cache_data_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(127 downto 0);
 signal cache_data : cache_data_type := (others => (others => '0'));
 
 -- 2D tag array declaration
 -- 5 bit tags x 4 words/block = 20 bits per block
-type cache_tag_type is array (natural range 31 downto 0) of std_logic_vector(19 downto 0);
+type cache_tag_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(19 downto 0);
 signal cache_tag : cache_tag_type := (others => (others => '0'));
 
 -- 2D valid/dirty array declaration
-type cache_valid_dirty_type is array (natural range 31 downto 0) of std_logic_vector(2 downto 0);
+type cache_valid_dirty_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(2 downto 0);
 signal cache_valid_dirty : cache_valid_dirty_type := (others => (others => '0'));
 
 -- control signal definition
 signal command_read : std_logic;
 signal command_write : std_logic;
+-- signal READ_MISS_in_process : std_logic;
 
 -- debug signal definition
 signal hit : std_logic;
@@ -69,7 +74,7 @@ signal NA : std_logic;
 signal FOO : std_logic;
 
 -- FSM definition
-type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, WRITE_MISS);
+type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_TO_USER, WRITE_DATA, READ_MISS, READ_MISS_1, READ_MISS_2, READ_MISS_3, READ_MISS_4_FINISHED, WRITE_MISS);
 signal state : state_type;
 signal next_state : state_type;
 
@@ -78,10 +83,32 @@ process (clk, reset)
 begin
 	if reset = '1' then
 
-		-- TODO: CLEAR ALL $$$
-		For i in 0 to 31 loop
-			cache_array(i)(31 downto 0) <= (others => '0');
+		-- clear cache
+		For i in BLOCK_NUMBER-1 downto 0 loop
+			cache_array(i)(127 downto 0) <= (others => '0');
+			cache_tag(i)(19 downto 0) <= (others => '0');
+			cache_valid_dirty(i)(1 downto 0) <= (others => '0');
 		end loop;
+
+		-- clear debug signals
+		hit <= '0';
+		miss <= '0';
+		NA <= '0';
+		FOO <= '0';
+
+		-- clear control signals
+		command_read <= (others => '0');
+		command_write <= (others => '0');
+
+		-- clear data transfer signal
+		read_data <= (others => '0');
+
+		-- clear internal signals
+		tag <= (others => '0');
+		row_location <= 0;
+		dirty <= '0';
+		valid <= '0';
+		tag_equal <= '0';
 
 		-- returns to nominal state
 		state <= WAIT_READ_FROM_USER;
@@ -179,12 +206,69 @@ begin
 			next_state <= WAIT_READ_FROM_USER;
 
 		when READ_MISS =>
-		-- transitional logic
-		-- we assume here that a waitrequest means that data is being processed.
-		-- we wait until the waitrequest 1 -> 0
-			if falling_edge(m_waitrequest) and command_read == '1' then
-				next_state <= WAIT_READ_FROM_USER
+		    m_addr <= to_integer(unsigned(s_addr));
+		    m_read <= '1';
+		    m_write <= '0';
+		    next_state <= READ_MISS_1;
+
+		when READ_MISS_1 =>
+		  if m_waitrequest'event and m_waitrequest == '1' then
+		    -- we assume a mapping of left->right in cache to top->down in memory
+		    read_data(31 downto 23) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 1);
+		    next_state <= READ_MISS_2;
+		  else
+		    next_state <= READ_MISS_1;
+		  end if;
+
+		when READ_MISS_2 =>
+		  if m_waitrequest'event and m_waitrequest == '1' then
+		    -- we assume a mapping of left->right in cache to top->down in memory
+		    read_data(23 downto 15) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 2);
+		    next_state <= READ_MISS_3;
+		  else
+		    next_state <= READ_MISS_2;
+		  end if;
+
+		when READ_MISS_3 =>
+		  if m_waitrequest'event and m_waitrequest == '1' then
+		    -- we assume a mapping of left->right in cache to top->down in memory
+		    read_data(15 downto 7) <= m_writedata;
+		    m_addr <= to_integer(unsigned(s_addr) + 3);
+		    next_state <= READ_MISS_4_FINISHED;
+		  else
+		    next_state <= READ_MISS_3;
+		  end if;
+
+		when READ_MISS_4_FINISHED =>
+		  if m_waitrequest'event and m_waitrequest == '1' then
+		    -- we assume a mapping of left->right in cache to top->down in memory
+		    read_data(7 downto 0) <= m_writedata;
+		    next_state <= READ_TO_USER;
+		  else
+		    next_state <= READ_MISS_4_FINISHED;
+		  end if;
+
+		when WRITE_MISS =>
+			-- implement write allocate here
+
+			-- write the value to main memory
+			-- write the block into the cache
+
+			if dirty == '1' then
+				-- store dirty memory into main memory
+				m_addr <= to_integer(unsigned(s_addr));
 			end if;
+
+			-- store the block containing the valid address from main memory
+
+			m_write <= '1';
+			m_read <= '0';
+			m_writedata <= ;-- how do we map a 32 bit data set to a 8 bit data set?
+
+			-- set dirty bit
+			cache_valid_dirty(row_location)(0) <= '1';
 
 	end case;
 end process;
