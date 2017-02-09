@@ -67,7 +67,7 @@ begin
 			dirty(i) <= '0';
 		end loop;
 	
-	elsif s_write = '1' and rising_edge(clock) then --reading process
+	elsif s_write = '1' and rising_edge(clock) then --writing process
 		s_waitrequest <= '1';
 		if tag_in = tag(index_in_int) and valid(index_in_int) = '1' then --hit
 		data(index_in_int)(127-32*offset_in_int downto 96-32*offset_in_int) <= s_writedata; --write to cache
@@ -91,14 +91,14 @@ begin
 		end if;
 		s_waitrequest <= '0';
 		
-	elsif s_read = '1' and rising_edge(clock) then --writing process
+	elsif s_read = '1' and rising_edge(clock) then --reading process
 		s_waitrequest <= '1';
 		if tag_in = tag(index_in_int) and valid(index_in_int) = '1' then --hit
 			s_readdata <= data(index_in_int)(127-32*offset_in_int downto 96-32*offset_in_int); --return the value
 		else --miss
 			if dirty(index_in_int) = '1' then --write to memory before overwriting
 				m_write <= '1';
-				wait until m_waitrequest = '0';
+				wait until rising_edge(clock) and m_waitrequest = '0';
 				for i in 0 to 16 loop
 					m_addr <= to_integer(unsigned(std_logic_vector'(s_addr(31 downto 4) & "0000")))+i;
 					m_writedata <= data(index_in_int)(127-i*8 downto 120-i*8);
@@ -108,7 +108,7 @@ begin
 			end if;
 			
 			m_read <= '1'; --begin reading from memory
-			wait until rising_edge(clock);
+			wait until rising_edge(clock) and m_waitrequest = '0';
 			for i in 0 to 16 loop
 				m_addr <= to_integer(unsigned(std_logic_vector'(s_addr(31 downto 4) & "0000")))+i;
 				data(index_in_int)(127-i*8 downto 120-i*8) <= m_readdata;
