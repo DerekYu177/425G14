@@ -36,11 +36,19 @@ constant BLOCK_NUMBER : integer := 32;
 alias given_block_offset is s_addr(3 downto 2);
 alias given_index is s_addr(8 downto 4);
 alias given_tag is s_addr(14 downto 9);
+
 signal tag : std_logic_vector(5 downto 0);
 signal row_location : integer;
 signal dirty : std_logic;
 signal valid : std_logic;
 signal tag_equal : std_logic;
+
+signal block_start : integer;
+signal block_end : integer;
+
+signal fetch_addr : std_logic_vector(BLOCK_NUMBER-1 downto 0);
+signal line_counter : integer;
+signal cache_line : std_logic_vector(127 downto 0);
 
 -- data transfer signal declaration
 signal read_data : std_logic_vector(BLOCK_NUMBER-1 downto 0);
@@ -73,7 +81,7 @@ signal command_read : std_logic;
 signal command_write : std_logic;
 
 -- FSM definition
-type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_READY, READ_FINISHED, WRITE_DATA, READ_MISS, LOAD_1, LOAD_2, LOAD_3, LOAD_FINISHED, WRITE_MISS, STORE_1, STORE_2, STORE_3, STORE_FINISHED);
+type state_type is (WAIT_READ_FROM_USER, FIND_COMPARE, READ_READY, READ_FINISHED, WRITE_DATA, LOAD_0_READ_MISS, LOAD_1, LOAD_2, LOAD_3, LOAD_FINISHED, WRITE_MISS, STORE_1, STORE_2, STORE_3, STORE_FINISHED);
 signal state : state_type;
 signal next_state : state_type;
 
@@ -141,18 +149,23 @@ begin
 				-- prefetch the data at that location if we think it is the correct one
 				when "00" =>
 					tag <= cache_tag(row_location)(23 downto 18);
-					read_data <= cache_data(row_location)(127 downto 96);
+					block_start <= 127;
+					block_end <= 96;
 				when "01" =>
 					tag <= cache_tag(row_location)(17 downto 12);
-					read_data <= cache_data(row_location)(95 downto 64);
+					block_start <= 95;
+					block_end <= 64;
 				when "10" =>
 					tag <= cache_tag(row_location)(11 downto 6);
-					read_data <= cache_data(row_location)(63 downto 32);
+					block_start <= 63;
+					block_end <= 32;
 				when others =>
 					-- this includes "11"
 					tag <= cache_tag(row_location)(5 downto 0);
-					read_data <= cache_data(row_location)(31 downto 0);
+					block_start <= 31;
+					block_end <= 0;
 			end case;
+			read_data <= cache_data(row_location)(block_start downto block_end);
 
 			if tag = given_tag then
 				tag_equal <= '1';
@@ -168,7 +181,9 @@ begin
 					next_state <= WAIT_READ_FROM_USER;
 				else
 					miss <= '1';
-					next_state <= READ_MISS;
+					fetch_addr <= s_addr;
+					line_counter <= 0;
+					next_state <= LOAD_0_READ_MISS;
 				end if;
 
 			elsif command_write = '1' then
@@ -206,8 +221,8 @@ begin
 			s_waitrequest <= '1';
 			next_state <= WAIT_READ_FROM_USER;
 
-		when READ_MISS =>
-		    m_addr <= to_integer(unsigned(s_addr));
+		when LOAD_0_READ_MISS =>
+		    m_addr <= to_integer(unsigned(fetch_addr));
 		    m_read <= '1';
 		    m_write <= '0';
 		    next_state <= LOAD_1;
@@ -216,7 +231,7 @@ begin
 		  if m_waitrequest = '0' then
 		    -- we assume a mapping of left->right in cache to top->down in memory
 		    read_data(31 downto 24) <= m_readdata;
-		    m_addr <= to_integer(unsigned(s_addr) + 1);
+		    m_addr <= to_integer(unsigned(fetch_addr) + 1);
 		    next_state <= LOAD_2;
 		  else
 		    next_state <= LOAD_1;
@@ -225,7 +240,7 @@ begin
 		when LOAD_2 =>
 		  if m_waitrequest = '0' then
 		    read_data(23 downto 16) <= m_readdata;
-		    m_addr <= to_integer(unsigned(s_addr) + 2);
+		    m_addr <= to_integer(unsigned(fetch_addr) + 2);
 		    next_state <= LOAD_3;
 		  else
 		    next_state <= LOAD_2;
@@ -234,7 +249,7 @@ begin
 		when LOAD_3 =>
 		  if m_waitrequest = '0' then
 		    read_data(15 downto 8) <= m_readdata;
-		    m_addr <= to_integer(unsigned(s_addr) + 3);
+		    m_addr <= to_integer(unsigned(fetch_addr) + 3);
 		    next_state <= LOAD_FINISHED;
 		  else
 		    next_state <= LOAD_3;
@@ -247,8 +262,25 @@ begin
 				-- now read_data is full
 		    read_data(7 downto 0) <= m_readdata;
 
+				if line_counter /= 4 then
+					-- keep repeating until we have the entire line
+					case line_counter is
+						when 0 =>
+							cache_line(127 downto 96) <= read_data;
+						when 1 =>
+							cache_line(95 downto 64) <= read_data;
+						when 2 =>
+							cache_line(63 downto 32) <= read_data;
+						when 3 =>
+							cache_line(31 downto 0) <= read_data;
+					end case;
+					line_counter <= line_counter + 1;
+					fetch_addr <= fetch_addr + 4;
+					next_state <= LOAD_0_READ_MISS;
+				end if;
+
 				-- store read_data back into the cache
-				cache_data(row_location)(BLOCK_NUMBER-1 downto 0) <= read_data;
+				cache_data(row_location)(127 downto 0) <= cache_line;
 
 		    -- we want to use the same process for reads AND writes
 		    if command_read = '1' then
