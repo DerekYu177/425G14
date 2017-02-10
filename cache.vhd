@@ -33,18 +33,18 @@ architecture arch of cache is
 constant BLOCK_NUMBER : integer := 32;
 
 -- signal declaration
-alias given_block_offset is s_addr(3 downto 1);
-alias given_index is s_addr(8 downto 3);
-alias given_tag is s_addr(14 downto 8);
-signal tag : std_logic_vector(7 downto 0);
+alias given_block_offset is s_addr(3 downto 2);
+alias given_index is s_addr(8 downto 4);
+alias given_tag is s_addr(14 downto 9);
+signal tag : std_logic_vector(5 downto 0);
 signal row_location : integer;
 signal dirty : std_logic;
 signal valid : std_logic;
 signal tag_equal : std_logic;
 
 -- data transfer signal declaration
-signal read_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
-signal store_cache_data is std_logic_vector(BLOCK_NUMBER-1 downto 0);
+signal read_data : std_logic_vector(BLOCK_NUMBER-1 downto 0);
+signal store_cache_data : std_logic_vector(BLOCK_NUMBER-1 downto 0);
 
 -- debug signal definition
 signal hit : std_logic;
@@ -55,17 +55,17 @@ signal FOO : std_logic;
 -- 2D data array declaration
 -- declare as an array with 32 rows and 128 bits per row (4 words = 32b)
 -- to modify say the data bits in the second row:
--- cache_array(1)(BLOCK_NUMBER-1 downto 0) <= std_logic_vector( __new_data__ )
+-- cache_data(1)(BLOCK_NUMBER-1 downto 0) <= std_logic_vector( __new_data__ )
 type cache_data_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(127 downto 0);
 signal cache_data : cache_data_type := (others => (others => '0'));
 
 -- 2D tag array declaration
 -- 5 bit tags x 4 words/block = 20 bits per block
-type cache_tag_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(19 downto 0);
+type cache_tag_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(23 downto 0);
 signal cache_tag : cache_tag_type := (others => (others => '0'));
 
 -- 2D valid/dirty array declaration
-type cache_valid_dirty_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(2 downto 0);
+type cache_valid_dirty_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(1 downto 0);
 signal cache_valid_dirty : cache_valid_dirty_type := (others => (others => '0'));
 
 -- control signal definition
@@ -78,16 +78,15 @@ signal state : state_type;
 signal next_state : state_type;
 
 -- Async Operation
-process (clk, reset)
 begin
-	if reset = '1' then
+process (clock, reset)
+begin
+	if (reset = '1') then
 
 		-- clear cache
-		For i in BLOCK_NUMBER-1 downto 0 loop
-			cache_array(i)(127 downto 0) <= (others => '0');
-			cache_tag(i)(19 downto 0) <= (others => '0');
-			cache_valid_dirty(i)(1 downto 0) <= (others => '0');
-		end loop;
+		cache_data <= (others => (others => '0'));
+		cache_tag <= (others => (others => '0'));
+		cache_valid_dirty <= (others => (others => '0'));
 
 		-- clear debug signals
 		hit <= '0';
@@ -96,28 +95,27 @@ begin
 		FOO <= '0';
 
 		-- clear control signals
-		command_read <= (others => '0');
-		command_write <= (others => '0');
+		command_read <= '0';
+		command_write <= '0';
 
 		-- clear data transfer signal
 		read_data <= (others => '0');
 
 		-- clear internal signals
 		tag <= (others => '0');
-		row_location <= 0;
 		dirty <= '0';
 		valid <= '0';
 		tag_equal <= '0';
 
 		-- returns to nominal state
 		state <= WAIT_READ_FROM_USER;
-	elsif (clk'event and clk = '1') then
+	elsif (clock'event and clock = '1') then
 		state <= next_state;
 	end if;
 end process;
 
 -- State transitions
-process (given_block_offset, given_tag, given_index, s_read, s_write, s_writedata, m_readdata, m_waitrequest)
+process (given_block_offset, given_tag, given_index, s_read, s_write, s_writedata, m_readdata, m_waitrequest, row_location)
 begin
 	case state is
 
@@ -126,7 +124,7 @@ begin
 			s_waitrequest <= '1';
 
 			-- transitional logic
-			if (s_read == '1' or s_write == '1') then
+			if (s_read = '1' or s_write = '1') then
 				next_state <= FIND_COMPARE;
 			end if;
 
@@ -142,30 +140,30 @@ begin
 			case given_block_offset is
 				-- prefetch the data at that location if we think it is the correct one
 				when "00" =>
-					tag <= cache_tag(row_location)(19 downto 14);
-					read_data <= cache_data(row_location)(127 downto 95);
+					tag <= cache_tag(row_location)(23 downto 18);
+					read_data <= cache_data(row_location)(127 downto 96);
 				when "01" =>
-					tag <= cache_tag(row_location)(14 downto 9);
-					read_data <= cache_data(row_location)(95 downto 63);
+					tag <= cache_tag(row_location)(17 downto 12);
+					read_data <= cache_data(row_location)(95 downto 64);
 				when "10" =>
-					tag <= cache_tag(row_location)(9 downto 4);
-					read_data <= cache_data(row_location)(63 downto 31);
+					tag <= cache_tag(row_location)(11 downto 6);
+					read_data <= cache_data(row_location)(63 downto 32);
 				when others =>
 					-- this includes "11"
-					tag <= cache_tag(row_location)(4 downto 0);
+					tag <= cache_tag(row_location)(5 downto 0);
 					read_data <= cache_data(row_location)(31 downto 0);
 			end case;
 
-			if tag == given_tag then
-				tag_equal <= '1'
+			if tag = given_tag then
+				tag_equal <= '1';
 			end if;
 
 			-- transitional logic
-			if command_read == '1' then
-				if tag_equal == '1' and valid == '1' then
+			if command_read = '1' then
+				if tag_equal = '1' and valid = '1' then
 					hit <= '1';
 					next_state <= READ_READY;
-				elsif valid == '0' and dirty == '1' then
+				elsif valid = '0' and dirty = '1' then
 					NA <= '1';
 					next_state <= WAIT_READ_FROM_USER;
 				else
@@ -173,12 +171,12 @@ begin
 					next_state <= READ_MISS;
 				end if;
 
-			elsif command_write == '1' then
-				if tag_equal == '1' and valid == '1' then
+			elsif command_write = '1' then
+				if tag_equal = '1' and valid = '1' then
 					hit <= '1';
 					cache_valid_dirty(row_location)(0) <= '1'; -- write dirty bit
 					next_state <= WRITE_DATA;
-				elsif valid == '0' and dirty == '1' then
+				elsif valid = '0' and dirty = '1' then
 					NA <= '1';
 					next_state <= WAIT_READ_FROM_USER;
 				else
@@ -198,7 +196,7 @@ begin
 
 			next_state <= READ_FINISHED;
 
-		when READ_FINISHED
+		when READ_FINISHED =>
 			-- cleanup to prepare to return to nominal state
 			hit <= '0';
 			miss <= '0';
@@ -215,9 +213,9 @@ begin
 		    next_state <= LOAD_1;
 
 		when LOAD_1 =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    -- we assume a mapping of left->right in cache to top->down in memory
-		    read_data(31 downto 23) <= m_writedata;
+		    read_data(31 downto 24) <= m_readdata;
 		    m_addr <= to_integer(unsigned(s_addr) + 1);
 		    next_state <= LOAD_2;
 		  else
@@ -225,8 +223,8 @@ begin
 		  end if;
 
 		when LOAD_2 =>
-		  if m_waitrequest == '0' then
-		    read_data(23 downto 15) <= m_writedata;
+		  if m_waitrequest = '0' then
+		    read_data(23 downto 16) <= m_readdata;
 		    m_addr <= to_integer(unsigned(s_addr) + 2);
 		    next_state <= LOAD_3;
 		  else
@@ -234,8 +232,8 @@ begin
 		  end if;
 
 		when LOAD_3 =>
-		  if m_waitrequest == '0' then
-		    read_data(15 downto 7) <= m_writedata;
+		  if m_waitrequest = '0' then
+		    read_data(15 downto 8) <= m_readdata;
 		    m_addr <= to_integer(unsigned(s_addr) + 3);
 		    next_state <= LOAD_FINISHED;
 		  else
@@ -243,17 +241,17 @@ begin
 		  end if;
 
 		when LOAD_FINISHED =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    m_read <= '0';
 
 				-- now read_data is full
-		    read_data(7 downto 0) <= m_writedata;
+		    read_data(7 downto 0) <= m_readdata;
 
 				-- store read_data back into the cache
-				cache_array(row_location)(BLOCK_NUMBER-1 downto 0) <= read_data;
+				cache_data(row_location)(BLOCK_NUMBER-1 downto 0) <= read_data;
 
 		    -- we want to use the same process for reads AND writes
-		    if command_read == '1' then
+		    if command_read = '1' then
 		      next_state <= READ_READY;
 		    else -- write
 		      next_state <= WRITE_MISS;
@@ -265,7 +263,7 @@ begin
 
 		when WRITE_DATA =>
 			-- write into the cache
-			cache_array(row_location)(BLOCK_NUMBER-1 downto 0) <= s_writedata;
+			cache_data(row_location)(BLOCK_NUMBER-1 downto 0) <= s_writedata;
 
 			-- transitional logic
 			s_waitrequest <= '0'; -- no longer busy
@@ -276,14 +274,14 @@ begin
 		  -- write the value to main memory
 		  -- write the block into the cache
 
-		  if dirty == '1' then
+		  if dirty = '1' then
 				-- pull dirty memory
-		    store_cache_data <= cache_array(row_location)(BLOCK_NUMBER-1 downto 0);
+		    store_cache_data <= cache_data(row_location)(BLOCK_NUMBER-1 downto 0);
 		    -- store dirty memory into main memory
 		    m_addr <= to_integer(unsigned(s_addr));
 		    m_read <= '0';
 		    m_write <= '1';
-		    m_writedata <= store_cache_data(31 downto 23);
+		    m_writedata <= store_cache_data(31 downto 24);
 		    next_state <= STORE_1;
 		  end if;
 
@@ -294,10 +292,10 @@ begin
 		  next_state <= FIND_COMPARE;
 
 		when STORE_1 =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    m_write <= '0';
 		    m_addr <= to_integer(unsigned(s_addr) + 1);
-		    m_writedata <= store_cache_data(23 downto 15);
+		    m_writedata <= store_cache_data(23 downto 16);
 
 		    m_write <= '1';
 		    next_state <= STORE_2;
@@ -306,10 +304,10 @@ begin
 		  end if;
 
 		when STORE_2 =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    m_write <= '0';
 		    m_addr <= to_integer(unsigned(s_addr) + 2);
-		    m_writedata <= store_cache_data(15 downto 7);
+		    m_writedata <= store_cache_data(15 downto 8);
 
 		    m_write <= '1';
 		    next_state <= STORE_3;
@@ -318,7 +316,7 @@ begin
 		  end if;
 
 		when STORE_3 =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    m_write <= '0';
 		    m_addr <= to_integer(unsigned(s_addr) + 2);
 		    m_writedata <= store_cache_data(7 downto 0);
@@ -330,7 +328,7 @@ begin
 		  end if;
 
 		when STORE_FINISHED =>
-		  if m_waitrequest == '0' then
+		  if m_waitrequest = '0' then
 		    m_write <= '0';
 
 		    -- TODO : Anything here?
