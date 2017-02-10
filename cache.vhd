@@ -134,9 +134,9 @@ begin
 			-- transitional logic
 			if (s_read = '1' or s_write = '1') then
 				next_state <= FIND_COMPARE;
+			else
+				next_state <= WAIT_READ_FROM_USER;
 			end if;
-
-			next_state <= WAIT_READ_FROM_USER;
 
 		when FIND_COMPARE =>
 			row_location <= to_integer(unsigned(given_index));
@@ -201,6 +201,7 @@ begin
 
 			else
 				FOO <= '1';
+				next_state <= FIND_COMPARE;
 			end if;
 
 		when READ_READY =>
