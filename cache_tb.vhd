@@ -10,6 +10,8 @@ architecture behavior of cache_tb is
 component cache is
 generic(
     ram_size : INTEGER := 32768;
+	 cache_size: INTEGER := 512; -- 32 x 4 = 128 words, or 512 addressable bytes in cache
+	block_number: INTEGER := 32
 );
 port(
     clock : in std_logic;
@@ -55,16 +57,16 @@ signal clk : std_logic := '0';
 constant clk_period : time := 1 ns;
 
 signal s_addr : std_logic_vector (31 downto 0);
-signal s_read : std_logic;
+signal s_read : std_logic :='0';
 signal s_readdata : std_logic_vector (31 downto 0);
-signal s_write : std_logic;
+signal s_write : std_logic := '0';
 signal s_writedata : std_logic_vector (31 downto 0);
 signal s_waitrequest : std_logic;
 
 signal m_addr : integer range 0 to 2147483647;
-signal m_read : std_logic;
+signal m_read : std_logic := '0';
 signal m_readdata : std_logic_vector (7 downto 0);
-signal m_write : std_logic;
+signal m_write : std_logic := '0';
 signal m_writedata : std_logic_vector (7 downto 0);
 signal m_waitrequest : std_logic; 
 
@@ -115,7 +117,33 @@ end process;
 test_process : process
 begin
 
--- put your tests here
+-- INITIATION
+reset <= '1';
+wait for 1*clk_period;
+reset <= '0';
+wait for 1*clk_period;
+
+
+-- CASES COVERED:
+
+-- READ, INVALID, TAG EQUAL (unimportant), DIRTY BIT 0 (unimportant)
+s_read <= '1';
+s_addr <= std_LOGIC_VECTOR(to_unsigned(0, 32));
+-- Read miss since invalid
+-- This should now bring the entire block into cache
+wait until s_waitrequest = '1';
+
+-- READ, VALID, TAG EQUAL, DIRTY BIT 0 (unimportant)
+s_read <= '1';
+s_addr <= std_LOGIC_VECTOR(to_unsigned(0, 32));
+-- Reading at same location aain
+-- This should now be a HIT (s_readdata should have correct output the next CC), since the block was fetched from memory into cache
+wait until s_waitrequest = '1';
+
+-- MANY MORE CASES TO BE COVERED
+-- BUT GETTING THOSE 2 TO WORK IS A START
+
+wait;
 	
 end process;
 	
