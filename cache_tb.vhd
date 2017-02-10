@@ -9,9 +9,7 @@ architecture behavior of cache_tb is
 
 component cache is
 generic(
-    ram_size : INTEGER := 32768;
-	 cache_size: INTEGER := 512; -- 32 x 4 = 128 words, or 512 addressable bytes in cache
-	block_number: INTEGER := 32
+    ram_size : INTEGER := 32768
 );
 port(
     clock : in std_logic;
@@ -23,7 +21,7 @@ port(
     s_readdata : out std_logic_vector (31 downto 0);
     s_write : in std_logic;
     s_writedata : in std_logic_vector (31 downto 0);
-    s_waitrequest : out std_logic; 
+    s_waitrequest : out std_logic;
 
     m_addr : out integer range 0 to ram_size-1;
     m_read : out std_logic;
@@ -34,7 +32,7 @@ port(
 );
 end component;
 
-component memory is 
+component memory is
 GENERIC(
     ram_size : INTEGER := 32768;
     mem_delay : time := 10 ns;
@@ -50,8 +48,8 @@ PORT (
     waitrequest: OUT STD_LOGIC
 );
 end component;
-	
--- test signals 
+
+-- test signals
 signal reset : std_logic := '0';
 signal clk : std_logic := '0';
 constant clk_period : time := 1 ns;
@@ -68,13 +66,13 @@ signal m_read : std_logic := '0';
 signal m_readdata : std_logic_vector (7 downto 0);
 signal m_write : std_logic := '0';
 signal m_writedata : std_logic_vector (7 downto 0);
-signal m_waitrequest : std_logic; 
+signal m_waitrequest : std_logic;
 
 begin
 
 -- Connect the components which we instantiated above to their
 -- respective signals.
-dut: cache 
+dut: cache
 port map(
     clock => clk,
     reset => reset,
@@ -104,7 +102,7 @@ port map (
     readdata => m_readdata,
     waitrequest => m_waitrequest
 );
-				
+
 
 clk_process : process
 begin
@@ -144,7 +142,7 @@ wait until s_waitrequest = '1';
 -- BUT GETTING THOSE 2 TO WORK IS A START
 
 wait;
-	
+
 end process;
-	
+
 end;
