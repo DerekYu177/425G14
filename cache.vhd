@@ -245,7 +245,13 @@ begin
 		when LOAD_FINISHED =>
 		  if m_waitrequest == '0' then
 		    m_read <= '0';
+
+				-- now read_data is full
 		    read_data(7 downto 0) <= m_writedata;
+
+				-- store read_data back into the cache
+				cache_array(row_location)(BLOCK_NUMBER-1 downto 0) <= read_data;
+
 		    -- we want to use the same process for reads AND writes
 		    if command_read == '1' then
 		      next_state <= READ_READY;
