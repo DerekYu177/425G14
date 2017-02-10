@@ -273,14 +273,18 @@ begin
 							cache_line(63 downto 32) <= read_data;
 						when 3 =>
 							cache_line(31 downto 0) <= read_data;
+						when others =>
+							FOO <= '1';
 					end case;
 					line_counter <= line_counter + 1;
-					fetch_addr <= fetch_addr + 4;
+					fetch_addr <= std_logic_vector(to_unsigned((to_integer(unsigned(fetch_addr)) + 4), fetch_addr'length));
 					next_state <= LOAD_0_READ_MISS;
 				end if;
 
 				-- store read_data back into the cache
 				cache_data(row_location)(127 downto 0) <= cache_line;
+
+				line_counter <= 0;
 
 		    -- we want to use the same process for reads AND writes
 		    if command_read = '1' then
