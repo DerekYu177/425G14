@@ -65,7 +65,8 @@ s_read_wreq_asserted, s_read_wreq_deasserted,
 s_write_wreq_deasserted, s_write_wreq_asserted,
 s_read_hit, s_read_miss, s_read_miss_flush, s_read_miss_invalid,
 s_write_hit, s_write_miss, s_write_miss_flush,
-load0, load1, load2, load3, load_ready0, load_ready1, load_ready2, load_ready3,
+load0, load1, load2, load3, load4, load5, load6, load7, load8, load9, load10, load11, load12, load13, load14, load15,
+load_ready0, load_ready1, load_ready2, load_ready3,load_ready4, load_ready5, load_ready6, load_ready7,load_ready8, load_ready9, load_ready10, load_ready11,load_ready12, load_ready13, load_ready14, load_ready15,
 flush0, flush1, flush2, flush3,
 exception);
 
@@ -132,13 +133,7 @@ BEGIN
 			-- Different case handling
 			when s_read_hit =>
 				if m_waitrequest = '1' then
-					if (s_read = '1') then
-						next_state <= s_read_wreq_asserted;
-					elsif (s_write = '1') then
-						next_state <= s_write_wreq_asserted;
-					else
-						next_state <= idle_state;
-					end if;
+					next_state <= idle_state;
 				else
 					--stall if m_waitrequest is still high
 					next_state <= s_read_hit;
@@ -168,7 +163,6 @@ BEGIN
 			when load_ready0 =>
 				next_state <= load1;
 
-
 			when load1 =>
 				if m_waitrequest = '0' then
 					next_state <= load_ready1;
@@ -197,18 +191,127 @@ BEGIN
 				end if;
 
 			when load_ready3 =>
-				if m_waitrequest = '1' then
-					if (s_read = '1') then
-						next_state <= s_read_wreq_asserted;
-					elsif (s_write = '1') then
-						next_state <= s_write_wreq_asserted;
-					else
-						next_state <= idle_state;
-					end if;
+				next_state <= load4;
+
+			when load4 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready4;
 				else
-					next_state <= load3;
+					next_state <= load4;
 				end if;
 
+			when load_ready4 =>
+				next_state <= load5;
+
+			when load5 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready5;
+				else
+					next_state <= load5;
+				end if;
+
+			when load_ready5 =>
+				next_state <= load6;
+
+			when load6 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready6;
+				else
+					next_state <= load6;
+				end if;
+
+			when load_ready6 =>
+				next_state <= load7;
+
+			when load7 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready7;
+				else
+					next_state <= load7;
+				end if;
+
+			when load_ready7 =>
+				next_state <= load8;
+
+			when load8 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready8;
+				else
+					next_state <= load8;
+				end if;
+
+			when load_ready8 =>
+				next_state <= load9;
+
+			when load9 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready9;
+				else
+					next_state <= load9;
+				end if;
+
+			when load_ready9 =>
+				next_state <= load10;
+
+			when load10 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready10;
+				else
+					next_state <= load10;
+				end if;
+
+			when load_ready10 =>
+				next_state <= load11;
+
+			when load11 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready11;
+				else
+					next_state <= load11;
+				end if;
+
+			when load_ready11 =>
+				next_state <= load_ready12;
+
+			when load12 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready12;
+				else
+					next_state <= load12;
+				end if;
+
+			when load_ready12 =>
+				next_state <= load13;
+
+			when load13 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready13;
+				else
+					next_state <= load13;
+				end if;
+
+			when load_ready13 =>
+				next_state <= load14;
+
+			when load14 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready14;
+				else
+					next_state <= load14;
+				end if;
+
+			when load_ready14 =>
+				next_state <= load15;
+
+			when load15 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready15;
+				else
+					next_state <= load15;
+				end if;
+
+			when load_ready15 =>
+					next_state <= idle_state;
 
 			when s_read_miss_flush =>
 				if m_waitrequest = '1' then
@@ -231,12 +334,13 @@ BEGIN
 
 			-- WRITING SEQUENCE
 			when s_write_wreq_asserted =>
+
 				s_indexed_block_number <= to_integer(unsigned(s_addr_index));
 				next_state <= s_read_wreq_deasserted;
 
 			when s_write_wreq_deasserted =>
 				-- Cases where data = valid, tag = equal, dirty = 1: WRITE HIT, set dirty bit high if not, dirty bit stays high if already high
-				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '0') then
+				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') then
 					next_state <= s_write_hit;
 				-- Cases where data = invalid, don't care about tag, dont care about dirty bit: WRITE MISS, no flushing, replace, mark dirty
 				elsif not(valid_block(s_indexed_block_number) = '1') then
@@ -268,7 +372,7 @@ BEGIN
 				if m_waitrequest = '1' then
 					next_state <= load0;
 				else
-					next_state <= s_write_miss;
+					next_state <= s_read_miss;
 				end if;
 			when s_write_miss_flush =>
 				if m_waitrequest = '1' then
@@ -405,6 +509,126 @@ BEGIN
 				m_write <= '0';
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +3) <= m_readdata;
 
+			when load4 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr)) +4;
+
+			when load_ready4 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +4) <= m_readdata;
+
+			when load5 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+5;
+
+			when load_ready5 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +5) <= m_readdata;
+
+			when load6 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+6;
+
+			when load_ready6 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +6) <= m_readdata;
+
+			when load7 =>
+				m_read <= '1';
+				m_addr <= to_integer(unsigned(s_addr))+7;
+				m_write <= '0';
+
+			when load_ready7 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +7) <= m_readdata;
+
+			when load8 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr)) +8;
+
+			when load_ready8 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +8) <= m_readdata;
+
+			when load9 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+9;
+
+			when load_ready9 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +9) <= m_readdata;
+
+			when load10 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+10;
+
+			when load_ready10 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +10) <= m_readdata;
+
+			when load11 =>
+				m_read <= '1';
+				m_addr <= to_integer(unsigned(s_addr))+11;
+				m_write <= '0';
+
+			when load_ready11 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +11) <= m_readdata;
+
+			when load12 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr)) +12;
+
+			when load_ready12 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +12) <= m_readdata;
+
+			when load13 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+13;
+
+			when load_ready13 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +13) <= m_readdata;
+
+			when load14 =>
+				m_read <= '1';
+				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+14;
+
+			when load_ready14 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +14) <= m_readdata;
+
+			when load15 =>
+				m_read <= '1';
+				m_addr <= to_integer(unsigned(s_addr))+15;
+				m_write <= '0';
+
+			when load_ready15 =>
+				m_read <= '0';
+				m_write <= '0';
+				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +15) <= m_readdata;
+
 				-- loading complete, now change the tag (if haven't done) to the tag of the block newly brought in block
 				tag_block(s_indexed_block_number) <= s_addr_tag;
 
@@ -440,10 +664,6 @@ BEGIN
 				s_waitrequest <= '1';
 				valid_block(s_indexed_block_number) <= '1';
 				dirty_block(s_indexed_block_number) <= '1';
-
-				-- FETCH CORRECT BLOCK
-				m_read <= '1';
-				m_write <= '0';
 
 			when s_write_miss_flush =>
 				write_hit <= '0';
