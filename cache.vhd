@@ -164,9 +164,10 @@ BEGIN
 				else
 					next_state <= load0;
 				end if;
-				
+			
 			when load_ready0 =>
 				next_state <= load1;
+				
 				
 			when load1 =>
 				if m_waitrequest = '0' then
@@ -174,7 +175,7 @@ BEGIN
 				else
 					next_state <= load1;
 				end if;
-				
+			
 			when load_ready1 =>
 				next_state <= load2;
 				
@@ -184,7 +185,7 @@ BEGIN
 				else
 					next_state <= load2;
 				end if;
-				
+			
 			when load_ready2 =>
 				next_state <= load3;
 				
@@ -194,7 +195,7 @@ BEGIN
 				else
 					next_state <= load3;
 				end if;
-				
+			
 			when load_ready3 =>
 				if m_waitrequest = '1' then
 					if (s_read = '1') then
@@ -366,41 +367,41 @@ BEGIN
 			when load0 =>
 				m_read <= '1';
 				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr));
 				
 			when load_ready0 =>
 				m_read <= '0';
 				m_write <= '0';
-				m_addr <= to_integer(unsigned(s_addr));
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4) <= m_readdata;
 				
 			when load1 =>
 				m_read <= '1';
 				m_write <= '0';
+				m_addr <= to_integer(unsigned(s_addr))+1;
 				
 			when load_ready1 =>
 				m_read <= '0';
 				m_write <= '0';
-				m_addr <= to_integer(unsigned(s_addr))+1;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +1) <= m_readdata;
 				
 			when load2 =>
 				m_read <= '1';
 				m_write <= '0';
-					
+				m_addr <= to_integer(unsigned(s_addr))+2;
+				
 			when load_ready2 =>
 				m_read <= '0';
 				m_write <= '0';
-				m_addr <= to_integer(unsigned(s_addr))+2;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +2) <= m_readdata;
 				
 			when load3 =>
 				m_read <= '1';
+				m_addr <= to_integer(unsigned(s_addr))+3;
 				m_write <= '0';
 						
 			when load_ready3 =>
 				m_read <= '0';
 				m_write <= '0';
-				m_addr <= to_integer(unsigned(s_addr))+3;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +3) <= m_readdata;
 				
 				-- loading complete, now change the tag (if haven't done) to the tag of the block newly brought in block
