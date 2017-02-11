@@ -144,16 +144,16 @@ wait until s_waitrequest = '1';
 -- WRITE, INVALID, TAG UNEQUAL, NOT DIRTY
 s_read <= '0';
 s_write <= '1';
--- tag = 0, index = 0, b0 = 1
-s_addr <= STD_LOGIC_VECTOR(to_unsigned(4, 32));
+-- ----------------------------------------------------------------------   tag = 1 --------------------------- index = 1 ------------------------------ b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(1, 6)) & STD_LOGIC_VECTOR(to_unsigned(1, 5)) & STD_LOGIC_VECTOR(to_unsigned(4, 4));
 s_writedata <= STD_LOGIC_VECTOR(to_unsigned(14, 32));
 
 wait until s_waitrequest = '1';
 
 -- WRITE, VALID, TAG UNEQUAL, DIRTY
 s_write <= '1';
--- tag = 1, index = 0, b0 = 1
-s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(1, 6)) & STD_LOGIC_VECTOR(to_unsigned(4, 9));
+-- ----------------------------------------------------------------------   tag = 2 --------------------------- index = 1 ------------------------------ b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(2, 6)) & STD_LOGIC_VECTOR(to_unsigned(1, 5)) & STD_LOGIC_VECTOR(to_unsigned(4, 4));
 s_writedata <= STD_LOGIC_VECTOR(to_unsigned(15, 32));
 
 wait until s_waitrequest = '1';
