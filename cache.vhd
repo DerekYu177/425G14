@@ -317,7 +317,7 @@ BEGIN
 				end if;
 			
 			when load_ready15 =>
-					next_state <= load15;
+					next_state <= idle_state;
 				
 				
 			when s_read_miss_flush =>
