@@ -38,16 +38,16 @@ alias given_index is s_addr(8 downto 4);
 alias given_tag is s_addr(14 downto 9);
 
 signal tag : std_logic_vector(5 downto 0);
-signal row_location : integer;
+signal row_location : integer range 0 to 31;
 signal dirty : std_logic;
 signal valid : std_logic;
 signal tag_equal : std_logic;
 
-signal block_start : integer;
-signal block_end : integer;
+signal block_start : integer range 0 to 127;
+signal block_end : integer range 0 to 127;
 
 signal fetch_addr : std_logic_vector(BLOCK_NUMBER-1 downto 0);
-signal line_counter : integer;
+signal line_counter : integer range 0 to 4;
 signal cache_line : std_logic_vector(127 downto 0);
 
 -- data transfer signal declaration
@@ -64,16 +64,16 @@ signal FOO : std_logic;
 -- declare as an array with 32 rows and 128 bits per row (4 words = 32b)
 -- to modify say the data bits in the second row:
 -- cache_data(1)(BLOCK_NUMBER-1 downto 0) <= std_logic_vector( __new_data__ )
-type cache_data_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(127 downto 0);
+type cache_data_type is array (BLOCK_NUMBER-1 downto 0) of std_logic_vector(127 downto 0);
 signal cache_data : cache_data_type := (others => (others => '0'));
 
 -- 2D tag array declaration
 -- 5 bit tags x 4 words/block = 20 bits per block
-type cache_tag_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(23 downto 0);
+type cache_tag_type is array (BLOCK_NUMBER-1 downto 0) of std_logic_vector(23 downto 0);
 signal cache_tag : cache_tag_type := (others => (others => '0'));
 
 -- 2D valid/dirty array declaration
-type cache_valid_dirty_type is array (natural range BLOCK_NUMBER-1 downto 0) of std_logic_vector(1 downto 0);
+type cache_valid_dirty_type is array (BLOCK_NUMBER-1 downto 0) of std_logic_vector(1 downto 0);
 signal cache_valid_dirty : cache_valid_dirty_type := (others => (others => '0'));
 
 -- control signal definition
@@ -123,7 +123,7 @@ begin
 end process;
 
 -- State transitions
-process (given_block_offset, given_tag, given_index, s_read, s_write, s_writedata, m_readdata, m_waitrequest, row_location)
+process (s_read, s_write, s_writedata, m_readdata, m_waitrequest, next_state)
 begin
 	case state is
 
@@ -139,9 +139,10 @@ begin
 			end if;
 
 		when FIND_COMPARE =>
+			-- 2147483648
 			row_location <= to_integer(unsigned(given_index));
-			valid <= cache_valid_dirty(row_location)(1);
-			dirty <= cache_valid_dirty(row_location)(0);
+			valid <= cache_valid_dirty(row_location)(0);
+			dirty <= cache_valid_dirty(row_location)(1);
 			command_read <= s_read;
 			command_write <= s_write;
 
