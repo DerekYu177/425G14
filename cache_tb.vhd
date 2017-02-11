@@ -141,6 +141,22 @@ wait until s_waitrequest = '1';
 -- MANY MORE CASES TO BE COVERED
 -- BUT GETTING THOSE 2 TO WORK IS A START
 
+-- WRITE, INVALID, TAG UNEQUAL, NOT DIRTY
+s_read <= '0';
+s_write <= '1';
+-- tag = 0, index = 0, b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(4, 32));
+s_writedata <= STD_LOGIC_VECTOR(to_unsigned(14, 32));
+
+wait until s_waitrequest = '1';
+
+-- WRITE, VALID, TAG UNEQUAL, DIRTY
+s_write <= '1';
+-- tag = 1, index = 0, b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(1, 6)) & STD_LOGIC_VECTOR(to_unsigned(4, 9));
+s_writedata <= STD_LOGIC_VECTOR(to_unsigned(15, 32));
+
+wait until s_waitrequest = '1';
 wait;
 
 end process;
