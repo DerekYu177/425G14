@@ -133,13 +133,7 @@ BEGIN
 			-- Different case handling
 			when s_read_hit =>
 				if m_waitrequest = '1' then
-					if (s_read = '1') then
-						next_state <= s_read_wreq_asserted;
-					elsif (s_write = '1') then
-						next_state <= s_write_wreq_asserted;
-					else
-						next_state <= idle_state;
-					end if;
+					next_state <= idle_state;
 				else
 					--stall if m_waitrequest is still high
 					next_state <= s_read_hit;
@@ -319,7 +313,6 @@ BEGIN
 			when load_ready15 =>
 					next_state <= idle_state;
 				
-				
 			when s_read_miss_flush =>
 				if m_waitrequest = '1' then
 					next_state <= flush0;
@@ -341,11 +334,11 @@ BEGIN
 			
 			-- WRITING SEQUENCE
 			when s_write_wreq_asserted =>
-				next_state <= s_read_wreq_deasserted;
+				next_state <= s_write_wreq_deasserted;
 				
 			when s_write_wreq_deasserted =>
 				-- Cases where data = valid, tag = equal, dirty = 1: WRITE HIT, set dirty bit high if not, dirty bit stays high if already high
-				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '0') then
+				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') then
 					next_state <= s_write_hit;
 				-- Cases where data = invalid, don't care about tag, dont care about dirty bit: WRITE MISS, no flushing, replace, mark dirty
 				elsif not(valid_block(s_indexed_block_number) = '1') then
