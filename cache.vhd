@@ -271,7 +271,7 @@ BEGIN
 				end if;
 			
 			when load_ready11 =>
-				next_state <= load_ready12;
+				next_state <= load12;
 				
 			when load12 =>
 				if m_waitrequest = '0' then
@@ -334,6 +334,13 @@ BEGIN
 			
 			-- WRITING SEQUENCE
 			when s_write_wreq_asserted =>
+				s_addr_unused_offset <= s_addr(1 downto 0);
+				s_addr_offsetw <= s_addr(3 downto 2);
+				s_addr_index <= s_addr(8 downto 4);
+				s_addr_tag <= s_addr(14 downto 9);
+				s_addr_unused_MSB <= s_addr(31 downto 15);
+				s_indexed_block_number <= to_integer(unsigned(s_addr_index));
+				s_word_offset_int <=to_integer(unsigned(s_addr_offsetw));
 				next_state <= s_write_wreq_deasserted;
 				
 			when s_write_wreq_deasserted =>
@@ -355,17 +362,12 @@ BEGIN
 				
 			when s_write_hit =>
 				if m_waitrequest = '1' then
-					if (s_read = '1') then
-						next_state <= s_read_wreq_asserted;
-					elsif (s_write = '1') then
-						next_state <= s_write_wreq_asserted;
-					else
-						next_state <= idle_state;
-					end if;
+					next_state <= idle_state;
 				else
 					--stall if m_waitrequest is still high
-					next_state <= s_write_hit;
+					next_state <= s_read_hit;
 				end if;
+				
 			when s_write_miss =>
 				if m_waitrequest = '1' then
 					next_state <= load0;
