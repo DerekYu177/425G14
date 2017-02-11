@@ -37,8 +37,8 @@ architecture arch of cache is
 --Storage types declarations
 TYPE MEM IS ARRAY(cache_size-1 downto 0) OF STD_LOGIC_VECTOR(7 DOWNTO 0); -- the type mem is a 512 bytes (8-bit) array
 TYPE TAG IS ARRAY(block_number-1 downto 0) OF STD_LOGIC_VECTOR(5 DOWNTO 0); -- 32 6-bits tag bit array 
-TYPE DIRTY IS ARRAY(block_number-1 downto 0) OF STD_LOGIC; -- 32 1-bit dirty bit array
-TYPE VALID IS ARRAY(block_number-1 downto 0) OF STD_LOGIC; -- 32 1-bit valid bit array
+TYPE DIRTY IS ARRAY(block_number-1 downto 0) OF bit; -- 32 1-bit dirty bit array
+TYPE VALID IS ARRAY(block_number-1 downto 0) OF bit; -- 32 1-bit valid bit array
 	
 --Storage signals instantiations
 SIGNAL data_byte_block: MEM;
@@ -63,10 +63,11 @@ TYPE State_type IS (
 idle_state,
 s_read_wreq_asserted, s_read_wreq_deasserted,
 s_write_wreq_deasserted, s_write_wreq_asserted,
-s_read_hit, s_read_miss, s_read_miss_flush,
+s_read_hit, s_read_miss, s_read_miss_flush, s_read_miss_invalid,
 s_write_hit, s_write_miss, s_write_miss_flush,
-load0, load1, load2, load3,
-flush0, flush1, flush2, flush3);
+load0, load1, load2, load3, load_ready0, load_ready1, load_ready2, load_ready3,
+flush0, flush1, flush2, flush3,
+exception);
 
 SIGNAL present_state, next_state: State_type;
 
@@ -79,42 +80,17 @@ SIGNAL write_hit: std_logic;
 ---------------------------
 BEGIN
 
-read_hit <= '0';
-write_hit <= '0';
+
 
 	--This is the main section of the SRAM model
 	mem_process: PROCESS (clock)
 	BEGIN
-		--This is a cheap trick to initialize the SRAM in simulation
-		IF(now < 1 ps)THEN
-			For i in 0 to ((cache_size-1)/2) -1 LOOP
-				data_byte_block(i) <= std_logic_vector(to_unsigned(i,8));
-				--From byte address 0 to 255, set data to whatever the address is (as binary representation)
-			END LOOP;
-			For i in (cache_size-1)/2 to cache_size -1 LOOP
-				data_byte_block(i) <= "00000000";
-				--From byte address 256 to 511, set data to all zeroes
-			END LOOP;
-		end if;
 		
-		IF(now < 1 ps)THEN
-		--addresses are of the form: xxxx xxxx xxxx xxxx x TTT TTTI IIII OO xx
-		--where x -> don't care, T -> tag, I -> index, O -> offset
-		
-			For j in 0 to block_number-1 LOOP
-				dirty_block(j) <= '0';
-				valid_block(j) <= '0';
-				tag_block(j) <= "000000"; 
-				--Initiate all dirty and valid bit to 0
-				--Initiate all tags (6 MSB of effective address) as 0
-				--In this fashion, reading address in the range [0, 255] will return the value of the address
-			END LOOP;
-		end if;
 	END PROCESS;
 	
 	-- make circuits here
 	
-	state_logic: PROCESS(s_read, s_write, s_addr, s_writedata)
+	state_logic: PROCESS(clock, s_read, s_write, s_addr, s_writedata)
 	BEGIN
 		CASE present_state is
 			when idle_state =>
@@ -129,14 +105,20 @@ write_hit <= '0';
 			-- READING SEQUENCE
 			when s_read_wreq_asserted =>
 				next_state <= s_read_wreq_deasserted;
-				
+				s_addr_unused_offset <= s_addr(1 downto 0);
+				s_addr_offsetw <= s_addr(3 downto 2);
+				s_addr_index <= s_addr(8 downto 4);
+				s_addr_tag <= s_addr(14 downto 9);
+				s_addr_unused_MSB <= s_addr(31 downto 15);
+				s_indexed_block_number <= to_integer(unsigned(s_addr_index));
+				s_word_offset_int <=to_integer(unsigned(s_addr_offsetw));
 			when s_read_wreq_deasserted =>
 				-- Cases where data = valid, tag = equal, don't care about dirty bit: READ HIT
 				if(s_addr_tag = tag_block(s_indexed_block_number) and valid_block(s_indexed_block_number) = '1') then
 					next_state <= s_read_hit;
 				-- Cases where data = invalid, don't care about tag, dirty bit must be low: READ MISS
-				elsif (valid_block(s_indexed_block_number) = '0') then
-					next_state <= s_read_miss;
+				elsif not(valid_block(s_indexed_block_number) = '1') then
+					next_state <= s_read_miss_invalid;
 				-- Case where data = valid, tag = unequal, dirty = 1: READ MISS, FLUSH, clear dirty
 				elsif not(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '1') then
 					next_state <= s_read_miss_flush;
@@ -144,12 +126,12 @@ write_hit <= '0';
 				elsif not(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '0') then
 					next_state <= s_read_miss;
 				else
-					null;
+					next_state <= exception;
 				end if;
 				
 			-- Different case handling
 			when s_read_hit =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					if (s_read = '1') then
 						next_state <= s_read_wreq_asserted;
 					elsif (s_write = '1') then
@@ -163,20 +145,58 @@ write_hit <= '0';
 				end if;
 				
 			when s_read_miss =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					next_state <= load0;
 				else
 					next_state <= s_read_miss;
 				end if;
 				
+			when s_read_miss_invalid =>
+				if m_waitrequest = '1' then
+					next_state <= load0;
+				else
+					next_state <= s_read_miss_invalid;
+				end if;
+				
 			when load0 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready0;
+				else
+					next_state <= load0;
+				end if;
+				
+			when load_ready0 =>
 				next_state <= load1;
+				
 			when load1 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready1;
+				else
+					next_state <= load1;
+				end if;
+				
+			when load_ready1 =>
 				next_state <= load2;
+				
 			when load2 =>
+				if m_waitrequest = '0' then
+					next_state <= load_ready2;
+				else
+					next_state <= load2;
+				end if;
+				
+			when load_ready2 =>
 				next_state <= load3;
+				
 			when load3 =>
 				if m_waitrequest = '0' then
+					next_state <= load_ready3;
+				else
+					next_state <= load3;
+				end if;
+				
+			when load_ready3 =>
+				if m_waitrequest = '1' then
 					if (s_read = '1') then
 						next_state <= s_read_wreq_asserted;
 					elsif (s_write = '1') then
@@ -187,9 +207,10 @@ write_hit <= '0';
 				else
 					next_state <= load3;
 				end if;
+			
 				
 			when s_read_miss_flush =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					next_state <= flush0;
 				else
 					next_state <= s_read_miss_flush;
@@ -201,7 +222,7 @@ write_hit <= '0';
 			when flush2 =>
 				next_state <= flush3;
 			when flush3 =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					next_state <= load0;
 				else
 					next_state <= flush3;
@@ -216,7 +237,7 @@ write_hit <= '0';
 				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '0') then
 					next_state <= s_write_hit;
 				-- Cases where data = invalid, don't care about tag, dont care about dirty bit: WRITE MISS, no flushing, replace, mark dirty
-				elsif valid_block(s_indexed_block_number) = '0' then
+				elsif not(valid_block(s_indexed_block_number) = '1') then
 					next_state <= s_write_miss;
 				-- Cases where data = valid, tag = unequal, dirty = 1: WRITE MISS, FLUSH, replace, mark dirty
 				elsif not(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '1') then
@@ -225,11 +246,11 @@ write_hit <= '0';
 				elsif not(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') and (dirty_block(s_indexed_block_number) = '0') then
 					next_state <= s_write_miss;
 				else
-					null;
+					next_state <= exception;
 				end if;
 				
 			when s_write_hit =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					if (s_read = '1') then
 						next_state <= s_read_wreq_asserted;
 					elsif (s_write = '1') then
@@ -242,13 +263,13 @@ write_hit <= '0';
 					next_state <= s_write_hit;
 				end if;
 			when s_write_miss =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					next_state <= load0;
 				else
 					next_state <= s_write_miss;
 				end if;
 			when s_write_miss_flush =>
-				if m_waitrequest = '0' then
+				if m_waitrequest = '1' then
 					next_state <= flush0;
 				else
 					next_state <= s_write_miss_flush;
@@ -264,17 +285,45 @@ write_hit <= '0';
 		CASE present_state is
 			when idle_state =>
 				s_waitrequest <= '1';
+				
+				read_hit <= '0';
+				write_hit <= '0';
+				
 				m_read <= '0';
 				m_write <= '0';
 				m_addr <= 0;
+				--This is a cheap trick to initialize the SRAM in simulation
+				IF(now < 1 ps)THEN
+					For i in 0 to ((cache_size-1)/2) -1 LOOP
+						data_byte_block(i) <= std_logic_vector(to_unsigned(i,8));
+						--From byte address 0 to 255, set data to whatever the address is (as binary representation)
+					END LOOP;
+					For i in (cache_size-1)/2 to cache_size -1 LOOP
+						data_byte_block(i) <= "00000000";
+						--From byte address 256 to 511, set data to all zeroes
+					END LOOP;
+				--addresses are of the form: xxxx xxxx xxxx xxxx x TTT TTTI IIII OO xx
+				--where x -> don't care, T -> tag, I -> index, O -> offset
+				
+					For j in 0 to block_number-1 LOOP
+						dirty_block(j) <= '0';
+						valid_block(j) <= '0';
+						tag_block(j) <= "000000"; 
+						--Initiate all dirty and valid bit to 0
+						--Initiate all tags (6 MSB of effective address) as 0
+						--In this fashion, reading address in the range [0, 255] will return the value of the address
+					END LOOP;
+				end if;
 			when s_read_wreq_asserted =>
 				s_waitrequest <= '1';
+				--NEW CHANGE
 				m_read <= '0';
 				m_write <= '0';
 			when s_read_wreq_deasserted =>
 				s_waitrequest <= '0';
 				m_read <= '0';
 				m_write <= '0';
+				
 			when s_write_wreq_asserted =>
 				s_waitrequest <= '1';
 				m_read <= '0';
@@ -288,7 +337,7 @@ write_hit <= '0';
 			when s_read_hit =>
 				-- Read hit, load data on data bus, no need to change valid/dirty bit
 				read_hit <= '1';
-				
+				s_waitrequest <= '0';
 				-- Get the complete word out, via concatenation of 4 adjacent bytes
 				s_readdata <= data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4)&
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +1)
@@ -299,38 +348,73 @@ write_hit <= '0';
 				-- make valid if not
 				-- cases matched to 's_read_miss' either have invalid data or have dirty bit = 0, hence no flushing and dirty bit stays as is
 				read_hit <= '0';
+				
+				m_read <= '0';
+				m_write <= '0';
+				
+				s_waitrequest <= '1';
 				valid_block(s_indexed_block_number) <= '1';
 				tag_block(s_indexed_block_number) <= s_addr_tag;
-				-- FETCH CORRECT BLOCK
+				
+			when s_read_miss_invalid =>
+				-- make valid if not
+				read_hit <= '0';
+				s_waitrequest <= '1';
+				valid_block(s_indexed_block_number) <= '1';
+				tag_block(s_indexed_block_number) <= s_addr_tag;
+				
+			when load0 =>
 				m_read <= '1';
 				m_write <= '0';
 				
-			when load0 =>
+			when load_ready0 =>
+				m_read <= '0';
+				m_write <= '0';
 				m_addr <= to_integer(unsigned(s_addr));
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4) <= m_readdata;
 				
 			when load1 =>
+				m_read <= '1';
+				m_write <= '0';
+				
+			when load_ready1 =>
+				m_read <= '0';
+				m_write <= '0';
 				m_addr <= to_integer(unsigned(s_addr))+1;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +1) <= m_readdata;
 				
 			when load2 =>
+				m_read <= '1';
+				m_write <= '0';
+					
+			when load_ready2 =>
+				m_read <= '0';
+				m_write <= '0';
 				m_addr <= to_integer(unsigned(s_addr))+2;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +2) <= m_readdata;
 				
 			when load3 =>
+				m_read <= '1';
+				m_write <= '0';
+						
+			when load_ready3 =>
+				m_read <= '0';
+				m_write <= '0';
 				m_addr <= to_integer(unsigned(s_addr))+3;
 				data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +3) <= m_readdata;
 				
-				-- loading complete, now change the tag, if haven't done, to the tag of the newly brought in block
+				-- loading complete, now change the tag (if haven't done) to the tag of the block newly brought in block
 				tag_block(s_indexed_block_number) <= s_addr_tag;
+				
 				
 			when s_read_miss_flush =>
 				-- TAG UNMATCHED yet dirty, FLUSH
 				-- Since we flushed the dirty block and fetched a new one, CLEAR the dirty bit!
 				read_hit <= '0';
+				s_waitrequest <= '1';
 				valid_block(s_indexed_block_number) <= '1';
 				dirty_block(s_indexed_block_number) <= '0';
-				tag_block(s_indexed_block_number) <= s_addr_tag;
+				--tag_block(s_indexed_block_number) <= s_addr_tag;
 				-- FLUSH TO MM FIRST
 				m_read <= '0';
 				m_write <= '1';
@@ -346,10 +430,12 @@ write_hit <= '0';
 
 				-- write hit, mark dirty no matter what
 				write_hit <= '1';
+				s_waitrequest <= '0';
 				dirty_block(s_indexed_block_number) <= '1';
 				
 			when s_write_miss =>
 				write_hit <= '0';
+				s_waitrequest <= '1';
 				valid_block(s_indexed_block_number) <= '1';
 				dirty_block(s_indexed_block_number) <= '1';
 				
@@ -359,14 +445,18 @@ write_hit <= '0';
 				
 			when s_write_miss_flush =>
 				write_hit <= '0';
+				s_waitrequest <= '1';
 				valid_block(s_indexed_block_number) <= '1';
 				dirty_block(s_indexed_block_number) <= '1';
 				
-				-- FLUSH TO MM FIRST
+				-- NEXT STATE SHOULD FLUSH TO MM FIRST
+				
+				
+			when flush0 =>
+				-- Making sure memory access mode is correct
 				m_read <= '0';
 				m_write <= '1';
 				
-			when flush0 =>
 				--flush things of the CURRENTLY INDEXED ADDRESS back to MM
 				m_addr <= s_current_full_addr;
 				m_writedata <= data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4);
@@ -382,15 +472,7 @@ write_hit <= '0';
 			when flush3 =>
 				m_addr <= s_current_full_addr+3;
 				m_writedata <= data_byte_block(s_indexed_block_number*16 + s_word_offset_int*4 +3);
-				
-				-- At the end of flushing, prepare for loading new data from MM
-				m_read <= '1';
-				m_write <= '0';
-								
-			
-				
-				
-			
+	
 				
 			when others =>
 				null;
@@ -401,6 +483,7 @@ write_hit <= '0';
 	begin
 		if reset = '1' then 
 			present_state <= idle_state;
+
 		elsif (Clock'EVENT AND Clock = '1') then
 			present_state <= next_state;
 		end if;
