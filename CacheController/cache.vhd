@@ -271,13 +271,8 @@ BEGIN
 				end if;
 
 			when load_ready11 =>
-<<<<<<< HEAD
-				next_state <= load_ready12;
-
-=======
 				next_state <= load12;
-				
->>>>>>> henrywang
+
 			when load12 =>
 				if m_waitrequest = '0' then
 					next_state <= load_ready12;
@@ -339,12 +334,6 @@ BEGIN
 
 			-- WRITING SEQUENCE
 			when s_write_wreq_asserted =>
-<<<<<<< HEAD
-
-				s_indexed_block_number <= to_integer(unsigned(s_addr_index));
-				next_state <= s_read_wreq_deasserted;
-
-=======
 				s_addr_unused_offset <= s_addr(1 downto 0);
 				s_addr_offsetw <= s_addr(3 downto 2);
 				s_addr_index <= s_addr(8 downto 4);
@@ -353,8 +342,7 @@ BEGIN
 				s_indexed_block_number <= to_integer(unsigned(s_addr_index));
 				s_word_offset_int <=to_integer(unsigned(s_addr_offsetw));
 				next_state <= s_write_wreq_deasserted;
-				
->>>>>>> henrywang
+
 			when s_write_wreq_deasserted =>
 				-- Cases where data = valid, tag = equal, dirty = 1: WRITE HIT, set dirty bit high if not, dirty bit stays high if already high
 				if(s_addr_tag = tag_block(s_indexed_block_number)) and (valid_block(s_indexed_block_number) = '1') then
@@ -379,7 +367,7 @@ BEGIN
 					--stall if m_waitrequest is still high
 					next_state <= s_read_hit;
 				end if;
-				
+
 			when s_write_miss =>
 				if m_waitrequest = '1' then
 					next_state <= load0;
