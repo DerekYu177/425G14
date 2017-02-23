@@ -8,9 +8,11 @@ entity pipeline is
     reset : in std_logic;
 
     -- input is the binary file produced by the Assembler --
-    instruction : in std_logic_vector (31 downto 0)
+    instruction : in std_logic_vector (31 downto 0);
 
     -- output is the register file and the data file --
+    done : out std_logic;
+    ready : out std_logic
   );
 end pipeline;
 
