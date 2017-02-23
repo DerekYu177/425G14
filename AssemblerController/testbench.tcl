@@ -16,13 +16,15 @@ component pipeline is
     reset : in std_logic;
 
     -- input is the binary file produced by the Assembler --
-    instruction : in std_logic_vector (31 downto 0)
+    instruction : in std_logic_vector (31 downto 0);
 
     -- output is the register file and the data file --
     done : out std_logic;
     ready : out std_logic
   );
 end component;
+
+signal PROGRAM_COUNTER : integer;
 
 begin
 
@@ -32,10 +34,11 @@ begin
     variable line_output : LINE;
   begin
     loop
-      exit when endfile(program)
-      wait until ready = '1'
-      readline(program, line_output);
-      -- do something here with our value in line_output
+      if ready = '1' then
+        exit when endfile(program);
+        readline(program, line_output);
+        -- do something here with our value in line_output
+      end if;
     end loop;
     wait;
   end process read_program;
@@ -49,5 +52,7 @@ begin
       -- plenty of conditions here
     end if;
   end process write_register_file;
+
+  --TODO: read/write methods to the memory file "memory.txt"
 
 end architecture behavior;
