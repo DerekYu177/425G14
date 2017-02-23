@@ -17,11 +17,6 @@ The Testbench must:
   8. Read the next line of the program.txt file
   9. Keep the register values as internal signals
   10. Repeat until PC reaches the end of the program
-  11. Update register_file.txt appropriately 
-
-
-Basically,
-  1. given a file "program.txt", we put the program into instruction memory (how?)
-  2. we traverse through the instruction memory, modifying "register_file.txt" at the very end (can this be done through write-back with a cache flush at the very end?)
+  11. Update register_file.txt appropriately
 
 (ctrl-shift-m)
