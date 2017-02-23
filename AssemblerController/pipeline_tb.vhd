@@ -26,19 +26,19 @@ end component;
 
 begin
 
-  read_memory : process (ready)
-    file memory : TEXT open READ_MODE is "memory.txt";
+  read_program : process (ready)
+    file program : TEXT open READ_MODE is "program.txt";
     variable read_line : LINE;
     variable line_output : LINE;
   begin
     loop
-      exit when endfile(memory)
+      exit when endfile(program)
       wait until ready = '1'
-      readline(memory, line_output);
+      readline(program, line_output);
       -- do something here with our value in line_output
     end loop;
     wait;
-  end process read_memory;
+  end process read_program;
 
   write_register_file : process(done)
     file rester : TEXT open WRITE_MODE is "register_file.txt";
