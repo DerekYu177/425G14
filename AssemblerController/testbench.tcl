@@ -26,6 +26,8 @@ end component;
 
 signal clock_period : time := 1 ns;
 
+signal PROGRAM_INITIALIZE : std_logic;
+signal PROGRAM_INITIALIZE_FINISHED : std_logic;
 signal PROGRAM_COUNTER : integer;
 signal PROGRAM_FINISHED : std_logic;
 
@@ -59,7 +61,7 @@ begin
   end process read_program;
 
   write_register_file : process (PROGRAM_FINISHED)
-    file register : TEXT open WRITE_MODE is "register_file.txt";
+    file register_file : TEXT open WRITE_MODE is "register_file.txt";
     variable write_line : LINE;
     variable line_input : LINE;
   begin
@@ -69,5 +71,18 @@ begin
   end process write_register_file;
 
   --TODO: read/write methods to the memory file "memory.txt"
+  initialize_memory_file : process (PROGRAM_INITIALIZE)
+    file memory_file : TEXT open WRITE_MODE is "memory.txt";
+    variable write_line : LINE;
+    variable line_input : LINE;
+  begin
+    if PROGRAM_INITIALIZE = '1' then
+      -- write blank memory file here
+      -- memory must be 8192 lines deep,
+      -- 32 bit words
+      PROGRAM_INITIALIZE_FINISHED <= '1';
+    end if;
+    -- ensure we close the memory file so that we can read from it in the future
+  end process initialize_memory_file;
 
 end architecture behavior;
