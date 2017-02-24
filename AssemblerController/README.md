@@ -1,22 +1,21 @@
 ### Update as we know more
 
 #### Pipeline
-Implemented as a FSM.
+The Pipeline must:
+  * Be built and connected using the block diagram given in the handouts.
+  * Be able to read line by line from the testbench and store it into its data memory and instruction memory, _ideally concurrently_.
+  * Be able to detect hazards and stall appropriately
 
 #### Testbench
 The Testbench must:
-  1. Initialize the data memory.txt file upon starting, effectively starting from a blank slate
-  2. Initialize PC = 0
-  3. Read from the instructions translated by the assembler (the instructions are in binary), and pass them one at a time into the pipeline. These are 32 bit lines.
-  4. Wait the appropriate amount of time for the output to occur (initial latency = 5 clock cycles)
-  5. Understand the output from the pipeline:
-    * R instruction, where the output should be the register + register value
-    * Jump/Branch instruction, where the output should indicate the new PC value to jump to
-  6. Update PC accordingly
+  1. Open both the program.txt and the memory.txt to begin sending to the pipeline
+  2. Set the reset switch to '1'
+  3. Read from the instructions translated by the assembler (the instructions are in binary), and pass them one at a time into the pipeline. These are 32 bit lines. _If possible_, pass them both in concurrently
+  4. When all the data has been passed through, assert memory_in_finished and program_in_finished.
+  4. Wait until the pipeline has asserted program_execution_finished.
+  5. The pipeline should then output, one line at a time, the entire register file and the entire data file.
+  6. Once finished, the testbench waits until the pipeline has asserted  memory_out_finished and register_out_finished
   7. Update the memory.txt file accordingly
-  8. Read the next line of the program.txt file
-  9. Keep the register values as internal signals
-  10. Repeat until PC reaches the end of the program
-  11. Update register_file.txt appropriately
+  8. Update register_file.txt accordingly
 
 (ctrl-shift-m)
