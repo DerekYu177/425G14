@@ -12,28 +12,33 @@ architecture behavior of pipeline_tb is
 
 component pipeline is
   port(
-    clock : in std_logic;
-    reset : in std_logic;
+  clock : in std_logic;
+  reset : in std_logic;
 
-    -- input is the binary file produced by the Assembler --
-    instruction : in std_logic_vector (31 downto 0);
+  -- inputs --
+  program_in : in std_logic_vector(31 downto 0);
+  memory_in : in std_logic_vector(31 downto 0);
+  program_in_finished : in std_logic;
+  memory_in_finished : in std_logic;
 
-    -- output is the register file and the data file --
-    done : out std_logic;
-    ready : out std_logic
+  -- outputs --
+  program_execution_finished : out std_logic;
+  memory_out_finished : out std_logic;
+  register_out_finished : out std_logic;
+  memory_out : out std_logic_vector(31 downto 0);
+  register_out : out std_logic_vector(31 downto 0)
   );
 end component;
 
-signal clock_period : time := 1 ns;
+-- constants
+constant clock_period : time := 1 ns;
+constant memory_size : integer range 0 to 8191;
 
+-- these are high level control signals
 signal PROGRAM_INITIALIZE : std_logic;
 signal PROGRAM_INITIALIZE_FINISHED : std_logic;
 signal PROGRAM_COUNTER : integer;
 signal PROGRAM_FINISHED : std_logic;
-
--- use this to store our register values until PROGRAM_FINISHED = '1' at which point we "flush" the register_file to register_file.txt
-type register_type is array (31 downto 0) of std_logic_vector(31 downto 0);
-signal register_file : register_type := (others => (others => '0'));
 
 begin
 
@@ -77,10 +82,10 @@ begin
     variable line_input : LINE;
   begin
     if PROGRAM_INITIALIZE = '1' then
-      -- write blank memory file here
-      -- memory must be 8192 lines deep,
-      -- 32 bit words
-      PROGRAM_INITIALIZE_FINISHED <= '1';
+        for write_line in memory_size loop
+          write( )
+        end loop;
+        PROGRAM_INITIALIZE_FINISHED <= '1';
     end if;
     -- ensure we close the memory file so that we can read from it in the future
   end process initialize_memory_file;

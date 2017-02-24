@@ -7,12 +7,18 @@ entity pipeline is
     clock : in std_logic;
     reset : in std_logic;
 
-    -- input is the binary file produced by the Assembler --
-    instruction : in std_logic_vector (31 downto 0);
+    -- inputs --
+    program_in : in std_logic_vector(31 downto 0);
+    memory_in : in std_logic_vector(31 downto 0);
+    program_in_finished : in std_logic;
+    memory_in_finished : in std_logic;
 
-    -- output is the register file and the data file --
-    done : out std_logic;
-    ready : out std_logic
+    -- outputs --
+    program_execution_finished : out std_logic;
+    memory_out_finished : out std_logic;
+    register_out_finished : out std_logic;
+    memory_out : out std_logic_vector(31 downto 0);
+    register_out : out std_logic_vector(31 downto 0)
   );
 end pipeline;
 
