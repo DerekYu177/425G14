@@ -24,7 +24,7 @@ end pipeline;
 
 architecture arch of pipeline is
   type state_type is (
-    ready,
+    ready, initializing,
     instruction_fetch, instruction_decode, execute, memory, writeback
   );
 
@@ -36,14 +36,22 @@ architecture arch of pipeline is
     async_operation : process(clock, reset)
     begin
       if reset = '1' then
-        -- what conditions do we need to have in ready mode?
-        state <= ready;
+        next_state <= initializing;
       elsif (clock'event and clock = '1') then
         present_state <= next_state;
       end if;
     end process;
 
-    state_logic : process(clock, present_state, instruction)
+    pipeline_initalize : process(clock, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
+    begin
+      if (clock'event and clock = '1') then
+        -- TODO : feed line by line into the instruction memory and the data memory
+      elsif program_in_finished = '1' and memory_in_finished = '1' then
+        next_state <= ready;
+      end if;
+    end process;
+
+    pipeline_state_logic : process(clock, present_state, instruction)
     begin
       case present_state is
         when ready =>
