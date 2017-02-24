@@ -24,12 +24,14 @@ end pipeline;
 
 architecture arch of pipeline is
   type state_type is (
-    ready, initializing,
+    ready, initializing, finished,
     instruction_fetch, instruction_decode, execute, memory, writeback
   );
 
   signal present_state, next_state : state_type;
   -- signal if_id, id_ex, ex_m, m_wb : std_logic_vector(31 downto 0);
+
+  signal program_counter : integer := 0;
 
   begin
 
@@ -42,7 +44,7 @@ architecture arch of pipeline is
       end if;
     end process;
 
-    pipeline_initalize : process(clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
+    pipeline_setup_teardown : process(clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
     begin
       case present_state is
         when initializing =>
@@ -82,7 +84,16 @@ architecture arch of pipeline is
           next_state <= writeback;
 
         when writeback =>
+
+          -- if the program is finished, then we need to go to finished
+          if (program_counter = 1) then
+            next_state <= finished;
+          end if;
+
           -- what should the next state be here?
+          next_state <= ready;
+
+        when finished =>
           next_state <= ready;
 
       end case;
