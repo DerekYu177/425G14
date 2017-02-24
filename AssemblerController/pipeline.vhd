@@ -42,18 +42,30 @@ architecture arch of pipeline is
       end if;
     end process;
 
-    pipeline_initalize : process(clock, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
-    begin
-      if (clock'event and clock = '1') then
-        -- TODO : feed line by line into the instruction memory and the data memory
-      elsif program_in_finished = '1' and memory_in_finished = '1' then
-        next_state <= ready;
-      end if;
-    end process;
-
-    pipeline_state_logic : process(clock, present_state, instruction)
+    pipeline_initalize : process(clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
     begin
       case present_state is
+        when initializing =>
+          if (clock'event and clock = '1') then
+            -- TODO : feed line by line into the instruction memory and the data memory
+          end if;
+        when others =>
+          if program_in_finished = '0' and memory_in_finished = '0' then
+            next_state <= initializing;
+          end if;
+      end case;
+    end process;
+
+    pipeline_state_logic : process(clock, present_state)
+    begin
+      case present_state is
+        when initializing =>
+          if program_in_finished = '1' and memory_in_finished = '1' then
+            next_state <= ready;
+          end if;
+          -- else we stay in initializing according to the pipeline_initialize process
+          -- TODO: can we make this better?
+
         when ready =>
          -- ready condition?
 
