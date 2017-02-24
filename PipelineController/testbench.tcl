@@ -10,7 +10,7 @@ end pipeline_tb;
 
 architecture behavior of pipeline_tb is
 
-component pipeline is
+component PIPELINE
   port(
   clock : in std_logic;
   reset : in std_logic;
@@ -34,13 +34,37 @@ end component;
 constant clock_period : time := 1 ns;
 constant memory_size : integer range 0 to 8191;
 
--- these are high level control signals
-signal PROGRAM_INITIALIZE : std_logic;
-signal PROGRAM_INITIALIZE_FINISHED : std_logic;
-signal PROGRAM_COUNTER : integer;
-signal PROGRAM_FINISHED : std_logic;
+-- input port map signals
+signal clock : std_logic;
+signal reset : std_logic;
+signal program_in : std_logic_vector(31 downto 0);
+signal memory_in : std_logic_vector(31 downto 0);
+signal program_in_finished : std_logic;
+signal memory_in_finished : std_logic;
+
+-- output port map signals
+signal program_execution_finished : std_logic;
+signal memory_out_finished : std_logic;
+signal register_out_finished : std_logic;
+signal memory_out : std_logic_vector(31 downto 0);
+signal register_out : std_logic_vector(31 downto 0)
 
 begin
+
+  P : PIPELINE port map (
+    clock => clock,
+    reset => reset,
+    program_in => program_in,
+    memory_in => memory_in,
+    program_in_finished => program_in_finished,
+    memory_in_finished => memory_in_finished,
+
+    program_execution_finished => program_execution_finished,
+    memory_out_finished => memory_out_finished,
+    register_out_finished => register_out_finished,
+    memory_out => memory_out,
+    register_out => register_out
+  );
 
   clock_process : process
   begin
@@ -51,17 +75,18 @@ begin
   end process;
 
   read_program : process (ready)
-    file program : TEXT open READ_MODE is "program.txt";
+    file program : TEXT is in "program.txt";
     variable read_line : LINE;
-    variable line_output : LINE;
+    variable line_output : REAL;
   begin
-    loop
-      if ready = '1' then
-        exit when endfile(program);
-        readline(program, line_output);
-        -- do something here with our value in line_output
-      end if;
-    end loop;
+    wait until clock'event and clock = '1';
+    if (not endfile(program)) then
+      readline(program, read_line);
+      read(read_line, line_output);
+
+      -- there is probably going to be a real -> std_logic_vector conflict here
+      program_in <= line_output;
+    end if;
     wait;
   end process read_program;
 
