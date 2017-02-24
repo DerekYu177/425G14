@@ -74,45 +74,40 @@ begin
     wait for clock_period / 2;
   end process;
 
-  read_program : process (ready)
+  read_program : process (reset)
     file program : TEXT is in "program.txt";
-    variable read_line : LINE;
+    variable inline : LINE;
     variable line_output : REAL;
   begin
-    wait until clock'event and clock = '1';
-    if (not endfile(program)) then
-      readline(program, read_line);
-      read(read_line, line_output);
+    if reset = '1' then
+      wait until clock'event and clock = '1';
+      if (not endfile(program)) then
+        readline(program, inline);
+        read(inline, line_output);
 
-      -- there is probably going to be a real -> std_logic_vector conflict here
-      program_in <= line_output;
+        -- there is probably going to be a real -> std_logic_vector conflict here
+        program_in <= line_output;
+      end if;
     end if;
     wait;
   end process read_program;
 
-  write_register_file : process (PROGRAM_FINISHED)
-    file register_file : TEXT open WRITE_MODE is "register_file.txt";
-    variable write_line : LINE;
-    variable line_input : LINE;
+  write_register_file : process (program_execution_finished)
+    file register_file : TEXT is out "register_file.txt";
+    variable outline : LINE;
   begin
-    if PROGRAM_FINISHED = '1' then
+    if program_execution_finished = '1' then
       -- plenty of conditions here
     end if;
   end process write_register_file;
 
-  --TODO: read/write methods to the memory file "memory.txt"
-  initialize_memory_file : process (PROGRAM_INITIALIZE)
-    file memory_file : TEXT open WRITE_MODE is "memory.txt";
-    variable write_line : LINE;
-    variable line_input : LINE;
+  write_memory_file : process (program_execution_finished)
+    file memory : TEXT is out "memory.txt";
+    variable outline : LINE;
   begin
-    if PROGRAM_INITIALIZE = '1' then
-        for write_line in memory_size loop
-          write( )
-        end loop;
-        PROGRAM_INITIALIZE_FINISHED <= '1';
+    if program_execution_finished = '1' then
+      -- plenty of conditions here
     end if;
-    -- ensure we close the memory file so that we can read from it in the future
-  end process initialize_memory_file;
+  end process write_memory_file;
 
 end architecture behavior;

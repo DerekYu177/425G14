@@ -51,6 +51,10 @@ architecture arch of pipeline is
           if (clock'event and clock = '1') then
             -- TODO : feed line by line into the instruction memory and the data memory
           end if;
+        when finished =>
+          if (clock'event and clock = '1') then
+            -- TODO : feed line by line into output for both memory and register
+          end if;
         when others =>
           if program_in_finished = '0' and memory_in_finished = '0' then
             next_state <= initializing;
