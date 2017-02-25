@@ -32,7 +32,10 @@ end component;
 
 -- constants
 constant clock_period : time := 1 ns;
-constant memory_size : integer range 0 to 8191;
+constant memory_size : integer := 8191;
+constant register_size : integer := 31;
+constant memory_line_counter : integer := 0;
+constant register_line_counter : integer := 0;
 
 -- input port map signals
 signal clock : std_logic;
@@ -97,7 +100,12 @@ begin
     variable outline : LINE;
   begin
     if program_execution_finished = '1' then
+      wait until clock'event and clock = '1';
+      write(outline, register_out); -- do we require field(width) and digits(natural)?
+      writeline(register_file, outline);
       -- plenty of conditions here
+      -- increment counter
+      -- if counter = counter_max_value, stop
     end if;
   end process write_register_file;
 
@@ -105,8 +113,13 @@ begin
     file memory : TEXT is out "memory.txt";
     variable outline : LINE;
   begin
-    if program_execution_finished = '1' then
+      if program_execution_finished = '1' then
+      wait until clock'event and clock = '1';
+      write(outline, memory_out); -- do we require field(width) and digits(natural)?
+      writeline(memory, outline);
       -- plenty of conditions here
+      -- increment counter
+      -- if counter = counter_max_value, stop
     end if;
   end process write_memory_file;
 
