@@ -38,35 +38,19 @@ architecture arch of pipeline is
     async_operation : process(clock, reset)
     begin
       if reset = '1' then
-        next_state <= initializing;
+        present_state <= initializing;
       elsif (clock'event and clock = '1') then
         present_state <= next_state;
       end if;
     end process;
 
-    pipeline_setup_teardown : process(clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
+    pipeline_state_logic : process (clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
     begin
       case present_state is
         when initializing =>
           if (clock'event and clock = '1') then
             -- TODO : feed line by line into the instruction memory and the data memory
-          end if;
-        when finished =>
-          if (clock'event and clock = '1') then
-            -- TODO : feed line by line into output for both memory and register
-          end if;
-        when others =>
-          if program_in_finished = '0' and memory_in_finished = '0' then
-            next_state <= initializing;
-          end if;
-      end case;
-    end process;
-
-    pipeline_state_logic : process(clock, present_state)
-    begin
-      case present_state is
-        when initializing =>
-          if program_in_finished = '1' and memory_in_finished = '1' then
+          elsif program_in_finished = '1' and memory_in_finished = '1' then
             next_state <= ready;
           end if;
           -- else we stay in initializing according to the pipeline_initialize process
@@ -98,6 +82,11 @@ architecture arch of pipeline is
           next_state <= ready;
 
         when finished =>
+          if (clock'event and clock = '1') then
+            -- TODO : feed line by line into output for both memory and register
+          end if;
+          -- if the file is not completely sent, then return to state
+          -- else go to ready
           next_state <= ready;
 
       end case;
