@@ -42,12 +42,12 @@ architecture arch of pipeline is
       end if;
     end process;
 
-    pipeline_state_logic : process (clock, reset, present_state, program_in_finished, memory_in_finished)
+    pipeline_state_logic : process (clock, reset, present_state, program_in_finished)
     begin
       case present_state is
         when initializing =>
 
-          if program_in_finished = '1' and memory_in_finished = '1' then
+          if program_in_finished = '1' then
             next_state <= ready;
           else
             next_state <= initializing;
