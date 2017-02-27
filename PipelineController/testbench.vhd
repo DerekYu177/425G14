@@ -33,8 +33,6 @@ constant clock_period : time := 1 ns;
 constant data_size : integer := 32;
 constant memory_size : integer := 8192;
 constant register_size : integer := 32;
-constant memory_line_counter : integer := 0;
-constant register_line_counter : integer := 0;
 
 -- binary logic vectors for reading text to std_logic_vector
 signal program_binary_data : std_logic_vector(31 downto 0) := (others => '0');

@@ -22,7 +22,7 @@ end pipeline;
 
 architecture arch of pipeline is
   type state_type is (
-    ready, initializing, finished,
+    ready, initializing, finishing,
     instruction_fetch, instruction_decode, execute, memory, writeback
   );
 
@@ -30,6 +30,13 @@ architecture arch of pipeline is
   -- signal if_id, id_ex, ex_m, m_wb : std_logic_vector(31 downto 0);
 
   signal program_counter : integer := 0;
+
+  -- read/write control signal
+  constant memory_size : integer := 8192;
+  constant register_size : integer := 32;
+  signal memory_line_counter : integer := 0;
+  signal register_line_counter : integer := 0;
+  signal read_write_finished : boolean := false;
 
   begin
 
@@ -70,18 +77,20 @@ architecture arch of pipeline is
 
         when writeback =>
 
-          -- if the program is finished, then we need to go to finished
+          -- if the program as completed execution
           if (program_counter = 1) then
-            next_state <= finished;
+            next_state <= finishing;
+          else
+            -- what should the next state be here?
+            next_state <= ready;
           end if;
 
-          -- what should the next state be here?
-          next_state <= ready;
-
-        when finished =>
-          -- if the file is not completely sent, then return to state
-          -- else go to ready
-          next_state <= ready;
+        when finishing =>
+          if (not read_write_finished) then
+            next_state <= finishing;
+          else
+            next_state <= ready;
+          end if;
 
       end case;
     end process;
@@ -93,10 +102,17 @@ architecture arch of pipeline is
           if clock'event and clock = '1' then
             -- TODO : feed line by line into the instruction memory and the data memory
           end if;
-        when finished =>
+
+        when finishing =>
           if (clock'event and clock = '1') then
             -- TODO : feed line by line into output for both memory and register
+            memory_line_counter <= memory_line_counter + 1;
+            register_line_counter <= register_line_counter + 1;
+            if (memory_line_counter = memory_size and register_line_counter > register_size) then
+              read_write_finished <= true;
+            end if;
           end if;
+        
         when others =>
           -- TODO : this.
       end case;
