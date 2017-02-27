@@ -9,9 +9,7 @@ entity pipeline is
 
     -- inputs --
     program_in : in std_logic_vector(31 downto 0);
-    memory_in : in std_logic_vector(31 downto 0);
     program_in_finished : in std_logic;
-    memory_in_finished : in std_logic;
 
     -- outputs --
     program_execution_finished : out std_logic;
