@@ -46,13 +46,14 @@ architecture arch of pipeline is
     begin
       case present_state is
         when initializing =>
-          if (clock'event and clock = '1') then
+
+          if clock'event and clock = '1' then
             -- TODO : feed line by line into the instruction memory and the data memory
           elsif program_in_finished = '1' and memory_in_finished = '1' then
             next_state <= ready;
+          else
+            next_state <= initializing;
           end if;
-          -- else we stay in initializing according to the pipeline_initialize process
-          -- TODO: can we make this better?
 
         when ready =>
          -- ready condition?
