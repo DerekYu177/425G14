@@ -42,14 +42,12 @@ architecture arch of pipeline is
       end if;
     end process;
 
-    pipeline_state_logic : process (clock, reset, present_state, program_in, memory_in, program_in_finished, memory_in_finished)
+    pipeline_state_logic : process (clock, reset, present_state, program_in_finished, memory_in_finished)
     begin
       case present_state is
         when initializing =>
 
-          if clock'event and clock = '1' then
-            -- TODO : feed line by line into the instruction memory and the data memory
-          elsif program_in_finished = '1' and memory_in_finished = '1' then
+          if program_in_finished = '1' and memory_in_finished = '1' then
             next_state <= ready;
           else
             next_state <= initializing;
@@ -81,13 +79,26 @@ architecture arch of pipeline is
           next_state <= ready;
 
         when finished =>
-          if (clock'event and clock = '1') then
-            -- TODO : feed line by line into output for both memory and register
-          end if;
           -- if the file is not completely sent, then return to state
           -- else go to ready
           next_state <= ready;
 
+      end case;
+    end process;
+
+    pipeline_functional_logic : process (clock, reset, present_state, program_in)
+    begin
+      case present_state is
+        when initializing =>
+          if clock'event and clock = '1' then
+            -- TODO : feed line by line into the instruction memory and the data memory
+          end if;
+        when finished =>
+          if (clock'event and clock = '1') then
+            -- TODO : feed line by line into output for both memory and register
+          end if;
+        when others =>
+          -- TODO : this.
       end case;
     end process;
 
