@@ -79,6 +79,7 @@ architecture arch of pipeline is
 
           -- if the program as completed execution
           if (program_counter = 1) then
+            program_execution_finished <= '1';
             next_state <= finishing;
           else
             -- what should the next state be here?
@@ -89,6 +90,8 @@ architecture arch of pipeline is
           if (not read_write_finished) then
             next_state <= finishing;
           else
+            memory_out_finished = '1';
+            register_out_finished = '1';
             next_state <= ready;
           end if;
 
@@ -112,7 +115,7 @@ architecture arch of pipeline is
               read_write_finished <= true;
             end if;
           end if;
-        
+
         when others =>
           -- TODO : this.
       end case;
