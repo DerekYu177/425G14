@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
 
 library std;
 use std.textio.all;
@@ -34,24 +35,19 @@ constant data_size : integer := 32;
 constant memory_size : integer := 8192;
 constant register_size : integer := 32;
 
--- binary logic vectors for reading text to std_logic_vector
-signal program_binary_data : std_logic_vector(31 downto 0) := (others => '0');
-
 -- read/write control signal
 signal write_finished : boolean := false;
 
 -- input port map signals
-signal clock : std_logic;
-signal reset : std_logic;
+signal clock : std_logic := '0';
+signal reset : std_logic := '0';
 signal program_in : std_logic_vector(31 downto 0);
-signal memory_in : std_logic_vector(31 downto 0);
-signal program_in_finished : std_logic;
-signal memory_in_finished : std_logic;
+signal program_in_finished : std_logic := '0';
 
 -- output port map signals
-signal program_execution_finished : std_logic;
-signal memory_out_finished : std_logic;
-signal register_out_finished : std_logic;
+signal program_execution_finished : std_logic := '0';
+signal memory_out_finished : std_logic := '0';
+signal register_out_finished : std_logic := '0';
 signal memory_out : std_logic_vector(31 downto 0);
 signal register_out : std_logic_vector(31 downto 0);
 
@@ -79,89 +75,85 @@ begin
   end process;
 
   read_program : process
-    file program : text;
+    file program : text; -- open read_mode is "program.txt"
     variable line_number : line;
-    variable line_content : string(1 to data_size);
-    variable i : integer := 0;
-    variable char : character := '0';
+    variable line_content : std_logic_vector(31 downto 0);
   begin
-    if reset = '1' then
-      file_open(program, "program.txt", READ_MODE);
-      while (not endfile(program)) loop
-        wait until clock'event and clock = '1';
-        readline(program, line_number);
-        read(line_number, line_content);
+    reset <= '1';
 
-        -- convert string to std_logic_vector
-        for i in 1 to data_size loop
-          char := line_content(i);
-          if (char = '0') then
-            program_binary_data(data_size - i) <= '0';
-          else
-            program_binary_data(data_size - i) <= '1';
-          end if;
-        end loop;
+    report "opening program";
+    file_open(program, "program.txt", READ_MODE);
 
-        program_in <= program_binary_data;
-      end loop;
-      file_close(program);
-      program_in_finished <= '1';
-    end if;
+    report "endfile? : " & boolean'image(endfile(program));
+    while (not endfile(program)) loop
+      wait until clock'event and clock = '1';
+
+      report "reading line from program";
+      readline(program, line_number);
+      hread(line_number, line_content);
+      program_in <= std_logic_vector(line_content);
+    end loop;
+
+    file_close(program);
+    reset <= '0';
+    program_in_finished <= '1';
     wait;
   end process read_program;
 
-  write_register_memory_files : process
-    file register_file : text;
-    file memory : text;
-    variable line_number_register, line_number_memory : line;
-    variable line_content_register, line_content_memory : string(1 to data_size); -- could there be a big/little endian conflict here?
-    variable i,j : integer := 0;
+  write_register_memory_files : process(program_execution_finished)
+      file register_file : text;
+      file memory : text;
+      variable line_number_register, line_number_memory : line;
+      variable line_content_register, line_content_memory : string(1 to data_size); -- could there be a big/little endian conflict here?
+      variable i,j : integer := 0;
   begin
     if program_execution_finished = '1' then
+
       file_open(register_file, "register_file.txt", WRITE_MODE);
       file_open(memory, "memory.txt", WRITE_MODE);
-      wait until clock'event and clock = '1';
-      while (not write_finished) loop
 
-        if (register_out_finished = '0') then
-          -- convert from std_logic_vector back to string
-          for i in 1 to data_size loop          --
-            if (register_out(i) = '0') then
-              line_content_register(data_size - i) := '0';
-            else
-              line_content_register(data_size - i) := '1';
-            end if;
-          end loop;
+      if clock'event and clock = '1' then
+        while (not write_finished) loop
 
-          write(line_number_register, line_content_register);
-          writeline(register_file, line_number_register);
-        else
-          -- register write finished
-          file_close(register_file);
-        end if;
+          if (register_out_finished = '0') then
+            -- convert from std_logic_vector back to string
+            for i in 1 to data_size loop          --
+              if (register_out(i) = '0') then
+                line_content_register(data_size - i) := '0';
+              else
+                line_content_register(data_size - i) := '1';
+              end if;
+            end loop;
 
-        if (memory_out_finished = '0') then
-          -- convert from std_logic_vector back to string
-          for j in 1 to data_size loop          --
-            if (memory_out(j) = '0') then
-              line_content_memory(data_size - j) := '0';
-            else
-              line_content_memory(data_size - j) := '1';
-            end if;
-          end loop;
+            write(line_number_register, line_content_register);
+            writeline(register_file, line_number_register);
+          else
+            -- register write finished
+            file_close(register_file);
+          end if;
 
-          write(line_number_memory, line_content_memory);
-          writeline(memory, line_number_memory);
-        else
-          -- memory write finished
-          file_close(memory);
-        end if;
+          if (memory_out_finished = '0') then
+            -- convert from std_logic_vector back to string
+            for j in 1 to data_size loop          --
+              if (memory_out(j) = '0') then
+                line_content_memory(data_size - j) := '0';
+              else
+                line_content_memory(data_size - j) := '1';
+              end if;
+            end loop;
 
-        if (register_out_finished = '1' and memory_out_finished = '1') then
-          write_finished <= true;
-        end if;
+            write(line_number_memory, line_content_memory);
+            writeline(memory, line_number_memory);
+          else
+            -- memory write finished
+            file_close(memory);
+          end if;
 
-      end loop;
+          if (register_out_finished = '1' and memory_out_finished = '1') then
+            write_finished <= true;
+          end if;
+        end loop;
+      end if;
     end if;
   end process write_register_memory_files;
 
@@ -169,12 +161,11 @@ begin
   begin
     report "simulation starting";
     -- first try reading from a program with a single line of text
-    reset <= '1';
     -- wait the appropriate amount of clock cycles for program to be sent
     wait until program_in_finished = '1';
     -- wait until the pipeline is finished with it's calculation
     wait until program_execution_finished = '1';
     -- we'll have to manually check the file?
-	end process;
+    end process;
 
 end architecture behavior;
