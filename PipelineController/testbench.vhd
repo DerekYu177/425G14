@@ -175,5 +175,6 @@ begin
     -- wait until the pipeline is finished with it's calculation
     wait until program_execution_finished = '1';
     -- we'll have to manually check the file?
+	end process;
 
 end architecture behavior;

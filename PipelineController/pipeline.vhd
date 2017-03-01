@@ -90,8 +90,8 @@ architecture arch of pipeline is
           if (not read_write_finished) then
             next_state <= finishing;
           else
-            memory_out_finished = '1';
-            register_out_finished = '1';
+            memory_out_finished <= '1';
+            register_out_finished <= '1';
             next_state <= ready;
           end if;
 
