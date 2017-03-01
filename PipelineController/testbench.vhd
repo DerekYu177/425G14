@@ -90,8 +90,12 @@ begin
 
       report "reading line from program";
       readline(program, line_number);
-      hread(line_number, line_content);
-      program_in <= std_logic_vector(line_content);
+      read(line_number, line_content);
+
+      program_in <= line_content;
+
+      wait for clock_period;
+
     end loop;
 
     file_close(program);
