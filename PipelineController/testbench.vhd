@@ -54,16 +54,16 @@ signal register_out : std_logic_vector(31 downto 0);
 begin
 
   P : PIPELINE port map (
-    clock => clock,
-    reset => reset,
-    program_in => program_in,
-    program_in_finished => program_in_finished,
+    clock,
+    reset,
+    program_in,
+    program_in_finished,
 
-    program_execution_finished => program_execution_finished,
-    memory_out_finished => memory_out_finished,
-    register_out_finished => register_out_finished,
-    memory_out => memory_out,
-    register_out => register_out
+    program_execution_finished,
+    memory_out_finished,
+    register_out_finished,
+    memory_out,
+    register_out
   );
 
   clock_process : process
@@ -92,12 +92,14 @@ begin
       readline(program, line_number);
       read(line_number, line_content);
 
+      report "writing program line to pipeline";
       program_in <= line_content;
 
       wait for clock_period;
 
     end loop;
 
+    report "end of file";
     file_close(program);
     reset <= '0';
     program_in_finished <= '1';
