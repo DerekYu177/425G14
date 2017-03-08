@@ -25,7 +25,7 @@ architecture arch of pipeline is
     ready, initializing, finishing,
     instruction_fetch, instruction_decode, execute, memory, writeback
   );
-
+  
   signal present_state, next_state : state_type;
   -- signal if_id, id_ex, ex_m, m_wb : std_logic_vector(31 downto 0);
 
@@ -37,7 +37,8 @@ architecture arch of pipeline is
   signal memory_line_counter : integer := 0;
   signal register_line_counter : integer := 0;
   signal read_write_finished : boolean := false;
-
+  
+  
   begin
 
     async_operation : process(clock, reset)
