@@ -164,7 +164,7 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 					ALU_output(15 downto 0) <= (others => '0');
 				when I_type_op_lw =>
 					-- Address formed in similar way as ADDI
-					-- The first operand is converted as unsigned because it represents an address...not sure though, to be comfirmed
+					
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2)); 
 				when I_type_op_sw =>
 					-- Address formed in similar way as ADDI
