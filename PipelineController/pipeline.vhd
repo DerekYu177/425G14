@@ -21,6 +21,8 @@ entity pipeline is
 end pipeline;
 
 architecture arch of pipeline is
+
+  -- STATE DEFINITION --
   type state_type is (
     ready, initializing, finishing,
     instruction_fetch, instruction_decode, execute, memory, writeback
@@ -29,20 +31,53 @@ architecture arch of pipeline is
   signal present_state, next_state : state_type;
   -- signal if_id, id_ex, ex_m, m_wb : std_logic_vector(31 downto 0);
 
+  -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
 
   -- read/write control signal
-  constant memory_size : integer := 8192;
-  constant register_size : integer := 32;
   signal memory_line_counter : integer := 0;
   signal register_line_counter : integer := 0;
   signal read_write_finished : boolean := false;
+
+  -- pipeline constants --
+  constant data_size : integer := 8192;
+  constant instruction_size : integer := 1024;
+  constant register_size : integer := 32;
+
+  -- COMPONENT INTERNAL SIGNALS --
+  signal instr_memory_writedata : std_logic_vector(31 downto 0);
+  signal instr_memory_address : integer range 0 to ram_size-1;
+  signal instr_memory_memwrite : std_logic;
+  signal instr_memory_memread : std_logic;
+  signal instr_memory_readdata : std_logic_vector(31 downto 0);
+  signal instr_memory_waitrequest : std_logic;
+
+  signal data_memory_writedata : std_logic_vector(31 downto 0);
+  signal data_memory_address : integer range 0 to ram_size-1;
+  signal data_memory_memwrite : std_logic;
+  signal data_memory_memread : std_logic;
+  signal data_memory_readdata : std_logic_vector(31 downto 0);
+  signal data_memory_waitrequest : std_logic;
+
+  signal reg_readreg1 : integer range 0 to 31;
+  signal reg_readreg2 : integer range 0 to 31;
+  signal reg_writereg : integer range 0 to 31;
+  signal reg_regwrite : std_logic;
+  signal reg_readdata1 : std_logic_vector(31 downto 0);
+  signal reg_readdata2 : std_logic_vector(31 downto 0);
+
+  signal ALU_reset : std_logic;
+  signal ALU_instruction : std_logic_vector(31 downto 0);
+  signal ALU_operand1 : std_logic_vector(31 downto 0);
+  signal ALU_operand2 : std_logic_vector(31 downto 0);
+  signal ALU_NPC : std_logic_vector(31 downto 0);
+  signal ALU_output : std_logic_vector(31 downto 0);
 
   -- DECLARING COMPONENTS --
 
   component instruction_memory
     generic(
-  		ram_size : integer := 1024;
+  		ram_size : integer := instruction_size;
   		mem_delay : time := 10 ns;
   		clock_period : time := 1 ns
   	);
@@ -60,7 +95,7 @@ architecture arch of pipeline is
 
   component data_memory
     generic(
-      ram_size : integer := 8192;
+      ram_size : integer := data_size;
       mem_delay : time := 10 ns;
       clock_period : time := 1 ns
     );
@@ -92,7 +127,8 @@ architecture arch of pipeline is
 
   component ALU is
     port(
-      clock, reset : in std_logic;
+      clock : in std_logic;
+      reset : in std_logic;
       ALU_instruction : in std_logic_vector(31 downto 0);
       ALU_operand1 : in std_logic_vector(31 downto 0);
       ALU_operand2 : in std_logic_vector(31 downto 0);
@@ -102,6 +138,54 @@ architecture arch of pipeline is
   end component;
 
   begin
+
+    -- COMPONENTS --
+
+    instruction_memory :  instruction_memory
+    port map(
+      clock,
+      instr_memory_writedata,
+      instr_memory_address,
+      instr_memory_memwrite,
+      instr_memory_memread,
+      instr_memory_readdata,
+      instr_memory_waitrequest
+    );
+
+    data_memory : data_memory
+    port map(
+      clock,
+      data_memory_writedata,
+      data_memory_address,
+      data_memory_memwrite,
+      data_memory_memread,
+      data_memory_readdata,
+      data_memory_waitrequest
+    );
+
+    registers : registers
+    port map(
+      clock,
+      reg_readreg1,
+      reg_readreg2,
+      reg_writereg,
+      reg_regwrite,
+      reg_readdata1,
+      reg_readdata2
+    );
+
+    ALU : ALU
+    port map(
+      clock,
+      ALU_reset,
+      ALU_instruction,
+      ALU_operand1,
+      ALU_operand2,
+      ALU_NPC,
+      ALU_output
+    );
+
+    -- BEGIN PROCESSES --
 
     async_operation : process(clock, reset)
     begin
