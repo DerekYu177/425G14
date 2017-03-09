@@ -51,6 +51,11 @@ architecture arch of pipeline is
   signal ex_mem : std_logic_vector(31 downto 0);
   signal mem_wb : std_logic_vector(31 downto 0);
 
+  -- pipeline registers for program counter (integer)
+  signal if_id_pc : integer;
+  signal id_ex_pc : integer;
+  signal ex_mem_pc : integer;
+  signal mem_wb_pc : integer;
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
@@ -67,6 +72,7 @@ architecture arch of pipeline is
   signal data_memory_readdata : std_logic_vector(31 downto 0);
   signal data_memory_waitrequest : std_logic;
 
+  signal reg_writedata : std_logic_vector(31 downto 0);
   signal reg_readreg1 : integer range 0 to 31;
   signal reg_readreg2 : integer range 0 to 31;
   signal reg_writereg : integer range 0 to 31;
@@ -225,18 +231,41 @@ architecture arch of pipeline is
          mem_wb <= (others => '0');
 
         when instruction_fetch =>
-          instr_memory_address <= program_counter;
-          program_counter <= program_counter + 4;
           instr_memory_memread <= '1';
+          instr_memory_address <= program_counter;
 
           -- wait for the instruction memory to be finished
           if waitrequest'event and waitrequest = '0' then
             if_id <= instr_memory_readdata;
           end if;
 
+          program_counter <= program_counter + 4;
           next_state <= instruction_decode;
 
         when instruction_decode =>
+          -- TODO: add load/store logic here so we know how to approach the register file
+
+          -- TODO: translate the register location to an integer range
+
+
+          if load = '1' then
+
+            -- read from register file
+            reg_writereg <= '0';
+            reg_readreg1 <= to_integer(unsigned(if_id));
+
+            -- put register file output onto pipeline register
+            id_ex_1 <= reg_readdata1;
+
+
+          elsif store = '1' then
+
+            -- write to register file
+            reg_writereg <= '1';
+            reg_readreg1 <= to_integer(unsigned(if_id));
+
+          end if;
+
           next_state <= execute;
 
         when execute =>
