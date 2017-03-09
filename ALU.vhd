@@ -105,7 +105,7 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 						when funct_mult =>
 							ALU_output <= std_logic_vector(to_signed((to_integer(signed(ALU_operand1)) * to_integer(signed(ALU_operand2))),32));
 						when funct_div =>
-							ALU_output <= std_logic_vector(to_signed((to_integer(signed(ALU_operand1)) * to_integer(signed(ALU_operand2))),32));
+							ALU_output <= std_logic_vector(to_signed((to_integer(signed(ALU_operand1)) / to_integer(signed(ALU_operand2))),32));
 						when funct_slt =>
 							if (signed(ALU_operand1) < signed(ALU_operand2)) then
 								ALU_output <= (0 => '1', others => '0');
@@ -126,11 +126,14 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 							null;
 						when funct_sll =>
 						-- Do we shift operand2 or operand1? Not sure...
-							null;
+							ALU_output(31 downto shamt_int_value) <= ALU_operand2(31-shamt_int_value downto 0);
+							ALU_output(shamt_int_value-1 downto 0) <= (others => '0');
 						when funct_srl =>
-							null;
+							ALU_output(31 downto (31-shamt_int_value+1)) <= (others => '0');
+							ALU_output(31-shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
 						when funct_sra =>
-							null;
+							ALU_output(31 downto (31-shamt_int_value+1)) <= (others => ALU_operand2(31));
+							ALU_output(31-shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
 						when funct_jr =>
 						-- Directly jump to address contained in register
 						-- Assume address contained comes from operand1
@@ -157,8 +160,8 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 				when I_type_op_xori =>
 					ALU_output <= ALU_operand1 XOR ALU_operand2;
 				when I_type_op_lui =>
-					--ALU_output <= immediate sll 16;
-					null;
+					ALU_output(31 downto 16) <= immediate(15 downto 0);
+					ALU_output(15 downto 0) <= (others => '0');
 				when I_type_op_lw =>
 					-- Address formed in similar way as ADDI
 					-- The first operand is converted as unsigned because it represents an address...not sure though, to be comfirmed
@@ -177,7 +180,7 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 				--All J-type operations
 				-----------------------
 				when J_type_op_j =>
-				-- 4 MSB taken from New PC & 26 bits from jump_address_offset & append "00"
+				-- [4 MSB taken from New PC] & [26 bits from jump_address_offset] & ["00"]
 					--ALU_output <= (31 downto 28 => ALU_NPC(31 downto 28), 27 downto 2 => jump_address_offset(25 downto 0), others => '0');	
 					ALU_output(31 downto 28) <= ALU_NPC(31 downto 28);
 					ALU_output(27 downto 2) <= jump_address_offset(25 downto 0);
