@@ -44,6 +44,14 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
 
+  -- PIPELINE REGISTERS --
+  signal if_id : std_logic_vector(31 downto 0);
+  signal id_ex_1 : std_logic_vector(31 downto 0);
+  signal id_ex_2 : std_logic_vector(31 downto 0);
+  signal ex_mem : std_logic_vector(31 downto 0);
+  signal mem_wb : std_logic_vector(31 downto 0);
+
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -200,7 +208,6 @@ architecture arch of pipeline is
     begin
       case present_state is
         when initializing =>
-
           if program_in_finished = '1' then
             next_state <= ready;
           else
@@ -208,9 +215,25 @@ architecture arch of pipeline is
           end if;
 
         when ready =>
-         -- ready condition?
+         program_counter <= 0;
+
+         -- ensuring that pipeline registers are clear
+         if_id <= (others => '0');
+         id_ex_1 <= (others => '0');
+         id_ex_2 <= (others => '0');
+         ex_mem <= (others => '0');
+         mem_wb <= (others => '0');
 
         when instruction_fetch =>
+          instr_memory_address <= program_counter;
+          program_counter <= program_counter + 4;
+          instr_memory_memread <= '1';
+
+          -- wait for the instruction memory to be finished
+          if waitrequest'event and waitrequest = '0' then
+            if_id <= instr_memory_readdata;
+          end if;
+
           next_state <= instruction_decode;
 
         when instruction_decode =>
