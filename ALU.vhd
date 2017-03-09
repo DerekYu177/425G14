@@ -165,17 +165,17 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 				when I_type_op_lw =>
 					-- Address formed in similar way as ADDI
 					-- The first operand is converted as unsigned because it represents an address...not sure though, to be comfirmed
-					ALU_output <= std_logic_vector(unsigned(ALU_operand1) + unsigned(ALU_operand2)); 
+					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2)); 
 				when I_type_op_sw =>
 					-- Address formed in similar way as ADDI
-					ALU_output <= std_logic_vector(unsigned(ALU_operand1) + unsigned(ALU_operand2));
+					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_beq =>
 					-- We assume equality met, it is the job of control to choose PC + 4 (via a mux) in case equality is NOT met
 					-- [New value of PC] (from operand 1) + [extended Imm << 2] (from operand 2)
-					ALU_output <= std_logic_vector(unsigned(ALU_NPC) + unsigned(extended_immediate));						
+					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));						
 				when I_type_op_bne =>
 					-- Same logic, assume equality is met
-					ALU_output <= std_logic_vector(unsigned(ALU_NPC) + unsigned(extended_immediate));	
+					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));	
 					
 				--All J-type operations
 				-----------------------
