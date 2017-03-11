@@ -153,13 +153,13 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- IO to satisfy instruction memory interface --
-      wait_request : in std_logic;
-      instruction : in std_logic_vector(31 downto 0);
       read_instruction_address : out std_logic_vector(31 downto 0);
       read_instruction : out std_logic;
+      instruction : in std_logic_vector(31 downto 0);
+      wait_request : in std_logic;
 
       -- pipeline interface --
-      id_if : out std_logic_vector(31 downto 0)
+      if_id : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -167,6 +167,12 @@ architecture arch of pipeline is
     port(
       clock : in std_logic;
       reset : in std_logic;
+
+      -- register interface --
+      read_1_address : out integer range 0 to 31;
+      read_2_address : out integer range 0 to 31;
+      register_1 : in std_logic_vector(31 downto 0);
+      register_2 : in std_logic_vector(31 downto 0);
 
       -- pipeline interface --
       if_id : in std_logic_vector(31 downto 0);
@@ -195,6 +201,12 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- component specific interface requirements --
+      data_memory_writedata : out std_logic_vector(31 downto 0);
+      data_memory_address : out integer range 0 to ram_size-1;
+      data_memory_memwrite : out std_logic;
+      data_memory_memread : out std_logic;
+      data_memory_readdata : in std_logic_vector(31 downto 0);
+      data_memory_waitrequest : in std_logic;
 
       -- pipeline interface --
       ex_mem : in std_logic_vector(31 downto 0);
@@ -319,31 +331,52 @@ architecture arch of pipeline is
       mem_wb_out
     );
 
-    -- TODO --
     instruction_fetch_stage : instruction_fetch_stage
     port map(
-      clock,
-      global_reset
+      clock => clock,
+      reset => global_reset,
+      read_instruction_address => instr_memory_address,
+      read_instruction => instr_memory_memread,
+      instruction => instr_memory_readdata,
+      wait_request => instr_memory_waitrequest,
+      if_id => if_id_in
     );
 
     instruction_decode_stage : instruction_decode_stage
     port map(
-      clock,
-      global_reset
+      clock => clock,
+      reset => global_reset,
+      read_1_address => reg_readreg1,
+      read_2_address => reg_readreg2,
+      register_1 => reg_readdata1,
+      register_2 => reg_readdata2,
+      if_id => if_id_out,
+      id_ex_reg_1 => id_ex_1_in,
+      id_ex_reg_2 => id_ex_2_in
     );
 
+    -- wait on Henry for this --
     execute_stage : execute_stage
     port map(
-      clock,
-      global_reset
+      clock => clock,
+      reset => global_reset
     );
 
     memory_stage : memory_stage
     port map(
-      clock,
-      global_reset
+      clock => clock,
+      reset => global_reset
+      data_memory_writedata => data_memory_writedata,
+      data_memory_address => data_memory_address,
+      data_memory_memwrite => data_memory_memwrite,
+      data_memory_memread => data_memory_memread,
+      data_memory_readdata => data_memory_readdata,
+      data_memory_waitrequest => data_memory_waitrequest,
+      ex_mem => ex_mem_out,
+      mem_wb => mem_wb_in
     );
 
+    -- TODO --
     write_back_stage : write_back_stage
     port map(
       clock,
