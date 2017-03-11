@@ -185,11 +185,9 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- pipeline interface --
-      operand_1 : in std_logic_vector(31 downto 0);
-      operand_2 : in std_logic_vector(31 downto 0);
-      ex_mem_1 : out std_logic_vector(31 downto 0);
-      ex_mem_2 : out std_logic_vector(31 downto 0)
+      ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
+      ALU_NPC: in std_logic_vector(31 downto 0);
+      ALU_output: out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -348,7 +346,17 @@ architecture arch of pipeline is
     execute_stage : execute_stage
     port map(
       clock => clock,
-      reset => global_reset
+      reset => global_reset,
+
+      -- compile will fail because it is missing:
+      -- ALU_instruction
+      -- ALU_NPC
+
+      ALU_instruction =>
+      ALU_operand1 => id_ex_1_out,
+      ALU_operand2 => id_ex_2_out,
+      ALU_NPC =>
+      ALU_output => ex_mem_in
     );
 
     memory_stage : memory_stage

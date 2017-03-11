@@ -2,15 +2,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity ALU is
+entity execute_stage is
 port(
-clock, reset: in std_logic;
-ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
-ALU_NPC: in std_logic_vector(31 downto 0); --This MUST BE passed in because the branching instruction needs to know it
-ALU_output: out std_logic_vector(31 downto 0));
-end ALU;
+	clock, reset: in std_logic;
+	ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
+	ALU_NPC: in std_logic_vector(31 downto 0); --This MUST BE passed in because the branching instruction needs to know it
+	ALU_output: out std_logic_vector(31 downto 0));
+end execute_stage;
 
-architecture arch of ALU is
+architecture arch of execute_stage is
 ----------------------
 -- DECLARATION SECTION
 ----------------------
@@ -141,12 +141,12 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 						when others =>
 							null;
 					end CASE;
-				
+
 				--All I-type operations
 				-----------------------
 				--We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
 				when I_type_op_addi =>
-					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2)); 
+					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_slti =>
 					if (signed(ALU_operand1) < signed(ALU_operand2)) then
 						ALU_output <= (0=> '1', others => '0');
@@ -164,24 +164,24 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 					ALU_output(15 downto 0) <= (others => '0');
 				when I_type_op_lw =>
 					-- Address formed in similar way as ADDI
-					
-					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2)); 
+
+					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_sw =>
 					-- Address formed in similar way as ADDI
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_beq =>
 					-- We assume equality met, it is the job of control to choose PC + 4 (via a mux) in case equality is NOT met
 					-- [New value of PC] (from operand 1) + [extended Imm << 2] (from operand 2)
-					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));						
+					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));
 				when I_type_op_bne =>
 					-- Same logic, assume equality is met
-					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));	
-					
+					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));
+
 				--All J-type operations
 				-----------------------
 				when J_type_op_j =>
 				-- [4 MSB taken from New PC] & [26 bits from jump_address_offset] & ["00"]
-					--ALU_output <= (31 downto 28 => ALU_NPC(31 downto 28), 27 downto 2 => jump_address_offset(25 downto 0), others => '0');	
+					--ALU_output <= (31 downto 28 => ALU_NPC(31 downto 28), 27 downto 2 => jump_address_offset(25 downto 0), others => '0');
 					ALU_output(31 downto 28) <= ALU_NPC(31 downto 28);
 					ALU_output(27 downto 2) <= jump_address_offset(25 downto 0);
 					ALU_output(1 downto 0) <= "00";
