@@ -174,11 +174,10 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- memory specific interface requirements --
-
       -- pipeline interface --
       if_id : in std_logic_vector(31 downto 0);
-      id_ex : out std_logic_vector(31 downto 0)
+      id_ex_reg_1 : out std_logic_vector(31 downto 0);
+      id_ex_reg_2 : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -186,8 +185,6 @@ architecture arch of pipeline is
     port(
       clock : in std_logic;
       reset : in std_logic;
-
-      -- memory specific interface requirements --
 
       -- pipeline interface --
       id_ex : in std_logic_vector(31 downto 0);
@@ -214,9 +211,16 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- component specific interface requirements --
+      writedata : in std_logic_vector(31 downto 0);
+
+      -- interface specific components --
+      waitrequest : in std_logic;
+      write_address : out integer range 0 to ram_size-1;
+      memwrite : out std_logic;
 
       -- pipeline interface --
-      mem_wb : in std_logic_vector(31 downto 0)
+      ex_mem : in std_logic_vector(31 downto 0);
+      mem_wb : out std_logic_vector(31 downto 0)
     );
   end component;
 
