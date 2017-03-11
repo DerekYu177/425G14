@@ -9,7 +9,7 @@ architecture behavior of cache_tb is
 
 component cache is
 generic(
-    ram_size : INTEGER := 32768;
+    ram_size : INTEGER := 32768
 );
 port(
     clock : in std_logic;
@@ -21,7 +21,7 @@ port(
     s_readdata : out std_logic_vector (31 downto 0);
     s_write : in std_logic;
     s_writedata : in std_logic_vector (31 downto 0);
-    s_waitrequest : out std_logic; 
+    s_waitrequest : out std_logic;
 
     m_addr : out integer range 0 to ram_size-1;
     m_read : out std_logic;
@@ -32,7 +32,7 @@ port(
 );
 end component;
 
-component memory is 
+component memory is
 GENERIC(
     ram_size : INTEGER := 32768;
     mem_delay : time := 10 ns;
@@ -48,31 +48,31 @@ PORT (
     waitrequest: OUT STD_LOGIC
 );
 end component;
-	
--- test signals 
+
+-- test signals
 signal reset : std_logic := '0';
 signal clk : std_logic := '0';
 constant clk_period : time := 1 ns;
 
 signal s_addr : std_logic_vector (31 downto 0);
-signal s_read : std_logic;
+signal s_read : std_logic :='0';
 signal s_readdata : std_logic_vector (31 downto 0);
-signal s_write : std_logic;
+signal s_write : std_logic := '0';
 signal s_writedata : std_logic_vector (31 downto 0);
 signal s_waitrequest : std_logic;
 
 signal m_addr : integer range 0 to 2147483647;
-signal m_read : std_logic;
+signal m_read : std_logic := '0';
 signal m_readdata : std_logic_vector (7 downto 0);
-signal m_write : std_logic;
+signal m_write : std_logic := '0';
 signal m_writedata : std_logic_vector (7 downto 0);
-signal m_waitrequest : std_logic; 
+signal m_waitrequest : std_logic;
 
 begin
 
 -- Connect the components which we instantiated above to their
 -- respective signals.
-dut: cache 
+dut: cache
 port map(
     clock => clk,
     reset => reset,
@@ -102,7 +102,7 @@ port map (
     readdata => m_readdata,
     waitrequest => m_waitrequest
 );
-				
+
 
 clk_process : process
 begin
@@ -115,8 +115,50 @@ end process;
 test_process : process
 begin
 
--- put your tests here
-	
+-- INITIATION
+reset <= '1';
+wait for 1*clk_period;
+reset <= '0';
+wait for 1*clk_period;
+
+
+-- CASES COVERED:
+
+-- READ, INVALID, TAG EQUAL (unimportant), DIRTY BIT 0 (unimportant)
+s_read <= '1';
+s_addr <= std_LOGIC_VECTOR(to_unsigned(0, 32));
+-- Read miss since invalid
+-- This should now bring the entire block into cache
+wait until s_waitrequest = '1';
+
+-- READ, VALID, TAG EQUAL, DIRTY BIT 0 (unimportant)
+s_read <= '1';
+s_addr <= std_LOGIC_VECTOR(to_unsigned(0, 32));
+-- Reading at same location aain
+-- This should now be a HIT (s_readdata should have correct output the next CC), since the block was fetched from memory into cache
+wait until s_waitrequest = '1';
+
+-- MANY MORE CASES TO BE COVERED
+-- BUT GETTING THOSE 2 TO WORK IS A START
+
+-- WRITE, INVALID, TAG UNEQUAL, NOT DIRTY
+s_read <= '0';
+s_write <= '1';
+-- ----------------------------------------------------------------------   tag = 1 --------------------------- index = 1 ------------------------------ b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(1, 6)) & STD_LOGIC_VECTOR(to_unsigned(1, 5)) & STD_LOGIC_VECTOR(to_unsigned(4, 4));
+s_writedata <= STD_LOGIC_VECTOR(to_unsigned(14, 32));
+
+wait until s_waitrequest = '1';
+
+-- WRITE, VALID, TAG UNEQUAL, DIRTY
+s_write <= '1';
+-- ----------------------------------------------------------------------   tag = 2 --------------------------- index = 1 ------------------------------ b0 = 1
+s_addr <= STD_LOGIC_VECTOR(to_unsigned(0, 17)) & STD_LOGIC_VECTOR(to_unsigned(2, 6)) & STD_LOGIC_VECTOR(to_unsigned(1, 5)) & STD_LOGIC_VECTOR(to_unsigned(4, 4));
+s_writedata <= STD_LOGIC_VECTOR(to_unsigned(15, 32));
+
+wait until s_waitrequest = '1';
+wait;
+
 end process;
-	
+
 end;
