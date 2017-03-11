@@ -44,7 +44,7 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
 
-  -- PIPELINE REGISTERS --
+  -- pipeline register IO --
   signal if_id_in, if_id_out : std_logic_vector(31 downto 0);
   signal id_ex_1_in, id_ex_1_out : std_logic_vector(31 downto 0);
   signal id_ex_2_in, id_ex_2_out : std_logic_vector(31 downto 0);
@@ -80,8 +80,6 @@ architecture arch of pipeline is
   signal ALU_operand2 : std_logic_vector(31 downto 0);
   signal ALU_NPC : std_logic_vector(31 downto 0);
   signal ALU_output : std_logic_vector(31 downto 0);
-
-  -- DECLARING COMPONENTS --
 
   component instruction_memory
     generic(
@@ -152,7 +150,7 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- IO to satisfy instruction memory interface --
+      -- instruction memory interface --
       read_instruction_address : out std_logic_vector(31 downto 0);
       read_instruction : out std_logic;
       instruction : in std_logic_vector(31 downto 0);
@@ -181,7 +179,7 @@ architecture arch of pipeline is
     );
   end component;
 
-  -- wait on Henry for this --
+  -- This is to be replaced by the ALU --
   component execute_stage is
     port(
       clock : in std_logic;
@@ -200,7 +198,7 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- component specific interface requirements --
+      -- data memory interface --
       data_memory_writedata : out std_logic_vector(31 downto 0);
       data_memory_address : out integer range 0 to ram_size-1;
       data_memory_memwrite : out std_logic;
@@ -219,17 +217,8 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- component specific interface requirements --
-      writedata : in std_logic_vector(31 downto 0);
-
-      -- interface specific components --
-      waitrequest : in std_logic;
-      write_address : out integer range 0 to ram_size-1;
-      memwrite : out std_logic;
-
       -- pipeline interface --
-      ex_mem : in std_logic_vector(31 downto 0);
-      mem_wb : out std_logic_vector(31 downto 0)
+      mem_wb : in std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -379,8 +368,9 @@ architecture arch of pipeline is
     -- TODO --
     write_back_stage : write_back_stage
     port map(
-      clock,
-      global_reset
+      clock => clock,
+      reset => global_reset,
+      mem_wb => mem_wb_out
     );
 
     -- BEGIN PROCESSES --
