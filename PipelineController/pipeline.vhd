@@ -45,17 +45,11 @@ architecture arch of pipeline is
   constant register_size : integer := 32;
 
   -- PIPELINE REGISTERS --
-  signal if_id : std_logic_vector(31 downto 0);
-  signal id_ex_1 : std_logic_vector(31 downto 0);
-  signal id_ex_2 : std_logic_vector(31 downto 0);
-  signal ex_mem : std_logic_vector(31 downto 0);
-  signal mem_wb : std_logic_vector(31 downto 0);
-
-  -- pipeline registers for program counter (integer)
-  signal if_id_pc : integer;
-  signal id_ex_pc : integer;
-  signal ex_mem_pc : integer;
-  signal mem_wb_pc : integer;
+  signal if_id_in, if_id_out : std_logic_vector(31 downto 0);
+  signal id_ex_1_in, id_ex_1_out : std_logic_vector(31 downto 0);
+  signal id_ex_2_in, id_ex_2_out : std_logic_vector(31 downto 0);
+  signal ex_mem_in, ex_mem_out : std_logic_vector(31 downto 0);
+  signal mem_wb_in, mem_wb_out : std_logic_vector(31 downto 0);
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
@@ -181,14 +175,17 @@ architecture arch of pipeline is
     );
   end component;
 
+  -- wait on Henry for this --
   component execute_stage is
     port(
       clock : in std_logic;
       reset : in std_logic;
 
       -- pipeline interface --
-      id_ex : in std_logic_vector(31 downto 0);
-      ex_mem : out std_logic_vector(31 downto 0)
+      operand_1 : in std_logic_vector(31 downto 0);
+      operand_2 : in std_logic_vector(31 downto 0);
+      ex_mem_1 : out std_logic_vector(31 downto 0);
+      ex_mem_2 : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -221,6 +218,16 @@ architecture arch of pipeline is
       -- pipeline interface --
       ex_mem : in std_logic_vector(31 downto 0);
       mem_wb : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component pipeline_register is
+    port (
+      clock : in std_logic;
+      reset : in std_logic;
+
+      data : in std_logic_vector(31 downto 0);
+      data_out : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -270,6 +277,77 @@ architecture arch of pipeline is
       ALU_operand2,
       ALU_NPC,
       ALU_output
+    );
+
+    if_id_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      if_id_in,
+      if_id_out
+    );
+
+    id_ex_1_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_1_in,
+      id_ex_1_out
+    );
+
+    id_ex_2_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_2_in,
+      id_ex_2_out
+    );
+
+    ex_mem_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      ex_mem_in,
+      ex_mem_out
+    );
+
+    mem_wb_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      mem_wb_in,
+      mem_wb_out
+    );
+
+    -- TODO --
+    instruction_fetch_stage : instruction_fetch_stage
+    port map(
+      clock,
+      global_reset
+    );
+
+    instruction_decode_stage : instruction_decode_stage
+    port map(
+      clock,
+      global_reset
+    );
+
+    execute_stage : execute_stage
+    port map(
+      clock,
+      global_reset
+    );
+
+    memory_stage : memory_stage
+    port map(
+      clock,
+      global_reset
+    );
+
+    write_back_stage : write_back_stage
+    port map(
+      clock,
+      global_reset
     );
 
     -- BEGIN PROCESSES --
