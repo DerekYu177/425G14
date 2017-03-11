@@ -24,8 +24,7 @@ architecture arch of pipeline is
 
   -- STATE DEFINITION --
   type state_type is (
-    ready, initializing, finishing,
-    instruction_fetch, instruction_decode, execute, memory, writeback
+    init, processor, fini
   );
 
   signal present_state, next_state : state_type;
@@ -33,6 +32,7 @@ architecture arch of pipeline is
 
   -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
+  signal global_reset : std_logic := 0;
 
   -- read/write control signal
   signal memory_line_counter : integer := 0;
@@ -44,18 +44,12 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
 
-  -- PIPELINE REGISTERS --
-  signal if_id : std_logic_vector(31 downto 0);
-  signal id_ex_1 : std_logic_vector(31 downto 0);
-  signal id_ex_2 : std_logic_vector(31 downto 0);
-  signal ex_mem : std_logic_vector(31 downto 0);
-  signal mem_wb : std_logic_vector(31 downto 0);
-
-  -- pipeline registers for program counter (integer)
-  signal if_id_pc : integer;
-  signal id_ex_pc : integer;
-  signal ex_mem_pc : integer;
-  signal mem_wb_pc : integer;
+  -- pipeline register IO --
+  signal if_id_in, if_id_out : std_logic_vector(31 downto 0);
+  signal id_ex_1_in, id_ex_1_out : std_logic_vector(31 downto 0);
+  signal id_ex_2_in, id_ex_2_out : std_logic_vector(31 downto 0);
+  signal ex_mem_in, ex_mem_out : std_logic_vector(31 downto 0);
+  signal mem_wb_in, mem_wb_out : std_logic_vector(31 downto 0);
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
@@ -86,8 +80,6 @@ architecture arch of pipeline is
   signal ALU_operand2 : std_logic_vector(31 downto 0);
   signal ALU_NPC : std_logic_vector(31 downto 0);
   signal ALU_output : std_logic_vector(31 downto 0);
-
-  -- DECLARING COMPONENTS --
 
   component instruction_memory
     generic(
@@ -151,6 +143,95 @@ architecture arch of pipeline is
     );
   end component;
 
+  -- DECLARING PIPELINE COMPONENTS --
+
+  component instruction_fetch_stage is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      -- instruction memory interface --
+      read_instruction_address : out std_logic_vector(31 downto 0);
+      read_instruction : out std_logic;
+      instruction : in std_logic_vector(31 downto 0);
+      wait_request : in std_logic;
+
+      -- pipeline interface --
+      if_id : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component instruction_decode_stage is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      -- register interface --
+      read_1_address : out integer range 0 to 31;
+      read_2_address : out integer range 0 to 31;
+      register_1 : in std_logic_vector(31 downto 0);
+      register_2 : in std_logic_vector(31 downto 0);
+
+      -- pipeline interface --
+      if_id : in std_logic_vector(31 downto 0);
+      id_ex_reg_1 : out std_logic_vector(31 downto 0);
+      id_ex_reg_2 : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  -- This is to be replaced by the ALU --
+  component execute_stage is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      -- pipeline interface --
+      operand_1 : in std_logic_vector(31 downto 0);
+      operand_2 : in std_logic_vector(31 downto 0);
+      ex_mem_1 : out std_logic_vector(31 downto 0);
+      ex_mem_2 : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component memory_stage is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      -- data memory interface --
+      data_memory_writedata : out std_logic_vector(31 downto 0);
+      data_memory_address : out integer range 0 to ram_size-1;
+      data_memory_memwrite : out std_logic;
+      data_memory_memread : out std_logic;
+      data_memory_readdata : in std_logic_vector(31 downto 0);
+      data_memory_waitrequest : in std_logic;
+
+      -- pipeline interface --
+      ex_mem : in std_logic_vector(31 downto 0);
+      mem_wb : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component write_back_stage is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      -- pipeline interface --
+      mem_wb : in std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component pipeline_register is
+    port (
+      clock : in std_logic;
+      reset : in std_logic;
+
+      data : in std_logic_vector(31 downto 0);
+      data_out : out std_logic_vector(31 downto 0)
+    );
+  end component;
+
   begin
 
     -- COMPONENTS --
@@ -199,12 +280,105 @@ architecture arch of pipeline is
       ALU_output
     );
 
+    if_id_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      if_id_in,
+      if_id_out
+    );
+
+    id_ex_1_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_1_in,
+      id_ex_1_out
+    );
+
+    id_ex_2_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_2_in,
+      id_ex_2_out
+    );
+
+    ex_mem_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      ex_mem_in,
+      ex_mem_out
+    );
+
+    mem_wb_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      mem_wb_in,
+      mem_wb_out
+    );
+
+    instruction_fetch_stage : instruction_fetch_stage
+    port map(
+      clock => clock,
+      reset => global_reset,
+      read_instruction_address => instr_memory_address,
+      read_instruction => instr_memory_memread,
+      instruction => instr_memory_readdata,
+      wait_request => instr_memory_waitrequest,
+      if_id => if_id_in
+    );
+
+    instruction_decode_stage : instruction_decode_stage
+    port map(
+      clock => clock,
+      reset => global_reset,
+      read_1_address => reg_readreg1,
+      read_2_address => reg_readreg2,
+      register_1 => reg_readdata1,
+      register_2 => reg_readdata2,
+      if_id => if_id_out,
+      id_ex_reg_1 => id_ex_1_in,
+      id_ex_reg_2 => id_ex_2_in
+    );
+
+    -- wait on Henry for this --
+    execute_stage : execute_stage
+    port map(
+      clock => clock,
+      reset => global_reset
+    );
+
+    memory_stage : memory_stage
+    port map(
+      clock => clock,
+      reset => global_reset
+      data_memory_writedata => data_memory_writedata,
+      data_memory_address => data_memory_address,
+      data_memory_memwrite => data_memory_memwrite,
+      data_memory_memread => data_memory_memread,
+      data_memory_readdata => data_memory_readdata,
+      data_memory_waitrequest => data_memory_waitrequest,
+      ex_mem => ex_mem_out,
+      mem_wb => mem_wb_in
+    );
+
+    -- TODO --
+    write_back_stage : write_back_stage
+    port map(
+      clock => clock,
+      reset => global_reset,
+      mem_wb => mem_wb_out
+    );
+
     -- BEGIN PROCESSES --
 
     async_operation : process(clock, reset)
     begin
       if reset = '1' then
-        present_state <= initializing;
+        present_state <= init;
       elsif (clock'event and clock = '1') then
         present_state <= next_state;
       end if;
@@ -213,81 +387,28 @@ architecture arch of pipeline is
     pipeline_state_logic : process (clock, reset, present_state, program_in_finished)
     begin
       case present_state is
-        when initializing =>
+        when init =>
           if program_in_finished = '1' then
-            next_state <= ready;
+            next_state <= processor;
           else
-            next_state <= initializing;
+            next_state <= init;
           end if;
 
-        when ready =>
-         program_counter <= 0;
+        when processor =>
+          -- this is where forwarding and hazard detection will take place --
 
-         -- ensuring that pipeline registers are clear
-         if_id <= (others => '0');
-         id_ex_1 <= (others => '0');
-         id_ex_2 <= (others => '0');
-         ex_mem <= (others => '0');
-         mem_wb <= (others => '0');
-
-        when instruction_fetch =>
-          instr_memory_memread <= '1';
-          instr_memory_address <= program_counter;
-
-          -- wait for the instruction memory to be finished
-          if waitrequest'event and waitrequest = '0' then
-            if_id <= instr_memory_readdata;
-          end if;
-
-          program_counter <= program_counter + 4;
-          next_state <= instruction_decode;
-
-        when instruction_decode =>
-          -- TODO: add load/store logic here so we know how to approach the register file
-
-          -- TODO: translate the register location to an integer range
-
-
-          if load = '1' then
-
-            -- read from register file
-            reg_writereg <= '0';
-            reg_readreg1 <= to_integer(unsigned(if_id));
-
-            -- put register file output onto pipeline register
-            id_ex_1 <= reg_readdata1;
-
-
-          elsif store = '1' then
-
-            -- write to register file
-            reg_writereg <= '1';
-            reg_readreg1 <= to_integer(unsigned(if_id));
-
-          end if;
-
-          next_state <= execute;
-
-        when execute =>
-          next_state <= memory;
-
-        when memory =>
-          next_state <= writeback;
-
-        when writeback =>
-
-          -- if the program as completed execution
           if (program_counter = 1) then
             program_execution_finished <= '1';
-            next_state <= finishing;
+            next_state <= fini;
           else
             -- what should the next state be here?
-            next_state <= ready;
+            next_state <= processor;
           end if;
+          null;
 
-        when finishing =>
+        when fini =>
           if (not read_write_finished) then
-            next_state <= finishing;
+            next_state <= fini;
           else
             memory_out_finished <= '1';
             register_out_finished <= '1';
@@ -300,12 +421,18 @@ architecture arch of pipeline is
     pipeline_functional_logic : process (clock, reset, present_state, program_in)
     begin
       case present_state is
-        when initializing =>
+        when init =>
           if clock'event and clock = '1' then
             -- TODO : feed line by line into the instruction memory and the data memory
           end if;
 
-        when finishing =>
+          -- reset all components
+          global_reset <= '1';
+
+          -- initialize PC counter
+          program_counter <= 0;
+
+        when fini =>
           if (clock'event and clock = '1') then
             -- TODO : feed line by line into output for both memory and register
             memory_line_counter <= memory_line_counter + 1;
@@ -317,6 +444,7 @@ architecture arch of pipeline is
 
         when others =>
           -- TODO : this.
+          null;
       end case;
     end process;
 
