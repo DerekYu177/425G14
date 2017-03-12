@@ -13,6 +13,7 @@ The Pipeline is:
   1. The logic behind forwarding is that the EX stage has the choice to select between what is provided by the ID stage or the current output (at the EX/MEM register).
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
   3. The idea of $[EX/MEM] -> EX input can be further generalized to cases of $[MEM/WB] -> EX input, and [MEM/WB] -> MEM input. More if-statements should be addded with care.
+  
 #### Testbench
 The Testbench must:
   1. Open both the program.txt and the memory.txt to begin sending to the pipeline
