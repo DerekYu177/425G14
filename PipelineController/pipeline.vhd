@@ -28,16 +28,15 @@ architecture arch of pipeline is
   );
 
   signal present_state, next_state : state_type;
-  -- signal if_id, id_ex, ex_m, m_wb : std_logic_vector(31 downto 0);
 
   -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
   signal global_reset : std_logic := 0;
 
   -- read/write control signal
+  signal instruction_line_in_counter : integer := 0;
   signal memory_line_counter : integer := 0;
   signal register_line_counter : integer := 0;
-  signal read_write_finished : boolean := false;
 
   -- pipeline constants --
   constant data_size : integer := 8192;
@@ -378,6 +377,7 @@ architecture arch of pipeline is
     async_operation : process(clock, reset)
     begin
       if reset = '1' then
+        instruction_line_in_counter <= '0';
         present_state <= init;
       elsif (clock'event and clock = '1') then
         present_state <= next_state;
@@ -407,13 +407,7 @@ architecture arch of pipeline is
           null;
 
         when fini =>
-          if (not read_write_finished) then
-            next_state <= fini;
-          else
-            memory_out_finished <= '1';
-            register_out_finished <= '1';
-            next_state <= ready;
-          end if;
+          next_state <= fini;
 
       end case;
     end process;
@@ -422,23 +416,32 @@ architecture arch of pipeline is
     begin
       case present_state is
         when init =>
+          instr_memory_memwrite = '1';
           if clock'event and clock = '1' then
-            -- TODO : feed line by line into the instruction memory and the data memory
+            instr_memory_address <= instruction_line_in_counter;
+            instr_memory_writedata <= program_in;
+            instr_memory_address <= instr_memory_address + 1;
           end if;
-
-          -- reset all components
           global_reset <= '1';
-
-          -- initialize PC counter
           program_counter <= 0;
 
         when fini =>
+          data_memory_memread <= '1';
+          -- register does not require memread
+
           if (clock'event and clock = '1') then
-            -- TODO : feed line by line into output for both memory and register
+            data_memory_address <= memory_line_counter;
+            reg_readreg1 <= register_line_counter;
+
+            memory_out <= data_memory_readdata;
+            register_out <= reg_readdata1;
+
             memory_line_counter <= memory_line_counter + 1;
             register_line_counter <= register_line_counter + 1;
-            if (memory_line_counter = memory_size and register_line_counter > register_size) then
-              read_write_finished <= true;
+
+            if (memory_line_counter >= memory_size and register_line_counter >= register_size) then
+              memory_out_finished <= '1';
+              register_out_finished <= '1';
             end if;
           end if;
 
