@@ -32,7 +32,7 @@ architecture arch of pipeline is
   -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
   signal updated_program_counter : integer := 0;
-  signal jump_taken : std_logic;
+  signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
 
   -- read/write control signal
@@ -143,7 +143,7 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- instruction memory interface --
-      read_instruction_address : out std_logic_vector(31 downto 0);
+      read_instruction_address : out integer;
       read_instruction : out std_logic;
       instruction : in std_logic_vector(31 downto 0);
       wait_request : in std_logic;
