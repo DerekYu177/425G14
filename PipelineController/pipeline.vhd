@@ -156,7 +156,10 @@ architecture arch of pipeline is
       wait_request : in std_logic;
 
       -- pipeline interface --
-      if_id : out std_logic_vector(31 downto 0)
+      if_id : out std_logic_vector(31 downto 0);
+
+      -- global output --
+      updated_program_counter : out integer
     );
   end component;
 
@@ -380,6 +383,7 @@ architecture arch of pipeline is
         instruction_line_in_counter <= '0';
         present_state <= init;
       elsif (clock'event and clock = '1') then
+        program_counter <= updated_program_counter;
         present_state <= next_state;
       end if;
     end process;
@@ -397,7 +401,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (program_counter = 1) then
+          if (program_counter >= 10,000) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
