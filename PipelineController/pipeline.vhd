@@ -62,6 +62,11 @@ architecture arch of pipeline is
   alias id_ex_instr_in : if_id_instr_out;
   signal id_ex_instr_out : std_logic_vector(31 downto 0);
 
+  -- pipeline data store address (for MEM and WB) --
+  signal id_ex_data_store_address_in, id_ex_data_store_address_out : std_logic_vector(31 downto 0);
+  alias ex_mem_data_store_address_in : id_ex_data_store_address_out;
+  signal ex_mem_data_store_address_out : std_logic_vector(31 downto 0);
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -226,7 +231,7 @@ architecture arch of pipeline is
     );
   end component;
 
-  component pipeline_pc_register is
+  component pipeline_int_register is
     port(
       clock : in std_logic;
       reset : in std_logic;
@@ -281,7 +286,7 @@ architecture arch of pipeline is
       if_id_out
     );
 
-    if_id_pc_register : pipeline_pc_register
+    if_id_pc_register : pipeline_int_register
     port map(
       clock,
       global_reset,
@@ -313,7 +318,7 @@ architecture arch of pipeline is
       id_ex_2_out
     );
 
-    id_ex_pc_register : pipeline_pc_register
+    id_ex_pc_register : pipeline_int_register
     port map(
       clock,
       global_reset,
@@ -327,6 +332,14 @@ architecture arch of pipeline is
       global_reset,
       id_ex_instr_in,
       id_ex_instr_out
+    );
+
+    id_ex_data_store_address : pipeline_int_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_data_store_address_in,
+      id_ex_data_store_address_out
     );
 
     ex_mem_register : pipeline_register

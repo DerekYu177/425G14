@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity pipeline_pc_register is
+entity pipeline_int_register is
   port (
     clock : in std_logic;
     reset : in std_logic;
@@ -10,9 +10,9 @@ entity pipeline_pc_register is
     pc_in : in integer;
     pc_out : out integer
   );
-end pipeline_pc_register;
+end pipeline_int_register;
 
-architecture arch of pipeline_pc_register is
+architecture arch of pipeline_int_register is
 begin
   process (clock, reset)
   begin
