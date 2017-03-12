@@ -50,6 +50,16 @@ architecture arch of pipeline is
   signal ex_mem_in, ex_mem_out : std_logic_vector(31 downto 0);
   signal mem_wb_in, mem_wb_out : std_logic_vector(31 downto 0);
 
+  -- pipeline pc register IO --
+  signal if_id_pc_in, if_id_pc_out : integer;
+  alias id_ex_pc_in : if_id_pc_out; -- since nothing exists in between
+  signal id_ex_pc_out: integer;
+
+  -- pipeline instruction register IO --
+  signal if_id_instr_in, if_id_instr_out : std_logic_vector(31 downto 0);
+  alias id_ex_instr_in : if_id_instr_out;
+  signal id_ex_instr_out : std_logic_vector(31 downto 0);
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -72,13 +82,6 @@ architecture arch of pipeline is
   signal reg_regwrite : std_logic;
   signal reg_readdata1 : std_logic_vector(31 downto 0);
   signal reg_readdata2 : std_logic_vector(31 downto 0);
-
-  signal ALU_reset : std_logic;
-  signal ALU_instruction : std_logic_vector(31 downto 0);
-  signal ALU_operand1 : std_logic_vector(31 downto 0);
-  signal ALU_operand2 : std_logic_vector(31 downto 0);
-  signal ALU_NPC : std_logic_vector(31 downto 0);
-  signal ALU_output : std_logic_vector(31 downto 0);
 
   component instruction_memory
     generic(
@@ -130,18 +133,6 @@ architecture arch of pipeline is
     );
   end component;
 
-  component ALU is
-    port(
-      clock : in std_logic;
-      reset : in std_logic;
-      ALU_instruction : in std_logic_vector(31 downto 0);
-      ALU_operand1 : in std_logic_vector(31 downto 0);
-      ALU_operand2 : in std_logic_vector(31 downto 0);
-      ALU_NPC : in std_logic_vector(31 downto 0);
-      ALU_output : out std_logic_vector(31 downto 0)
-    );
-  end component;
-
   -- DECLARING PIPELINE COMPONENTS --
 
   component instruction_fetch_stage is
@@ -181,17 +172,14 @@ architecture arch of pipeline is
     );
   end component;
 
-  -- This is to be replaced by the ALU --
   component execute_stage is
     port(
       clock : in std_logic;
       reset : in std_logic;
 
-      -- pipeline interface --
-      operand_1 : in std_logic_vector(31 downto 0);
-      operand_2 : in std_logic_vector(31 downto 0);
-      ex_mem_1 : out std_logic_vector(31 downto 0);
-      ex_mem_2 : out std_logic_vector(31 downto 0)
+      ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
+      ALU_next_pc: in integer;
+      ALU_output: out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -234,6 +222,16 @@ architecture arch of pipeline is
     );
   end component;
 
+  component pipeline_pc_register is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      pc_in : in integer;
+      pc_out : out integer
+    );
+  end component;
+
   begin
 
     -- COMPONENTS --
@@ -271,23 +269,28 @@ architecture arch of pipeline is
       reg_readdata2
     );
 
-    ALU : ALU
-    port map(
-      clock,
-      ALU_reset,
-      ALU_instruction,
-      ALU_operand1,
-      ALU_operand2,
-      ALU_NPC,
-      ALU_output
-    );
-
     if_id_register : pipeline_register
     port map(
       clock,
       global_reset,
       if_id_in,
       if_id_out
+    );
+
+    if_id_pc_register : pipeline_pc_register
+    port map(
+      clock,
+      global_reset,
+      if_id_pc_in,
+      if_id_pc_out
+    );
+
+    if_id_instruction_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      if_id_instr_in,
+      if_id_instr_out
     );
 
     id_ex_1_register : pipeline_register
@@ -304,6 +307,22 @@ architecture arch of pipeline is
       global_reset,
       id_ex_2_in,
       id_ex_2_out
+    );
+
+    id_ex_pc_register : pipeline_pc_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_pc_in,
+      id_ex_pc_out
+    );
+
+    id_ex_instruction_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_instr_in,
+      id_ex_instr_out
     );
 
     ex_mem_register : pipeline_register
@@ -346,11 +365,15 @@ architecture arch of pipeline is
       id_ex_reg_2 => id_ex_2_in
     );
 
-    -- wait on Henry for this --
     execute_stage : execute_stage
     port map(
       clock => clock,
-      reset => global_reset
+      reset => global_reset,
+      ALU_instruction => id_ex_instr_out,
+      ALU_operand1 => id_ex_1_out,
+      ALU_operand2 => id_ex_2_out,
+      ALU_next_pc => id_ex_pc_out,
+      ALU_output => ex_mem_in
     );
 
     memory_stage : memory_stage
