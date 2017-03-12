@@ -2,24 +2,25 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity instruction_decode is
+entity instruction_decode_stage is
   port(
     clock : in std_logic;
     reset : in std_logic;
 
     -- interface with the register memory --
-    reg_readreg1 : out std_logic_vector(31 downto 0);
-    reg_readreg2 : out std_logic_vector(31 downto 0);
+    read_1_address : out integer range 0 to 31;
+    read_2_address : out integer range 0 to 31;
+    register_1 : out std_logic_vector(31 downto 0);
+    register_2 : out std_logic_vector(31 downto 0);
 
-    -- inputs --
+    -- pipeline interface --
     if_id : in std_logic_vector(31 downto 0);
-
-    -- outputs --
-    id_ex : out std_logic_vector(31 downto 0)
+    id_ex_reg_1 : out std_logic_vector(31 downto 0);
+    id_ex_reg_2 : out std_logic_vector(31 downto 0)
   );
-end instruction_decode;
+end instruction_decode_stage;
 
-architecture arch of instruction_decode is
+architecture arch of instruction_decode_stage is
   -- INSTRUCTION RELATED SIGNALS AND COMPONENTS --
   -- (Copied from ALU)
 
@@ -118,32 +119,32 @@ architecture arch of instruction_decode is
     -----------------------
       case funct is
         when funct_add =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_sub =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_mult =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_div =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_slt =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_and =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_or =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_nor =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         when funct_xor =>
-          reg_readreg1 <= rtype_rs;
-          reg_readreg2 <= rtype_rt;
+          register_1 <= rtype_rs;
+          register_2 <= rtype_rt;
         -- Is there anything to do for mfhi and mflo? They just move content of HI/LO to $rd...
         -- In my opinion this should be dealt in the WB stage
         when funct_mfhi =>
@@ -151,13 +152,13 @@ architecture arch of instruction_decode is
         when funct_mflo =>
           null;
         when funct_sll =>
-          reg_readreg1 <= rtype_rt;
+          register_1 <= rtype_rt;
         when funct_srl =>
-          reg_readreg1 <= rtype_rt;
+          register_1 <= rtype_rt;
         when funct_sra =>
-          reg_readreg1 <= rtype_rt;
+          register_1 <= rtype_rt;
         when funct_jr =>
-          reg_readreg1 <= rtype_rs;
+          register_1 <= rtype_rs;
         when others =>
           null;
       end case;
@@ -166,35 +167,35 @@ architecture arch of instruction_decode is
     -----------------------
     --We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
     when I_type_op_addi =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= "0000000000000000"&immediate;
     when I_type_op_slti =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= extended_immediate;
     when I_type_op_andi =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= "0000000000000000"&immediate;
     when I_type_op_ori =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= "0000000000000000"&immediate;
     when I_type_op_xori =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= "0000000000000000"&immediate;
     when I_type_op_lui =>
       -- Handled within ALU, no need to do anything here
       null;
     when I_type_op_lw =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= extended_immediate;
     when I_type_op_sw =>
-      reg_readreg1 <= itype_rs;
+      register_1 <= itype_rs;
       ALU_operand2 <= extended_immediate;
     when I_type_op_beq =>
-      reg_readreg1 <= itype_rs;
-      reg_readreg2 <= itype_rt;
+      register_1 <= itype_rs;
+      register_2 <= itype_rt;
     when I_type_op_bne =>
-      reg_readreg1 <= itype_rs;
-      reg_readreg2 <= itype_rt;
+      register_1 <= itype_rs;
+      register_2 <= itype_rt;
 
     --All J-type operations
     -----------------------
