@@ -51,6 +51,16 @@ architecture arch of pipeline is
   signal ex_mem_in, ex_mem_out : std_logic_vector(31 downto 0);
   signal mem_wb_in, mem_wb_out : std_logic_vector(31 downto 0);
 
+  -- pipeline pc register IO --
+  signal if_id_pc_in, if_id_pc_out : integer;
+  alias id_ex_pc_in : if_id_pc_out; -- since nothing exists in between
+  signal id_ex_pc_out: integer;
+
+  -- pipeline instruction register IO --
+  signal if_id_instr_in, if_id_instr_out : std_logic_vector(31 downto 0);
+  alias id_ex_instr_in : if_id_instr_out;
+  signal id_ex_instr_out : std_logic_vector(31 downto 0);
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -210,6 +220,16 @@ architecture arch of pipeline is
     );
   end component;
 
+  component pipeline_pc_register is
+    port(
+      clock : in std_logic;
+      reset : in std_logic;
+
+      pc_in : in integer;
+      pc_out : out integer
+    );
+  end component;
+
   begin
 
     -- COMPONENTS --
@@ -255,6 +275,22 @@ architecture arch of pipeline is
       if_id_out
     );
 
+    if_id_pc_register : pipeline_pc_register
+    port map(
+      clock,
+      global_reset,
+      if_id_pc_in,
+      if_id_pc_out
+    );
+
+    if_id_instruction_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      if_id_instr_in,
+      if_id_instr_out
+    );
+
     id_ex_1_register : pipeline_register
     port map(
       clock,
@@ -269,6 +305,22 @@ architecture arch of pipeline is
       global_reset,
       id_ex_2_in,
       id_ex_2_out
+    );
+
+    id_ex_pc_register : pipeline_pc_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_pc_in,
+      id_ex_pc_out
+    );
+
+    id_ex_instruction_register : pipeline_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_instr_in,
+      id_ex_instr_out
     );
 
     ex_mem_register : pipeline_register
@@ -315,15 +367,10 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
-
-      -- compile will fail because it is missing:
-      -- ALU_instruction
-      -- ALU_NPC
-
-      ALU_instruction =>
+      ALU_instruction => id_ex_instr_out,
       ALU_operand1 => id_ex_1_out,
       ALU_operand2 => id_ex_2_out,
-      ALU_NPC =>
+      ALU_NPC => id_ex_pc_out,
       ALU_output => ex_mem_in
     );
 
