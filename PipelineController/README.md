@@ -8,6 +8,7 @@ The Pipeline is:
   2. components separated by a pipeline register. Each stage component can only access the adjacent pipeline registers initially. i.e. ID component can only interact with the if_id register and the id_ex register.
   3. components which are given access to memory if they need it. This means that IF can access the instruction memory, but perhaps not the register memory.
   4. A three stage FSM, with states _init_, _process_, and _finished_. _init_ communicates with the testbench to receive data. _process_ is where the processor is working, and _finished_ again communicates appropriately with the testbench in order to return data.
+  
 #### Forwarding
   1. The logic behind forwarding is that the EX stage has the choice to select between what is provided by the ID stage or the current output (at the EX/MEM register).
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
