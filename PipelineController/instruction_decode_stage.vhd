@@ -10,8 +10,8 @@ entity instruction_decode_stage is
     -- interface with the register memory --
     read_1_address : out integer range 0 to 31;
     read_2_address : out integer range 0 to 31;
-    register_1 : out std_logic_vector(31 downto 0);
-    register_2 : out std_logic_vector(31 downto 0);
+    register_1 : in std_logic_vector(31 downto 0);
+    register_2 : in std_logic_vector(31 downto 0);
 
     -- pipeline interface --
     if_id : in std_logic_vector(31 downto 0);
@@ -21,31 +21,30 @@ entity instruction_decode_stage is
 end instruction_decode_stage;
 
 architecture arch of instruction_decode_stage is
-  -- INSTRUCTION RELATED SIGNALS AND COMPONENTS --
-  -- (Copied from ALU)
+  -- internal control signals --
+  signal reg_1_set : std_logic := '0';
+  signal reg_2_set : std_logic := '0';
 
   -- General op code
   signal op_code: std_logic_vector(5 downto 0) := if_id(31 downto 26);
 
 	-- R-type decomposition
-  signal rtype_rs: integer := to_integer(unsigned (if_id(25 downto 21)));
-  signal rtype_rt: integer := to_integer(unsigned (if_id(20 downto 16)));
-  signal rtype_rd: integer := to_integer(unsigned (if_id(15 downto 11)));
-
+  signal rtype_rs: integer := to_integer(unsigned(if_id(25 downto 21)));
+  signal rtype_rt: integer := to_integer(unsigned(if_id(20 downto 16)));
+  signal rtype_rd: integer := to_integer(unsigned(if_id(15 downto 11)));
   signal shamt: std_logic_vector(4 downto 0) := if_id(10 downto 6);
   signal funct: std_logic_vector(5 downto 0) := if_id(5 downto 0);
 
 	-- I-type decomposition
-  signal itype_rs: integer := to_integer(unsigned (if_id(25 downto 21)));
-  signal itype_rt: integer := to_integer(unsigned (if_id(20 downto 16)));
-
+  signal itype_rs: integer := to_integer(unsigned(if_id(25 downto 21)));
+  signal itype_rt: integer := to_integer(unsigned(if_id(20 downto 16)));
   signal immediate: std_logic_vector(15 downto 0) := if_id(15 downto 0);
+  signal blank_immediate_header : std_logic_vector(15 downto 0) := (others => '0');
   signal extended_immediate: std_logic_vector(31 downto 0);
   signal extended_immediate_shifted: std_logic_vector(31 downto 0);
-	-- J-type decomposition
-  signal jump_address_offset: std_logic_vector(25 downto 0) := if_id(25 downto 0);
 
-	-- Comments: notice that the register fields are omitted on purpose, since it's the controller's job to feed in the correct operand as input; the ALU just performs the operation
+  -- J-type decomposition
+  signal jump_address_offset: std_logic_vector(25 downto 0) := if_id(25 downto 0);
 
 	-- FUNCT constants for R-type instructions
 	-------------------------------------------------
@@ -72,7 +71,6 @@ architecture arch of instruction_decode_stage is
 	-- Register jump_address_offset
 	-- CAREFUL! jr is not a J type...
   constant funct_jr: std_logic_vector(5 downto 0)  := "001000";
-
 
 	-- OPCODE constants for I-type instructions
 	----------------------------------------------
@@ -101,113 +99,119 @@ architecture arch of instruction_decode_stage is
 
   begin
 
-  -- SIGNAL --
   -- For sw/lw
   extended_immediate <= (31 downto 16 => immediate(15)) & immediate;
+
   -- For bne/beq
   extended_immediate_shifted <= (31 downto 18 => immediate(15)) & immediate & "00";
 
-
-      -- TODO: add load/store logic here so we know how to approach the register file
-
-      -- TODO: translate the register location to an integer range
-   -- NEW CODE 10/03/2017--
+  -- TODO: add load/store logic here so we know how to approach the register file
 
    case op_code is
     when R_type_general_op_code =>
-    --All R-type operations
-    -----------------------
+
+      --All R-type operations
       case funct is
         when funct_add =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_sub =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_mult =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_div =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_slt =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_and =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_or =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_nor =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_xor =>
-          register_1 <= rtype_rs;
-          register_2 <= rtype_rt;
-        -- Is there anything to do for mfhi and mflo? They just move content of HI/LO to $rd...
-        -- In my opinion this should be dealt in the WB stage
+          read_1_address <= to_integer(unsigned(rtype_rs));
+          read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_mfhi =>
-          null;
+          null; -- performed in WB
         when funct_mflo =>
-          null;
+          null; -- performed in WB
         when funct_sll =>
-          register_1 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_srl =>
-          register_1 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_sra =>
-          register_1 <= rtype_rt;
+          read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_jr =>
-          register_1 <= rtype_rs;
+          read_1_address <= to_integer(unsigned(rtype_rs));
         when others =>
           null;
       end case;
 
     --All I-type operations
-    -----------------------
-    --We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
     when I_type_op_addi =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= "0000000000000000"&immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_slti =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= extended_immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= extended_immediate;
     when I_type_op_andi =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= "0000000000000000"&immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_ori =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= "0000000000000000"&immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_xori =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= "0000000000000000"&immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_lui =>
-      -- Handled within ALU, no need to do anything here
-      null;
+      null; -- Handled within ALU, no need to do anything here
     when I_type_op_lw =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= extended_immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= extended_immediate;
     when I_type_op_sw =>
-      register_1 <= itype_rs;
-      ALU_operand2 <= extended_immediate;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= extended_immediate;
     when I_type_op_beq =>
-      register_1 <= itype_rs;
-      register_2 <= itype_rt;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= to_integer(unsigned(itype_rt));
     when I_type_op_bne =>
-      register_1 <= itype_rs;
-      register_2 <= itype_rt;
+      read_1_address <= to_integer(unsigned(itype_rs));
+      reg_2_set <= '1';
+      id_ex_reg_2 <= to_integer(unsigned(itype_rt));
 
     --All J-type operations
-    -----------------------
-    -- Both handled within ALU
-    -- Question though...should they be handled within ALU? Or can we resolve them here?
+    -- handled within ALU? Or can we resolve them here?
     when J_type_op_j =>
       null;
     when J_type_op_jal =>
       null;
     when others =>
-      ALU_output <= (others => '0');
+      null;
   end case;
+
+  if reg_1_set = '0' then
+    id_ex_reg_1 <= register_1;
+  end if;
+
+  if reg_2_set = '0' then
+    id_ex_reg_2 <= register_2;
+  end if;
 
 
 end arch;
