@@ -74,13 +74,6 @@ architecture arch of pipeline is
   signal reg_readdata1 : std_logic_vector(31 downto 0);
   signal reg_readdata2 : std_logic_vector(31 downto 0);
 
-  signal ALU_reset : std_logic;
-  signal ALU_instruction : std_logic_vector(31 downto 0);
-  signal ALU_operand1 : std_logic_vector(31 downto 0);
-  signal ALU_operand2 : std_logic_vector(31 downto 0);
-  signal ALU_NPC : std_logic_vector(31 downto 0);
-  signal ALU_output : std_logic_vector(31 downto 0);
-
   component instruction_memory
     generic(
   		ram_size : integer := instruction_size;
@@ -131,18 +124,6 @@ architecture arch of pipeline is
     );
   end component;
 
-  component ALU is
-    port(
-      clock : in std_logic;
-      reset : in std_logic;
-      ALU_instruction : in std_logic_vector(31 downto 0);
-      ALU_operand1 : in std_logic_vector(31 downto 0);
-      ALU_operand2 : in std_logic_vector(31 downto 0);
-      ALU_NPC : in std_logic_vector(31 downto 0);
-      ALU_output : out std_logic_vector(31 downto 0)
-    );
-  end component;
-
   -- DECLARING PIPELINE COMPONENTS --
 
   component instruction_fetch_stage is
@@ -179,7 +160,6 @@ architecture arch of pipeline is
     );
   end component;
 
-  -- This is to be replaced by the ALU --
   component execute_stage is
     port(
       clock : in std_logic;
@@ -267,17 +247,6 @@ architecture arch of pipeline is
       reg_readdata2
     );
 
-    ALU : ALU
-    port map(
-      clock,
-      ALU_reset,
-      ALU_instruction,
-      ALU_operand1,
-      ALU_operand2,
-      ALU_NPC,
-      ALU_output
-    );
-
     if_id_register : pipeline_register
     port map(
       clock,
@@ -342,7 +311,6 @@ architecture arch of pipeline is
       id_ex_reg_2 => id_ex_2_in
     );
 
-    -- wait on Henry for this --
     execute_stage : execute_stage
     port map(
       clock => clock,
