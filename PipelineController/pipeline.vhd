@@ -31,7 +31,9 @@ architecture arch of pipeline is
 
   -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
-  signal global_reset : std_logic := 0;
+  signal updated_program_counter : integer := 0;
+  signal jump_taken : std_logic;
+  signal global_reset : std_logic := '0';
 
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
@@ -149,7 +151,10 @@ architecture arch of pipeline is
       -- pipeline interface --
       if_id : out std_logic_vector(31 downto 0);
 
-      -- global output --
+      -- global modifier --
+      program_counter : in integer;
+      jump_program_counter : in integer;
+      jump_taken : in std_logic;
       updated_program_counter : out integer
     );
   end component;
@@ -174,12 +179,11 @@ architecture arch of pipeline is
 
   component execute_stage is
     port(
-      clock : in std_logic;
-      reset : in std_logic;
-
-      ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
-      ALU_next_pc: in integer;
-      ALU_output: out std_logic_vector(31 downto 0)
+      clock, reset: in std_logic;
+  		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
+  		ALU_next_pc : in integer; -- for branching
+  		jump_taken : out std_logic;
+  		ALU_output: out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -349,7 +353,11 @@ architecture arch of pipeline is
       read_instruction => instr_memory_memread,
       instruction => instr_memory_readdata,
       wait_request => instr_memory_waitrequest,
-      if_id => if_id_in
+      if_id => if_id_in,
+      program_counter => program_counter,
+      jump_program_counter => ex_mem_in,
+      jump_taken => jump_taken,
+      updated_program_counter => updated_program_counter
     );
 
     instruction_decode_stage : instruction_decode_stage
@@ -373,6 +381,7 @@ architecture arch of pipeline is
       ALU_operand1 => id_ex_1_out,
       ALU_operand2 => id_ex_2_out,
       ALU_next_pc => id_ex_pc_out,
+      jump_taken => jump_taken,
       ALU_output => ex_mem_in
     );
 
@@ -452,6 +461,9 @@ architecture arch of pipeline is
           global_reset <= '1';
           program_counter <= 0;
 
+        when processor =>
+          program_counter <= updated_program_counter;
+
         when fini =>
           data_memory_memread <= '1';
           -- register does not require memread
@@ -471,10 +483,6 @@ architecture arch of pipeline is
               register_out_finished <= '1';
             end if;
           end if;
-
-        when others =>
-          -- TODO : this.
-          null;
       end case;
     end process;
 
