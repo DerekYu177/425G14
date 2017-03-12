@@ -176,7 +176,7 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
-      ALU_NPC: in std_logic_vector(31 downto 0);
+      ALU_next_pc: in integer;
       ALU_output: out std_logic_vector(31 downto 0)
     );
   end component;
@@ -370,7 +370,7 @@ architecture arch of pipeline is
       ALU_instruction => id_ex_instr_out,
       ALU_operand1 => id_ex_1_out,
       ALU_operand2 => id_ex_2_out,
-      ALU_NPC => id_ex_pc_out,
+      ALU_next_pc => id_ex_pc_out,
       ALU_output => ex_mem_in
     );
 

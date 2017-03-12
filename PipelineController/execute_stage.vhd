@@ -6,7 +6,7 @@ entity execute_stage is
 port(
 	clock, reset: in std_logic;
 	ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
-	ALU_NPC: in std_logic_vector(31 downto 0); --This MUST BE passed in because the branching instruction needs to know it
+	ALU_next_pc : in integer; -- for branching
 	ALU_output: out std_logic_vector(31 downto 0));
 end execute_stage;
 
@@ -14,6 +14,8 @@ architecture arch of execute_stage is
 ----------------------
 -- DECLARATION SECTION
 ----------------------
+
+alias ALU_NPC : conv_std_logic_vector(ALU_next_pc, 32);
 
 -- General op code
 SIGNAL op_code: std_logic_vector(5 downto 0) := ALU_instruction(31 downto 26);
@@ -172,10 +174,10 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 				when I_type_op_beq =>
 					-- We assume equality met, it is the job of control to choose PC + 4 (via a mux) in case equality is NOT met
 					-- [New value of PC] (from operand 1) + [extended Imm << 2] (from operand 2)
-					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));
+					ALU_output <= ALU_next_pc + signed(extended_immediate));
 				when I_type_op_bne =>
 					-- Same logic, assume equality is met
-					ALU_output <= std_logic_vector(signed(ALU_NPC) + signed(extended_immediate));
+					ALU_output <= ALU_next_pc + signed(extended_immediate));
 
 				--All J-type operations
 				-----------------------
