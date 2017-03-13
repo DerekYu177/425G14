@@ -2,17 +2,17 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity pipeline_register is
+entity pipeline_logic_register is
   port (
     clock : in std_logic;
     reset : in std_logic;
 
-    data : in std_logic_vector(31 downto 0);
-    data_out : out std_logic_vector(31 downto 0)
+    data : in std_logic_vector(1 downto 0);
+    data_out : out std_logic_vector(1 downto 0)
   );
-end pipeline_register;
+end pipeline_logic_register;
 
-architecture arch of pipeline_register is
+architecture arch of pipeline_logic_register is
 begin
   process (clock, reset)
   begin

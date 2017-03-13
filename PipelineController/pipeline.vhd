@@ -67,6 +67,13 @@ architecture arch of pipeline is
   alias ex_mem_data_store_address_in : id_ex_data_store_address_out;
   signal ex_mem_data_store_address_out : std_logic_vector(31 downto 0);
 
+  -- pipeline valid load/store register IO --
+  signal id_ex_valid_load_store_in, id_ex_data_store_address_out : std_logic_vector(1 downto 0);
+  alias ex_mem_valid_load_store_in : id_ex_valid_load_store_out;
+  signal ex_mem_valid_load_store_out : std_logic_vector(1 downto 0);
+  alias mem_wb_valid_load_store_in : ex_mem_valid_load_store_out;
+  signal mem_wb_valid_load_store_out : std_logic_vector(1 downto 0);
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -241,6 +248,16 @@ architecture arch of pipeline is
     );
   end component;
 
+  component pipeline_logic_register is
+    port (
+      clock : in std_logic;
+      reset : in std_logic;
+
+      data : in std_logic_vector(1 downto 0);
+      data_out : out std_logic_vector(1 downto 0)
+    );
+  end component;
+
   begin
 
     -- COMPONENTS --
@@ -342,6 +359,14 @@ architecture arch of pipeline is
       id_ex_data_store_address_out
     );
 
+    id_ex_load_store_control_register : pipeline_logic_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_valid_load_store_in,
+      id_ex_valid_load_store_out
+    );
+
     ex_mem_register : pipeline_register
     port map(
       clock,
@@ -350,12 +375,28 @@ architecture arch of pipeline is
       ex_mem_out
     );
 
+    ex_mem_load_store_control_register : pipeline_logic_register
+    port map(
+      clock,
+      global_reset,
+      ex_mem_valid_load_store_in,
+      ex_mem_valid_load_store_out
+    );
+
     mem_wb_register : pipeline_register
     port map(
       clock,
       global_reset,
       mem_wb_in,
       mem_wb_out
+    );
+
+    mem_wb_load_store_control_register : pipeline_logic_register
+    port map(
+      clock,
+      global_reset,
+      mem_wb_valid_load_store_in,
+      mem_wb_valid_load_store_out
     );
 
     instruction_fetch_stage : instruction_fetch_stage
