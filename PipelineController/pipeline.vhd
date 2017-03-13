@@ -63,9 +63,11 @@ architecture arch of pipeline is
   signal id_ex_instr_out : std_logic_vector(31 downto 0);
 
   -- pipeline data store address (for MEM and WB) --
-  signal id_ex_data_store_address_in, id_ex_data_store_address_out : std_logic_vector(31 downto 0);
+  signal id_ex_data_store_address_in, id_ex_data_store_address_out : integer;
   alias ex_mem_data_store_address_in : id_ex_data_store_address_out;
-  signal ex_mem_data_store_address_out : std_logic_vector(31 downto 0);
+  signal ex_mem_data_store_address_out : integer;
+  alias mem_wb_data_store_address_in : ex_mem_data_store_address_out;
+  signal mem_wb_data_store_address_out : integer;
 
   -- pipeline valid load/store register IO --
   signal id_ex_valid_load_store_in, id_ex_data_store_address_out : std_logic_vector(1 downto 0);
@@ -383,6 +385,14 @@ architecture arch of pipeline is
       ex_mem_valid_load_store_out
     );
 
+    ex_mem_data_store_address : pipeline_int_register
+    port map(
+      clock,
+      global_reset,
+      ex_mem_data_store_address_in,
+      ex_mem_data_store_address_out
+    );
+
     mem_wb_register : pipeline_register
     port map(
       clock,
@@ -397,6 +407,14 @@ architecture arch of pipeline is
       global_reset,
       mem_wb_valid_load_store_in,
       mem_wb_valid_load_store_out
+    );
+
+    mem_wb_data_store_address : pipeline_int_register
+    port map(
+      clock,
+      global_reset,
+      mem_wb_data_store_address_in,
+      mem_wb_data_store_address_out
     );
 
     instruction_fetch_stage : instruction_fetch_stage
