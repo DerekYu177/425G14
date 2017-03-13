@@ -13,17 +13,25 @@ entity instruction_decode_stage is
     register_1 : in std_logic_vector(31 downto 0);
     register_2 : in std_logic_vector(31 downto 0);
 
-    -- pipeline interface --
+    -- main pipeline interface --
     if_id : in std_logic_vector(31 downto 0);
     id_ex_reg_1 : out std_logic_vector(31 downto 0);
-    id_ex_reg_2 : out std_logic_vector(31 downto 0)
+    id_ex_reg_2 : out std_logic_vector(31 downto 0);
+
+    -- pipeline data store address --
+    valid_load_store_flag : out std_logic_vector(1 downto 0)
   );
 end instruction_decode_stage;
 
 architecture arch of instruction_decode_stage is
+
   -- internal control signals --
   signal reg_1_set : std_logic := '0';
   signal reg_2_set : std_logic := '0';
+
+  signal valid_load_store : std_logic_vector(1 downto 0) := "00";
+  alias valid_flag : valid_load_store(1);
+  alias load_store : valid_load_store(0);
 
   -- General op code
   signal op_code: std_logic_vector(5 downto 0) := if_id(31 downto 26);
@@ -107,36 +115,61 @@ architecture arch of instruction_decode_stage is
 
   -- TODO: add load/store logic here so we know how to approach the register file
 
-   case op_code is
+  async_reset : process(clock, reset)
+  begin
+    if reset = '1' then
+      valid <= '0';
+    end if;
+  end process;
+
+  case op_code is
     when R_type_general_op_code =>
 
       --All R-type operations
       case funct is
         when funct_add =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_sub =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_mult =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_div =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_slt =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_and =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_or =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_nor =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_xor =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
         when funct_mfhi =>
@@ -144,12 +177,20 @@ architecture arch of instruction_decode_stage is
         when funct_mflo =>
           null; -- performed in WB
         when funct_sll =>
+            valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_srl =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_sra =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rt));
         when funct_jr =>
+          valid <= '1';
+          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
         when others =>
           null;
@@ -157,40 +198,56 @@ architecture arch of instruction_decode_stage is
 
     --All I-type operations
     when I_type_op_addi =>
+      valid <= '1';
+      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_slti =>
+      valid <= '1';
+      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
     when I_type_op_andi =>
+      valid <= '1';
+      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_ori =>
+      valid <= '1';
+      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_xori =>
+      valid <= '1';
+      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= blank_immediate_header & immediate;
     when I_type_op_lui =>
       null; -- Handled within ALU, no need to do anything here
     when I_type_op_lw =>
+      valid <= '1';
+      load_store <= '1';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
     when I_type_op_sw =>
+      valid <= '1';
+      load_store <= '1';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
     when I_type_op_beq =>
+      valid <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= to_integer(unsigned(itype_rt));
     when I_type_op_bne =>
+      valid <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= to_integer(unsigned(itype_rt));
@@ -213,5 +270,6 @@ architecture arch of instruction_decode_stage is
     id_ex_reg_2 <= register_2;
   end if;
 
+  valid_load_store_flag <= valid_load_store;
 
 end arch;

@@ -45,7 +45,7 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
 
-  -- pipeline register IO --
+  -- pipeline main register IO --
   signal if_id_in, if_id_out : std_logic_vector(31 downto 0);
   signal id_ex_1_in, id_ex_1_out : std_logic_vector(31 downto 0);
   signal id_ex_2_in, id_ex_2_out : std_logic_vector(31 downto 0);
@@ -63,13 +63,13 @@ architecture arch of pipeline is
   signal id_ex_instr_out : std_logic_vector(31 downto 0);
 
   -- pipeline data store address (for MEM and WB) --
-  signal id_ex_data_store_address_in, id_ex_data_store_address_out : integer;
-  alias ex_mem_data_store_address_in : id_ex_data_store_address_out;
-  signal ex_mem_data_store_address_out : integer;
+  signal ex_mem_data_store_address_in, ex_mem_data_store_address_out : integer;
   alias mem_wb_data_store_address_in : ex_mem_data_store_address_out;
   signal mem_wb_data_store_address_out : integer;
 
   -- pipeline valid load/store register IO --
+  -- signal at 1 is valid/not_valid
+  -- signal at 0 is loadstore/not_loadstore
   signal id_ex_valid_load_store_in, id_ex_data_store_address_out : std_logic_vector(1 downto 0);
   alias ex_mem_valid_load_store_in : id_ex_valid_load_store_out;
   signal ex_mem_valid_load_store_out : std_logic_vector(1 downto 0);
@@ -184,10 +184,13 @@ architecture arch of pipeline is
       register_1 : in std_logic_vector(31 downto 0);
       register_2 : in std_logic_vector(31 downto 0);
 
-      -- pipeline interface --
+      -- main pipeline interface --
       if_id : in std_logic_vector(31 downto 0);
       id_ex_reg_1 : out std_logic_vector(31 downto 0);
-      id_ex_reg_2 : out std_logic_vector(31 downto 0)
+      id_ex_reg_2 : out std_logic_vector(31 downto 0);
+
+      -- pipeline data store address --
+      valid_load_store_flag : out std_logic_vector(1 downto 0)
     );
   end component;
 
@@ -353,14 +356,6 @@ architecture arch of pipeline is
       id_ex_instr_out
     );
 
-    id_ex_data_store_address : pipeline_int_register
-    port map(
-      clock,
-      global_reset,
-      id_ex_data_store_address_in,
-      id_ex_data_store_address_out
-    );
-
     id_ex_load_store_control_register : pipeline_logic_register
     port map(
       clock,
@@ -442,7 +437,9 @@ architecture arch of pipeline is
       register_2 => reg_readdata2,
       if_id => if_id_out,
       id_ex_reg_1 => id_ex_1_in,
-      id_ex_reg_2 => id_ex_2_in
+      id_ex_reg_2 => id_ex_2_in,
+      load_store_data_address => id_ex_data_store_address_in,
+      valid_load_store_flag => id_ex_valid_load_store_in
     );
 
     execute_stage : execute_stage
