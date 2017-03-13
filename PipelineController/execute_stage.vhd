@@ -125,9 +125,9 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 						when funct_xor =>
 							ALU_output <= ALU_operand1 xor ALU_operand2;
 						when funct_mfhi =>
-							null;
+							null; -- handled in WB
 						when funct_mflo =>
-							null;
+							null; -- handled in WB
 						when funct_sll =>
 						-- Do we shift operand2 or operand1? Not sure...
 							ALU_output(31 downto shamt_int_value) <= ALU_operand2(31-shamt_int_value downto 0);
@@ -168,7 +168,6 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 					ALU_output(15 downto 0) <= (others => '0');
 				when I_type_op_lw =>
 					-- Address formed in similar way as ADDI
-
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_sw =>
 					-- Address formed in similar way as ADDI

@@ -19,6 +19,7 @@ entity instruction_decode_stage is
     id_ex_reg_2 : out std_logic_vector(31 downto 0);
 
     -- pipeline data store address --
+    load_store_data_address : out integer;
     valid_load_store_flag : out std_logic_vector(1 downto 0)
   );
 end instruction_decode_stage;

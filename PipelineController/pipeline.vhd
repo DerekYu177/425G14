@@ -63,7 +63,9 @@ architecture arch of pipeline is
   signal id_ex_instr_out : std_logic_vector(31 downto 0);
 
   -- pipeline data store address (for MEM and WB) --
-  signal ex_mem_data_store_address_in, ex_mem_data_store_address_out : integer;
+  signal id_ex_data_store_address_in, id_ex_data_store_address_out : integer;
+  alias ex_mem_data_store_address_in : id_ex_data_store_address_out;
+  signal ex_mem_data_store_address_out : integer;
   alias mem_wb_data_store_address_in : ex_mem_data_store_address_out;
   signal mem_wb_data_store_address_out : integer;
 
@@ -190,6 +192,7 @@ architecture arch of pipeline is
       id_ex_reg_2 : out std_logic_vector(31 downto 0);
 
       -- pipeline data store address --
+      load_store_data_address : out integer;
       valid_load_store_flag : out std_logic_vector(1 downto 0)
     );
   end component;
@@ -354,6 +357,14 @@ architecture arch of pipeline is
       global_reset,
       id_ex_instr_in,
       id_ex_instr_out
+    );
+
+    id_ex_data_store_address : pipeline_int_register
+    port map(
+      clock,
+      global_reset,
+      id_ex_data_store_address_in,
+      id_ex_data_store_address_out
     );
 
     id_ex_load_store_control_register : pipeline_logic_register
