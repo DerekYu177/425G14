@@ -5,10 +5,19 @@
 #### Pipeline
 The Pipeline is:
   1. a collection of components. Each component represents one stage in the pipeline. i.e. IF is one component, with it's own entity and architecture.
-  2. components separated by a pipeline register. Each stage component can only access the adjacent pipeline registers initially. i.e. ID component can only interact with the if_id register and the id_ex register.
+  2. components separated by a pipeline register bus. Each stage component can only access the adjacent pipeline registers initially. i.e. ID component can only interact with the if_id register bus and the id_ex register bus.
   3. components which are given access to memory if they need it. This means that IF can access the instruction memory, but perhaps not the register memory.
-  4. A three stage FSM, with states _init_, _process_, and _finished_. _init_ communicates with the testbench to receive data. _process_ is where the processor is working, and _finished_ again communicates appropriately with the testbench in order to return data.
-  
+  4. A three stage FSM, with states _init_, _process_, and _fini_. _init_ communicates with the testbench to receive data. _process_ is where the processor is working, and _fini_ again communicates appropriately with the testbench in order to return data.
+ 
+#### Pipeline Register Bus (PRB)
+  1. The PRB is the principle way of communicating between components. It is a straightforward active-high clock & asynchronous clear register. 
+  2. The PRB contains 10 inputs and 10 outputs. These are
+    1. 3 x 32b registers, named data_1, data_2, and scratch
+    2. 2 x integer registers, one for PC, and the other for Address
+    3. 2 x 1b valid registers, one for PC and the other for Address
+    4. 3 x 1b valid registers, one for loading into memory, one for storing into memory, and one for storing into the registers. 
+  3. The connections between the components and the PRB is outlined in the PR located here: https://github.com/DerekYu177/425G14/pull/17
+
 #### Forwarding
   1. The logic behind forwarding is that the EX stage has the choice to select between what is provided by the ID stage or the current output (at the EX/MEM register).
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
