@@ -14,13 +14,16 @@ entity instruction_decode_stage is
     register_2 : in std_logic_vector(31 downto 0);
 
     -- main pipeline interface --
-    if_id : in std_logic_vector(31 downto 0);
+    instruction : in std_logic_vector(31 downto 0);
     id_ex_reg_1 : out std_logic_vector(31 downto 0);
     id_ex_reg_2 : out std_logic_vector(31 downto 0);
 
     -- pipeline data store address --
-    load_store_data_address : out integer;
-    valid_load_store_flag : out std_logic_vector(1 downto 0)
+    load_store_address : out integer; -- still unused!
+    load_store_address_valid : out std_logic; -- still unused!
+    load_memory_valid : out std_logic;
+    store_memory_valid : out std_logic;
+    store_register : out std_logic
   );
 end instruction_decode_stage;
 
@@ -30,30 +33,26 @@ architecture arch of instruction_decode_stage is
   signal reg_1_set : std_logic := '0';
   signal reg_2_set : std_logic := '0';
 
-  signal valid_load_store : std_logic_vector(1 downto 0) := "00";
-  alias valid_flag : valid_load_store(1);
-  alias load_store : valid_load_store(0);
-
   -- General op code
-  signal op_code: std_logic_vector(5 downto 0) := if_id(31 downto 26);
+  signal op_code: std_logic_vector(5 downto 0) := instruction(31 downto 26);
 
 	-- R-type decomposition
-  signal rtype_rs: integer := to_integer(unsigned(if_id(25 downto 21)));
-  signal rtype_rt: integer := to_integer(unsigned(if_id(20 downto 16)));
-  signal rtype_rd: integer := to_integer(unsigned(if_id(15 downto 11)));
-  signal shamt: std_logic_vector(4 downto 0) := if_id(10 downto 6);
-  signal funct: std_logic_vector(5 downto 0) := if_id(5 downto 0);
+  signal rtype_rs: integer := to_integer(unsigned(instruction(25 downto 21)));
+  signal rtype_rt: integer := to_integer(unsigned(instruction(20 downto 16)));
+  signal rtype_rd: integer := to_integer(unsigned(instruction(15 downto 11)));
+  signal shamt: std_logic_vector(4 downto 0) := instruction(10 downto 6);
+  signal funct: std_logic_vector(5 downto 0) := instruction(5 downto 0);
 
 	-- I-type decomposition
-  signal itype_rs: integer := to_integer(unsigned(if_id(25 downto 21)));
-  signal itype_rt: integer := to_integer(unsigned(if_id(20 downto 16)));
-  signal immediate: std_logic_vector(15 downto 0) := if_id(15 downto 0);
+  signal itype_rs: integer := to_integer(unsigned(instruction(25 downto 21)));
+  signal itype_rt: integer := to_integer(unsigned(instruction(20 downto 16)));
+  signal immediate: std_logic_vector(15 downto 0) := instruction(15 downto 0);
   signal blank_immediate_header : std_logic_vector(15 downto 0) := (others => '0');
   signal extended_immediate: std_logic_vector(31 downto 0);
   signal extended_immediate_shifted: std_logic_vector(31 downto 0);
 
   -- J-type decomposition
-  signal jump_address_offset: std_logic_vector(25 downto 0) := if_id(25 downto 0);
+  signal jump_address_offset: std_logic_vector(25 downto 0) := instruction(25 downto 0);
 
 	-- FUNCT constants for R-type instructions
 	-------------------------------------------------
@@ -128,137 +127,90 @@ architecture arch of instruction_decode_stage is
 
       --All R-type operations
       case funct is
-        when funct_add =>
-          valid <= '1';
-          load_store <= '0';
+        when funct_add | funct_sub | funct_mult | funct_div | funct_slt | funct_and | funct_or | funct_nor | funct_xor =>
           read_1_address <= to_integer(unsigned(rtype_rs));
           read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_sub =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_mult =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_div =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_slt =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_and =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_or =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_nor =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_xor =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rs));
-          read_2_address <= to_integer(unsigned(rtype_rt));
-        when funct_mfhi =>
+          store_register <= '1';
+          load_memory_valid <= '0';
+          store_memory_valid <= '0';
+          load_store_address_valid <= '0';
+
+        when funct_mfhi | funct_mflo=>
           null; -- performed in WB
-        when funct_mflo =>
-          null; -- performed in WB
-        when funct_sll =>
-            valid <= '1';
-          load_store <= '0';
+
+        when funct_sll | funct_srl | funct_sra =>
           read_1_address <= to_integer(unsigned(rtype_rt));
-        when funct_srl =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rt));
-        when funct_sra =>
-          valid <= '1';
-          load_store <= '0';
-          read_1_address <= to_integer(unsigned(rtype_rt));
+          store_register <= '1';
+          load_memory_valid <= '0';
+          store_memory_valid <= '0';
+          load_store_address_valid <= '0';
+
         when funct_jr =>
-          valid <= '1';
-          load_store <= '0';
           read_1_address <= to_integer(unsigned(rtype_rs));
+          store_register <= '1';
+          load_memory_valid <= '0';
+          store_memory_valid <= '0';
+          load_store_address_valid <= '0';
+
         when others =>
           null;
+
       end case;
 
     --All I-type operations
-    when I_type_op_addi =>
-      valid <= '1';
-      load_store <= '0';
+    when I_type_op_addi | I_type_op_andi | I_type_op_ori | I_type_op_xori =>
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= blank_immediate_header & immediate;
+      store_register <= '1';
+      load_memory_valid <= '0';
+      store_memory_valid <= '0';
+      load_store_address_valid <= '0';
+
     when I_type_op_slti =>
-      valid <= '1';
-      load_store <= '0';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
-    when I_type_op_andi =>
-      valid <= '1';
-      load_store <= '0';
-      read_1_address <= to_integer(unsigned(itype_rs));
-      reg_2_set <= '1';
-      id_ex_reg_2 <= blank_immediate_header & immediate;
-    when I_type_op_ori =>
-      valid <= '1';
-      load_store <= '0';
-      read_1_address <= to_integer(unsigned(itype_rs));
-      reg_2_set <= '1';
-      id_ex_reg_2 <= blank_immediate_header & immediate;
-    when I_type_op_xori =>
-      valid <= '1';
-      load_store <= '0';
-      read_1_address <= to_integer(unsigned(itype_rs));
-      reg_2_set <= '1';
-      id_ex_reg_2 <= blank_immediate_header & immediate;
+      store_register <= '1';
+      load_memory_valid <= '0';
+      store_memory_valid <= '0';
+      load_store_address_valid <= '0';
+
     when I_type_op_lui =>
       null; -- Handled within ALU, no need to do anything here
+
     when I_type_op_lw =>
-      valid <= '1';
-      load_store <= '1';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
+      store_register <= '0';
+      load_memory_valid <= '1';
+      store_memory_valid <= '0';
+      load_store_address_valid <= '1'; -- but where is the address of the register??
+
     when I_type_op_sw =>
-      valid <= '1';
-      load_store <= '1';
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= extended_immediate;
-    when I_type_op_beq =>
-      valid <= '0';
+      store_register <= '0';
+      load_memory_valid <= '0';
+      store_memory_valid <= '1';
+      load_store_address_valid <= '1'; -- but where is the address of the register?? 
+
+    when I_type_op_beq | I_type_op_bne =>
       read_1_address <= to_integer(unsigned(itype_rs));
       reg_2_set <= '1';
       id_ex_reg_2 <= to_integer(unsigned(itype_rt));
-    when I_type_op_bne =>
-      valid <= '0';
-      read_1_address <= to_integer(unsigned(itype_rs));
-      reg_2_set <= '1';
-      id_ex_reg_2 <= to_integer(unsigned(itype_rt));
+      store_register <= '0';
+      load_memory_valid <= '0';
+      store_memory_valid <= '0';
+      load_store_address_valid <= '0';
 
     --All J-type operations
     -- handled within ALU? Or can we resolve them here?
-    when J_type_op_j =>
+    when J_type_op_j | J_type_op_jal =>
       null;
-    when J_type_op_jal =>
-      null;
+
     when others =>
       null;
   end case;
@@ -270,7 +222,5 @@ architecture arch of instruction_decode_stage is
   if reg_2_set = '0' then
     id_ex_reg_2 <= register_2;
   end if;
-
-  valid_load_store_flag <= valid_load_store;
 
 end arch;
