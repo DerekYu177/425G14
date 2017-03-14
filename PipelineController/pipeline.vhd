@@ -254,9 +254,17 @@ architecture arch of pipeline is
 
   component execute_stage is
     port(
-      clock, reset: in std_logic;
-  		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
+      clock : in std_logic;
+      reset: in std_logic;
+
+      -- pipeline interface --
+  		ALU_instruction : in std_logic_vector(31 downto 0);
+      ALU_operand1 : in std_logic_vector(31 downto 0);
+      ALU_operand2 : in std_logic_vector(31 downto 0);
   		ALU_next_pc : in integer; -- for branching
+      ALU_next_pc_valid : in std_logic;
+      load_store_address : in integer;
+      load_store_address_valid : in std_logic;
       jump_address : out integer;
   		jump_taken : out std_logic;
   		ALU_output: out std_logic_vector(31 downto 0)
@@ -509,10 +517,13 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
+
       ALU_instruction => id_ex_scratch_out,
       ALU_operand1 => id_ex_data_1_out,
       ALU_operand2 => id_ex_data_2_out,
       ALU_next_pc => id_ex_pc_value_out,
+      load_store_address => id_ex_address_value_out,
+      load_store_address_valid => id_ex_address_valid_out,
       jump_address => ex_mem_pc_value_in,
       jump_taken => ex_mem_pc_valid_in,
       ALU_output => ex_mem_data_1_in
