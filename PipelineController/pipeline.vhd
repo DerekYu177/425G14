@@ -288,6 +288,9 @@ architecture arch of pipeline is
       data_in : in std_logic_vector(31 downto 0);
       data_in_address : in integer;
       data_in_address_valid : in std_logic;
+      data_out : out std_logic_vector(31 downto 0);
+      data_out_address : out integer;
+      data_out_address_valid : out std_logic;
       load_memory_valid : in std_logic;
       store_memory_valid : in std_logic
     );
@@ -543,6 +546,9 @@ architecture arch of pipeline is
       data_in <= ex_mem_data_1_out,
       data_in_address <= ex_mem_address_value_out,
       data_in_address_valid <= ex_mem_address_valid_out,
+      data_out <= mem_wb_data_1_in,
+      data_out_address <= mem_wb_address_value_in,
+      data_out_address_valid <= mem_wb_address_valid_in,
       load_memory_valid <= ex_mem_load_memory_valid_out,
       store_memory_valid <= ex_mem_store_memory_valid_out
     );
