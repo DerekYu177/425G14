@@ -22,6 +22,55 @@ The Pipeline is:
   1. The logic behind forwarding is that the EX stage has the choice to select between what is provided by the ID stage or the current output (at the EX/MEM register).
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
   3. The idea of $[EX/MEM] -> EX input can be further generalized to cases of $[MEM/WB] -> EX input, and $[MEM/WB] -> MEM input. More if-statements should be addded with care.
+
+#### Concrete Implementation of Forwarding
+  
+  1. At the EX stage, check if the instruction_register at the beginning holds an instruction (call this i_current) that:
+    a) If R-type: 
+    Check the instruction at the end of EX stage (call this i_prev), what type is it?
+    
+      i)
+      If i_prev is R-type, does i_prev holds a destination register that is currently being consumed as the source register of i_current (data dependency)?
+      if YES ->
+      This corresponds to the case of:
+      ADD R1 R2 R3 (previous instruction, located in the inst-reg at the end of EX stage, EX_MEM)
+      SUB R4 R1 R5 (current instruction, located in the inst-reg at the beginning of EX stage, ID_EX)
+      Since all R-type produces their result by EX with 1cc latency, the updated data resulting from executing i_prev should already be ready.
+      i_ SELECT FORWARDING FROM EX's output to EX's input_
+      if NO ->
+      i_ NO FORWARDING, nothing additional_
+      
+      ii) If i_prev is an I-type
+      Does i_prev holds a destination register that is currently being consumed as the source register of i_current (data dependency)?
+      is it a LOAD? if yes ->
+      This corresponds to the case of:
+      L.D R1 R2 imm (i_prev)
+      ADD R4 R1 R5 (i_current)
+      Since load only produces at at the end of MEM, it means R1 is not ready yet
+      i_ NO FORWADING, STALL to prevent RAW hazard_
+      is it a STORE? if yes ->
+      This corresponds to the case
+      S.W R1 R2 imm (i_prev)
+      ADD R5 R1 R6 (i_current)
+      i_ NO FORWARDING, nothing additional_
+      Is it an immediate-reg arithmentics? if yes ->
+      This correponds to the case of:
+      ADDI R1 R2 imm (i_prev)
+      ADD R3 R1 R4 (i_current)
+       Since immediate-reg arithmentics produce their result by EX with 1cc latency, the updated data resulting from executing i_prev should already be ready.
+      i_ SELECT FORWARDING FROM EX's output to EX's input_
+      
+      We then peek 1 stage further (instruction from MEM/WB), but here things are much easier, we disregard all R-type instructions (they're already handled before), we forward from MEM/WB to ID/EX if and only if when the instruction is a LOAD, since the loading should be done producing by now
+      L.D R1 R2 imm
+      ADD R3 R4 R5 (R1 not ready yet)
+      SUB R6 R1 R7 (R1 is ready now)
+      
+    b) If I-type
+      TODO
+    
+      
+      
+       
   
 #### Testbench
 The Testbench must:
