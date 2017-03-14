@@ -7,7 +7,15 @@ entity execute_stage is
 		clock, reset: in std_logic;
 		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
 		ALU_next_pc : in integer; -- for branching
+		ALU_next_pc_valid : in std_logic;
+		load_store_address : in integer;
+		load_store_address_valid : in std_logic;
+		jump_address : out integer;
 		jump_taken : out std_logic;
+
+		-- ALU_output is only used for arithmetic actions, corresponding to non - load/store or jump instructions.
+		-- If an addresss for jump is being calculated, it goes onto jump_address with an asserted jump_taken.
+		-- If an address for load/store is being calculated, it goes onto load_store_address with an asserted load_store_address_valid
 		ALU_output: out std_logic_vector(31 downto 0)
 	);
 end execute_stage;
@@ -33,8 +41,6 @@ signal extended_immediate: std_logic_vector(31 downto 0);
 -- J-type decomposition
 signal jump_address_offset: std_logic_vector(25 downto 0) := ALU_instruction(25 downto 0);
 
--- Comments: notice that the register fields are omitted on purpose, since it's the controller's job to feed in the correct operand as input; the ALU just performs the operation
-
 -- FUNCT constants for R-type instructions
 -------------------------------------------------
 constant R_type_general_op_code: std_logic_vector(5 downto 0) := "000000";
@@ -57,8 +63,7 @@ constant funct_mflo: std_logic_vector(5 downto 0):= "010010";
 constant funct_sll: std_logic_vector(5 downto 0) := "000000";
 constant funct_srl: std_logic_vector(5 downto 0) := "000010";
 constant funct_sra: std_logic_vector(5 downto 0) := "000011";
--- Register jump_address_offset
--- CAREFUL! jr is not a J type...
+-- Register jump_address_offset -  CAREFUL! jr is not a J type...
 constant funct_jr: std_logic_vector(5 downto 0)  := "001000";
 
 
@@ -99,9 +104,8 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 		elsif (clock'event and clock = '1') then
 			case op_code is
 				when R_type_general_op_code =>
-				--All R-type operations
-				-----------------------
-					case funct is
+
+					case funct is -- R-type
 						when funct_add =>
 							ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 						when funct_sub =>
@@ -124,9 +128,7 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 							ALU_output <= ALU_operand1 NOR ALU_operand2;
 						when funct_xor =>
 							ALU_output <= ALU_operand1 xor ALU_operand2;
-						when funct_mfhi =>
-							null; -- handled in WB
-						when funct_mflo =>
+						when funct_mfhi | funct_mflo =>
 							null; -- handled in WB
 						when funct_sll =>
 						-- Do we shift operand2 or operand1? Not sure...
@@ -141,13 +143,13 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 						when funct_jr =>
 						-- Directly jump to address contained in register
 						-- Assume address contained comes from operand1
-							ALU_output <= ALU_operand1;
+							jump_address <= ALU_operand1;
+							jump_taken <= '1';
+							-- ALU_output <= ALU_operand1;
 						when others =>
 							null;
 					end case;
 
-				--All I-type operations
-				-----------------------
 				--We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
 				when I_type_op_addi =>
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
@@ -166,29 +168,30 @@ extended_immediate <= (31 downto 16 => immediate(15))&immediate;
 				when I_type_op_lui =>
 					ALU_output(31 downto 16) <= immediate(15 downto 0);
 					ALU_output(15 downto 0) <= (others => '0');
-				when I_type_op_lw =>
+				when I_type_op_lw | I_type_op_sw =>
 					-- Address formed in similar way as ADDI
-					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
-				when I_type_op_sw =>
-					-- Address formed in similar way as ADDI
-					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
+					load_store_address <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
+					load_store_address_valid <= '1';
+					-- ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 				when I_type_op_beq =>
 					if (ALU_operand1 = ALU_operand2) then
 						jump_taken <= '1';
-						ALU_output <= ALU_next_pc + signed(extended_immediate));
+						jump_address <= ALU_next_pc + signed(extended_immediate));
+						-- ALU_output <= std_logic_vector(ALU_next_pc + signed(extended_immediate)));
 					else
 						jump_taken <= '0';
 					end if;
 				when I_type_op_bne =>
 					if (ALU_operand1 != ALU_operand2) then
 						jump_taken <= '1';
-						ALU_output <= ALU_next_pc + signed(extended_immediate));
+						jump_address <= ALU_next_pc + signed(extended_immediate));
+						-- ALU_output <= std_logic_vector(ALU_next_pc + signed(extended_immediate)));
 					else
 						jump_taken <= '0';
 					end if;
 
-				--All J-type operations
-				-----------------------
+
+				-- TODO : TURN THIS INTO INT AND OUTPOUT TO jump_address and assert jump_address_valid
 				when J_type_op_j =>
 				-- [4 MSB taken from New PC] & [26 bits from jump_address_offset] & ["00"]
 					--ALU_output <= (31 downto 28 => ALU_NPC(31 downto 28), 27 downto 2 => jump_address_offset(25 downto 0), others => '0');
