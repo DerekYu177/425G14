@@ -36,9 +36,9 @@ The Pipeline is:
       ADD R1 R2 R3 (previous instruction, located in the inst-reg at the end of EX stage, EX_MEM)
       SUB R4 R1 R5 (current instruction, located in the inst-reg at the beginning of EX stage, ID_EX)
       Since all R-type produces their result by EX with 1cc latency, the updated data resulting from executing i_prev should already be ready.
-      i_ SELECT FORWARDING FROM EX's output to EX's input_
+      SELECT FORWARDING FROM EX's output to EX's input
       if NO ->
-      i_ NO FORWARDING, nothing additional_
+      NO FORWARDING, nothing additional
       
       ii) If i_prev is an I-type
       Does i_prev holds a destination register that is currently being consumed as the source register of i_current (data dependency)?
@@ -47,18 +47,18 @@ The Pipeline is:
       L.D R1 R2 imm (i_prev)
       ADD R4 R1 R5 (i_current)
       Since load only produces at at the end of MEM, it means R1 is not ready yet
-      i_ NO FORWADING, STALL to prevent RAW hazard_
+      NO FORWADING, STALL to prevent RAW hazard
       is it a STORE? if yes ->
       This corresponds to the case
       S.W R1 R2 imm (i_prev)
       ADD R5 R1 R6 (i_current)
-      i_ NO FORWARDING, nothing additional_
+      NO FORWARDING, nothing additional
       Is it an immediate-reg arithmentics? if yes ->
       This correponds to the case of:
       ADDI R1 R2 imm (i_prev)
       ADD R3 R1 R4 (i_current)
        Since immediate-reg arithmentics produce their result by EX with 1cc latency, the updated data resulting from executing i_prev should already be ready.
-      i_ SELECT FORWARDING FROM EX's output to EX's input_
+      SELECT FORWARDING FROM EX's output to EX's input
       
       We then peek 1 stage further (instruction from MEM/WB), but here things are much easier, we disregard all R-type instructions (they're already handled before), we forward from MEM/WB to ID/EX if and only if when the instruction is a LOAD, since the loading should be done producing by now
       L.D R1 R2 imm
