@@ -78,6 +78,86 @@ architecture arch of pipeline is
   alias mem_wb_valid_load_store_in : ex_mem_valid_load_store_out;
   signal mem_wb_valid_load_store_out : std_logic_vector(1 downto 0);
 
+  signal if_id_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_pc_value_in : integer := 0;
+  signal if_id_address_value_in : integer := 0;
+  signal if_id_pc_valid_in : std_logic := '0';
+  signal if_id_address_valid_in : std_logic := '0';
+  signal if_id_load_memory_valid_in : std_logic := '0';
+  signal if_id_store_memory_valid_in : std_logic := '0';
+  signal if_id_store_register_in : std_logic := '0';
+
+  signal if_id_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_pc_value_out : integer := 0;
+  signal if_id_address_value_out : integer := 0;
+  signal if_id_pc_valid_out : std_logic := '0';
+  signal if_id_address_valid_out : std_logic := '0';
+  signal if_id_load_memory_valid_out : std_logic := '0';
+  signal if_id_store_memory_valid_out : std_logic := '0';
+  signal if_id_store_register_out : std_logic := '0';
+
+  signal id_ex_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_pc_value_in : integer := 0;
+  signal id_ex_address_value_in : integer := 0;
+  signal id_ex_pc_valid_in : std_logic := '0';
+  signal id_ex_address_valid_in : std_logic := '0';
+  signal id_ex_load_memory_valid_in : std_logic := '0';
+  signal id_ex_store_memory_valid_in : std_logic := '0';
+  signal id_ex_store_register_in : std_logic := '0';
+
+  signal id_ex_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_pc_value_out : integer := 0;
+  signal id_ex_address_value_out : integer := 0;
+  signal id_ex_pc_valid_out : std_logic := '0';
+  signal id_ex_address_valid_out : std_logic := '0';
+  signal id_ex_load_memory_valid_out : std_logic := '0';
+  signal id_ex_store_memory_valid_out : std_logic := '0';
+  signal id_ex_store_register_out : std_logic := '0';
+
+  signal ex_mem_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_pc_value_in : integer := 0;
+  signal ex_mem_address_value_in : integer := 0;
+  signal ex_mem_pc_valid_in : std_logic := '0';
+  signal ex_mem_address_valid_in : std_logic := '0';
+  signal ex_mem_load_memory_valid_in : std_logic := '0';
+  signal ex_mem_store_memory_valid_in : std_logic := '0';
+  signal ex_mem_store_register_in : std_logic := '0';
+
+  signal ex_mem_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_pc_value_out : integer := 0;
+  signal ex_mem_address_value_out : integer := 0;
+  signal ex_mem_pc_valid_out : std_logic := '0';
+  signal ex_mem_address_valid_out : std_logic := '0';
+  signal ex_mem_load_memory_valid_out : std_logic := '0';
+  signal ex_mem_store_memory_valid_out : std_logic := '0';
+  signal ex_mem_store_register_out : std_logic := '0';
+
+  signal mem_wb_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_pc_value_in : integer := 0;
+  signal mem_wb_address_value_in : integer := 0;
+  signal mem_wb_pc_valid_in : std_logic := '0';
+  signal mem_wb_address_valid_in : std_logic := '0';
+  signal mem_wb_load_memory_valid_in : std_logic := '0';
+  signal mem_wb_store_memory_valid_in : std_logic := '0';
+  signal mem_wb_store_register_in : std_logic := '0';
+
+  signal mem_wb_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_pc_value_out : integer := 0;
+  signal mem_wb_address_value_out : integer := 0;
+  signal mem_wb_pc_valid_out : std_logic := '0';
+  signal mem_wb_address_valid_out : std_logic := '0';
+  signal mem_wb_load_memory_valid_out : std_logic := '0';
+  signal mem_wb_store_memory_valid_out : std_logic := '0';
+  signal mem_wb_store_register_out : std_logic := '0';
+
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
   signal instr_memory_address : integer range 0 to ram_size-1;
@@ -233,6 +313,33 @@ architecture arch of pipeline is
 
       -- pipeline interface --
       mem_wb : in std_logic_vector(31 downto 0)
+    );
+  end component;
+
+  component pipeline_register_bus is
+    port (
+      clock : in std_logic;
+      reset : in std_logic;
+
+      stage_1_data_1 : in std_logic_vector(31 downto 0);
+      stage_1_scratch : in std_logic_vector(31 downto 0);
+      stage_1_pc_value : in integer;
+      stage_1_address_value : in integer;
+      stage_1_pc_valid : in std_logic;
+      stage_1_address_valid : in std_logic;
+      stage_1_load_memory_valid : in std_logic;
+      stage_1_store_memory_valid : in std_logic;
+      stage_1_store_register : in std_logic;
+
+      stage_2_data_1 : in std_logic_vector(31 downto 0);
+      stage_2_scratch : in std_logic_vector(31 downto 0);
+      stage_2_pc_value : in integer;
+      stage_2_address_value : in integer;
+      stage_2_pc_valid : in std_logic;
+      stage_2_address_valid : in std_logic;
+      stage_2_load_memory_valid : in std_logic;
+      stage_2_store_memory_valid : in std_logic;
+      stage_2_store_register : in std_logic
     );
   end component;
 
@@ -421,6 +528,110 @@ architecture arch of pipeline is
       global_reset,
       mem_wb_data_store_address_in,
       mem_wb_data_store_address_out
+    );
+
+    if_id_pipeline_bus : pipeline_register_bus
+    port map(
+      clock,
+      global_reset,
+
+      if_id_data_1_in,
+      if_id_scratch_in,
+      if_id_pc_value_in,
+      if_id_address_value_in,
+      if_id_pc_valid_in,
+      if_id_address_valid_in,
+      if_id_load_memory_valid_in,
+      if_id_store_memory_valid_in,
+      if_id_store_register_in,
+
+      if_id_data_1_out,
+      if_id_scratch_out,
+      if_id_pc_value_out,
+      if_id_address_value_out,
+      if_id_pc_valid_out,
+      if_id_address_valid_out,
+      if_id_load_memory_valid_out,
+      if_id_store_memory_valid_out,
+      if_id_store_register_out
+    );
+
+    id_ex_pipeline_bus : pipeline_register_bus
+    port map(
+      clock,
+      global_reset,
+
+      id_ex_data_1_in,
+      id_ex_scratch_in,
+      id_ex_pc_value_in,
+      id_ex_address_value_in,
+      id_ex_pc_valid_in,
+      id_ex_address_valid_in,
+      id_ex_load_memory_valid_in,
+      id_ex_store_memory_valid_in,
+      id_ex_store_register_in,
+
+      id_ex_data_1_out,
+      id_ex_scratch_out,
+      id_ex_pc_value_out,
+      id_ex_address_value_out,
+      id_ex_pc_valid_out,
+      id_ex_address_valid_out,
+      id_ex_load_memory_valid_out,
+      id_ex_store_memory_valid_out,
+      id_ex_store_register_out
+    );
+
+    ex_mem_pipeline_bus : pipeline_register_bus
+    port map(
+      clock,
+      global_reset,
+
+      ex_mem_data_1_in,
+      ex_mem_scratch_in,
+      ex_mem_pc_value_in,
+      ex_mem_address_value_in,
+      ex_mem_pc_valid_in,
+      ex_mem_address_valid_in,
+      ex_mem_load_memory_valid_in,
+      ex_mem_store_memory_valid_in,
+      ex_mem_store_register_in,
+
+      ex_mem_data_1_out,
+      ex_mem_scratch_out,
+      ex_mem_pc_value_out,
+      ex_mem_address_value_out,
+      ex_mem_pc_valid_out,
+      ex_mem_address_valid_out,
+      ex_mem_load_memory_valid_out,
+      ex_mem_store_memory_valid_out,
+      ex_mem_store_register_out
+    );
+
+    mem_wb_pipeline_bus : pipeline_register_bus
+    port map(
+      clock,
+      global_reset,
+
+      mem_wb_data_1_in,
+      mem_wb_scratch_in,
+      mem_wb_pc_value_in,
+      mem_wb_address_value_in,
+      mem_wb_pc_valid_in,
+      mem_wb_address_valid_in,
+      mem_wb_load_memory_valid_in,
+      mem_wb_store_memory_valid_in,
+      mem_wb_store_register_in,
+
+      mem_wb_data_1_out,
+      mem_wb_scratch_out,
+      mem_wb_pc_value_out,
+      mem_wb_address_value_out,
+      mem_wb_pc_valid_out,
+      mem_wb_address_valid_out,
+      mem_wb_load_memory_valid_out,
+      mem_wb_store_memory_valid_out,
+      mem_wb_store_register_out
     );
 
     instruction_fetch_stage : instruction_fetch_stage
