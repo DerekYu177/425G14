@@ -8,6 +8,7 @@ entity pipeline_register_bus is
     reset : in std_logic;
 
     stage_1_data_1 : in std_logic_vector(31 downto 0);
+    stage_1_data_2 : in std_logic_vector(31 downto 0);
     stage_1_scratch : in std_logic_vector(31 downto 0);
     stage_1_pc_value : in integer;
     stage_1_address_value : in integer;
@@ -17,15 +18,16 @@ entity pipeline_register_bus is
     stage_1_store_memory_valid : in std_logic;
     stage_1_store_register : in std_logic;
 
-    stage_2_data_1 : in std_logic_vector(31 downto 0);
-    stage_2_scratch : in std_logic_vector(31 downto 0);
-    stage_2_pc_value : in integer;
-    stage_2_address_value : in integer;
-    stage_2_pc_valid : in std_logic;
-    stage_2_address_valid : in std_logic;
-    stage_2_load_memory_valid : in std_logic;
-    stage_2_store_memory_valid : in std_logic;
-    stage_2_store_register : in std_logic
+    stage_2_data_1 : out std_logic_vector(31 downto 0);
+    stage_1_data_2 : out std_logic_vector(31 downto 0);
+    stage_2_scratch : out std_logic_vector(31 downto 0);
+    stage_2_pc_value : out integer;
+    stage_2_address_value : out integer;
+    stage_2_pc_valid : out std_logic;
+    stage_2_address_valid : out std_logic;
+    stage_2_load_memory_valid : out std_logic;
+    stage_2_store_memory_valid : out std_logic;
+    stage_2_store_register : out std_logic
   );
 end pipeline_register_bus;
 
@@ -35,6 +37,7 @@ begin
   begin
     if reset = '1' then
       stage_2_data_1 <= (others => '0');
+      stage_2_data_2 <= (others => '0');
       stage_2_scratch <= (others => '0');
       stage_2_pc_value <= 0;
       stage_2_address_value <= 0;
@@ -45,6 +48,7 @@ begin
       stage_2_store_register <= '0';
     elsif clock'event and clock = '1' then
       stage_2_data_1 <= stage_1_data_1;
+      stage_2_data_2 <= stage_1_data_2;
       stage_2_scratch <= stage_1_scratch;
       stage_2_pc_value <= stage_1_pc_value;
       stage_2_address_value <= stage_1_address_value;
