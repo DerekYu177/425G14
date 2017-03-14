@@ -26,10 +26,8 @@ The Pipeline is:
 #### Concrete Implementation of Forwarding
   
   1. At the EX stage, check if the instruction_register at the beginning holds an instruction (call this i_current) that:
-    a) If R-type: 
+    If R-type: 
     Check the instruction at the end of EX stage (call this i_prev), what type is it?
-    
-      i)
       If i_prev is R-type, does i_prev holds a destination register that is currently being consumed as the source register of i_current (data dependency)?
       if YES ->
       This corresponds to the case of:
@@ -40,7 +38,7 @@ The Pipeline is:
       if NO ->
       NO FORWARDING, nothing additional
       
-      ii) If i_prev is an I-type
+      If i_prev is an I-type
       Does i_prev holds a destination register that is currently being consumed as the source register of i_current (data dependency)?
       is it a LOAD? if yes ->
       This corresponds to the case of:
@@ -64,14 +62,7 @@ The Pipeline is:
       L.D R1 R2 imm
       ADD R3 R4 R5 (R1 not ready yet)
       SUB R6 R1 R7 (R1 is ready now)
-      
-    b) If I-type
-      TODO
-    
-      
-      
-       
-  
+        
 #### Testbench
 The Testbench must:
   1. Open both the program.txt and the memory.txt to begin sending to the pipeline
