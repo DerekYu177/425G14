@@ -23,32 +23,33 @@ entity instruction_fetch_stage is
 end instruction_fetch_stage;
 
 architecture arch of instruction_fetch_stage is
+
+  signal program_counter : integer := 0;
+
   begin
-    async_reset : process(reset)
+    async_reset : process(reset, clock, jump_taken)
     begin
       if (reset = '1') then
         read_instruction <= '0';
-        read_instruction_address <= '0';
-        updated_program_counter <= 0;
+        read_instruction_address <= 0;
+        program_counter <= 0;
         program_counter_valid <= '0';
       end if;
-    end process;
 
-    pc_incrementer : process(clock, jump_taken)
-    begin
       if (clock'event and clock = '1') then
         if (jump_taken = '1') then
-          updated_program_counter <= jump_program_counter;
+          program_counter <= jump_program_counter;
           program_counter_valid <= '1';
         else
-          updated_program_counter <= program_counter + 4;
+          program_counter <= program_counter + 4;
           program_counter_valid <= '1';
         end if;
       end if;
-    end process;
 
-    read_instruction <= '1';
-    read_instruction_address <= program_counter;
+      read_instruction <= '1';
+      read_instruction_address <= program_counter;
+      updated_program_counter <= program_counter;
+    end process;
 
     fetch_instruction : process(wait_request)
     begin
