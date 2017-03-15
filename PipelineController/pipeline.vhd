@@ -583,8 +583,9 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
-
-      -- TODO : REGISTER INTERFACE
+      reg_writedata => reg_writedata,
+      reg_writereg_address => reg_writereg,
+      reg_regwrite => reg_regwrite,
 
       write_data => mem_wb_data_1_out,
       write_address => mem_wb_pc_value_out,
