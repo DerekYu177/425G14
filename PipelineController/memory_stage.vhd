@@ -25,7 +25,7 @@ end memory_stage;
 
 architecture arch of memory_stage is
 begin
-  load_store_with_async_reset : process(load_memory_valid, store_memory_valid, data_in_address_valid, reset)
+  process(clock, load_memory_valid, store_memory_valid, data_in_address_valid, reset)
   begin
     if reset = '1' then
       data_out_address_valid <= '0';
