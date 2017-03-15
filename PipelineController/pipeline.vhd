@@ -24,7 +24,7 @@ architecture arch of pipeline is
 
   -- STATE DEFINITION --
   type state_type is (
-    init, processor, fini
+    clear, init, processor, fini
   );
 
   signal present_state, next_state : state_type;
@@ -44,6 +44,7 @@ architecture arch of pipeline is
   constant data_size : integer := 8192;
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
+
 
   -- pipeline main register IO --
   signal if_id_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -136,14 +137,14 @@ architecture arch of pipeline is
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
-  signal instr_memory_address : integer range 0 to ram_size-1;
+  signal instr_memory_address : integer range 0 to instruction_size-1;
   signal instr_memory_memwrite : std_logic;
   signal instr_memory_memread : std_logic;
   signal instr_memory_readdata : std_logic_vector(31 downto 0);
   signal instr_memory_waitrequest : std_logic;
 
   signal data_memory_writedata : std_logic_vector(31 downto 0);
-  signal data_memory_address : integer range 0 to ram_size-1;
+  signal data_memory_address : integer range 0 to data_size-1;
   signal data_memory_memwrite : std_logic;
   signal data_memory_memread : std_logic;
   signal data_memory_readdata : std_logic_vector(31 downto 0);
@@ -159,7 +160,7 @@ architecture arch of pipeline is
 
   component instruction_memory
     generic(
-  		ram_size : integer := instruction_size;
+  		ram_size : integer := 1024;
   		mem_delay : time := 10 ns;
   		clock_period : time := 1 ns
   	);
@@ -177,7 +178,7 @@ architecture arch of pipeline is
 
   component data_memory
     generic(
-      ram_size : integer := data_size;
+      ram_size : integer := 8192;
       mem_delay : time := 10 ns;
       clock_period : time := 1 ns
     );
@@ -278,7 +279,7 @@ architecture arch of pipeline is
 
       -- data memory interface --
       data_memory_writedata : out std_logic_vector(31 downto 0);
-      data_memory_address : out integer range 0 to ram_size-1;
+      data_memory_address : out integer range 0 to data_size-1;
       data_memory_memwrite : out std_logic;
       data_memory_memread : out std_logic;
       data_memory_readdata : in std_logic_vector(31 downto 0);
@@ -328,7 +329,7 @@ architecture arch of pipeline is
       stage_1_store_register : in std_logic;
 
       stage_2_data_1 : out std_logic_vector(31 downto 0);
-      stage_1_data_2 : out std_logic_vector(31 downto 0);
+      stage_2_data_2 : out std_logic_vector(31 downto 0);
       stage_2_scratch : out std_logic_vector(31 downto 0);
       stage_2_pc_value : out integer;
       stage_2_address_value : out integer;
@@ -344,7 +345,7 @@ architecture arch of pipeline is
 
     -- COMPONENTS --
 
-    instruction_memory :  instruction_memory
+    instruction_memory_module :  instruction_memory
     port map(
       clock,
       instr_memory_writedata,
@@ -355,7 +356,7 @@ architecture arch of pipeline is
       instr_memory_waitrequest
     );
 
-    data_memory : data_memory
+    data_memory_module : data_memory
     port map(
       clock,
       data_memory_writedata,
@@ -366,9 +367,10 @@ architecture arch of pipeline is
       data_memory_waitrequest
     );
 
-    registers : registers
+    registers_module : registers
     port map(
       clock,
+      reg_writedata,
       reg_readreg1,
       reg_readreg2,
       reg_writereg,
@@ -382,7 +384,8 @@ architecture arch of pipeline is
       clock,
       global_reset,
 
-      if_id_data_in,
+      if_id_data_1_in,
+      if_id_data_2_in,
       if_id_scratch_in,
       if_id_pc_value_in,
       if_id_address_value_in,
@@ -392,7 +395,8 @@ architecture arch of pipeline is
       if_id_store_memory_valid_in,
       if_id_store_register_in,
 
-      if_id_data_out,
+      if_id_data_1_out,
+      if_id_data_2_out,
       if_id_scratch_out,
       if_id_pc_value_out,
       if_id_address_value_out,
@@ -408,7 +412,8 @@ architecture arch of pipeline is
       clock,
       global_reset,
 
-      id_ex_data_in,
+      id_ex_data_1_in,
+      id_ex_data_2_in,
       id_ex_scratch_in,
       id_ex_pc_value_in,
       id_ex_address_value_in,
@@ -418,7 +423,8 @@ architecture arch of pipeline is
       id_ex_store_memory_valid_in,
       id_ex_store_register_in,
 
-      id_ex_data_out,
+      id_ex_data_1_out,
+      id_ex_data_2_out,
       id_ex_scratch_out,
       id_ex_pc_value_out,
       id_ex_address_value_out,
@@ -434,7 +440,8 @@ architecture arch of pipeline is
       clock,
       global_reset,
 
-      ex_mem_data_in,
+      ex_mem_data_1_in,
+      ex_mem_data_2_in,
       ex_mem_scratch_in,
       ex_mem_pc_value_in,
       ex_mem_address_value_in,
@@ -444,7 +451,8 @@ architecture arch of pipeline is
       ex_mem_store_memory_valid_in,
       ex_mem_store_register_in,
 
-      ex_mem_data_out,
+      ex_mem_data_1_out,
+      ex_mem_data_2_out,
       ex_mem_scratch_out,
       ex_mem_pc_value_out,
       ex_mem_address_value_out,
@@ -460,7 +468,8 @@ architecture arch of pipeline is
       clock,
       global_reset,
 
-      mem_wb_data_in,
+      mem_wb_data_1_in,
+      mem_wb_data_2_in,
       mem_wb_scratch_in,
       mem_wb_pc_value_in,
       mem_wb_address_value_in,
@@ -470,7 +479,8 @@ architecture arch of pipeline is
       mem_wb_store_memory_valid_in,
       mem_wb_store_register_in,
 
-      mem_wb_data_out,
+      mem_wb_data_1_out,
+      mem_wb_data_2_out,
       mem_wb_scratch_out,
       mem_wb_pc_value_out,
       mem_wb_address_value_out,
@@ -481,7 +491,7 @@ architecture arch of pipeline is
       mem_wb_store_register_out
     );
 
-    instruction_fetch_stage : instruction_fetch_stage
+    instruction_fetch_module : instruction_fetch_stage
     port map(
       clock => clock,
       reset => global_reset,
@@ -490,14 +500,14 @@ architecture arch of pipeline is
       instruction_in => instr_memory_readdata,
       wait_request => instr_memory_waitrequest,
 
-      jump_program_counter <= ex_mem_pc_value_in,
-      jump_taken <= ex_mem_pc_valid_in,
-      instruction_out <= if_id_scratch_in,
-      updated_program_counter <= if_id_pc_value_in,
-      program_counter_valid <= if_id_pc_valid_in
+      jump_program_counter => if_id_pc_value_in,
+      jump_taken => if_id_pc_valid_in,
+      instruction_out => if_id_scratch_in,
+      updated_program_counter => if_id_pc_value_in,
+      program_counter_valid => if_id_pc_valid_in
     );
 
-    instruction_decode_stage : instruction_decode_stage
+    instruction_decode_module : instruction_decode_stage
     port map(
       clock => clock,
       reset => global_reset,
@@ -509,14 +519,14 @@ architecture arch of pipeline is
       instruction => if_id_scratch_out,
       id_ex_reg_1 => id_ex_data_1_in,
       id_ex_reg_2 => id_ex_data_2_in,
-      load_store_address <= id_ex_address_value_in,
-      load_store_address_valid <= id_ex_address_valid_in,
-      load_memory_valid <= id_ex_load_memory_valid_in,
-      store_memory_valid <= id_ex_store_memory_valid_in,
-      store_register <= id_ex_store_register_in
+      load_store_address => id_ex_address_value_in,
+      load_store_address_valid => id_ex_address_valid_in,
+      load_memory_valid => id_ex_load_memory_valid_in,
+      store_memory_valid => id_ex_store_memory_valid_in,
+      store_register => id_ex_store_register_in
     );
 
-    execute_stage : execute_stage
+    execute_module : execute_stage
     port map(
       clock => clock,
       reset => global_reset,
@@ -525,6 +535,7 @@ architecture arch of pipeline is
       ALU_operand1 => id_ex_data_1_out,
       ALU_operand2 => id_ex_data_2_out,
       ALU_next_pc => id_ex_pc_value_out,
+      ALU_next_pc_valid => id_ex_pc_valid_out,
       load_store_address => id_ex_address_value_out,
       load_store_address_valid => id_ex_address_valid_out,
       jump_address => ex_mem_pc_value_in,
@@ -532,10 +543,10 @@ architecture arch of pipeline is
       ALU_output => ex_mem_data_1_in
     );
 
-    memory_stage : memory_stage
+    memory_module : memory_stage
     port map(
       clock => clock,
-      reset => global_reset
+      reset => global_reset,
       data_memory_writedata => data_memory_writedata,
       data_memory_address => data_memory_address,
       data_memory_memwrite => data_memory_memwrite,
@@ -543,45 +554,37 @@ architecture arch of pipeline is
       data_memory_readdata => data_memory_readdata,
       data_memory_waitrequest => data_memory_waitrequest,
 
-      data_in <= ex_mem_data_1_out,
-      data_in_address <= ex_mem_address_value_out,
-      data_in_address_valid <= ex_mem_address_valid_out,
-      data_out <= mem_wb_data_1_in,
-      data_out_address <= mem_wb_address_value_in,
-      data_out_address_valid <= mem_wb_address_valid_in,
-      load_memory_valid <= ex_mem_load_memory_valid_out,
-      store_memory_valid <= ex_mem_store_memory_valid_out
+      data_in => ex_mem_data_1_out,
+      data_in_address => ex_mem_address_value_out,
+      data_in_address_valid => ex_mem_address_valid_out,
+      data_out => mem_wb_data_1_in,
+      data_out_address => mem_wb_address_value_in,
+      data_out_address_valid => mem_wb_address_valid_in,
+      load_memory_valid => ex_mem_load_memory_valid_out,
+      store_memory_valid => ex_mem_store_memory_valid_out
     );
 
-    write_back_stage : write_back_stage
+    write_back_module : write_back_stage
     port map(
       clock => clock,
       reset => global_reset,
 
       -- TODO : REGISTER INTERFACE
 
-      write_data <= mem_wb_data_1_out,
-      write_address <= mem_wb_pc_value_out,
-      write_address_valid <= mem_wb_pc_valid_out,
-      store_register <= mem_wb_store_register_out
+      write_data => mem_wb_data_1_out,
+      write_address => mem_wb_pc_value_out,
+      write_address_valid => mem_wb_pc_valid_out,
+      store_register => mem_wb_store_register_out
     );
 
     -- BEGIN PROCESSES --
 
-    async_operation : process(clock, reset)
-    begin
-      if reset = '1' then
-        instruction_line_in_counter <= '0';
-        present_state <= init;
-      elsif (clock'event and clock = '1') then
-        program_counter <= updated_program_counter;
-        present_state <= next_state;
-      end if;
-    end process;
-
     pipeline_state_logic : process (clock, reset, present_state, program_in_finished)
     begin
       case present_state is
+        when clear =>
+          next_state <= init;
+
         when init =>
           if program_in_finished = '1' then
             next_state <= processor;
@@ -592,7 +595,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (program_counter >= 10,000) then
+          if (program_counter >= 10000) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
@@ -610,18 +613,23 @@ architecture arch of pipeline is
     pipeline_functional_logic : process (clock, reset, present_state, program_in)
     begin
       case present_state is
+        when clear =>
+          instruction_line_in_counter <= 0;
+          present_state <= init;
+          global_reset <= '1';
+
         when init =>
-          instr_memory_memwrite = '1';
+          instr_memory_memwrite <= '1';
           if clock'event and clock = '1' then
             instr_memory_address <= instruction_line_in_counter;
             instr_memory_writedata <= program_in;
-            instr_memory_address <= instr_memory_address + 1;
+            instruction_line_in_counter <= instruction_line_in_counter + 1;
           end if;
           global_reset <= '1';
           program_counter <= 0;
 
         when processor =>
-          program_counter <= updated_program_counter;
+          null;
 
         when fini =>
           data_memory_memread <= '1';
@@ -637,7 +645,7 @@ architecture arch of pipeline is
             memory_line_counter <= memory_line_counter + 1;
             register_line_counter <= register_line_counter + 1;
 
-            if (memory_line_counter >= memory_size and register_line_counter >= register_size) then
+            if ((memory_line_counter >= data_size) and (register_line_counter >= register_size)) then
               memory_out_finished <= '1';
               register_out_finished <= '1';
             end if;
