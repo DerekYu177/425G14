@@ -12,7 +12,8 @@ entity instruction_memory is
 		clock : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
-		address : in integer range 0 to ram_size-1;
+		write_address : in integer range 0 to ram_size-1;
+		read_address : in integer range 0 to ram_size-1;
 		memwrite : in std_logic;
 		memread : in std_logic;
 		readdata : out std_logic_vector(31 downto 0);
@@ -39,9 +40,9 @@ begin
 
 		if clock'event and clock = '1' then
 			if memwrite = '1' then
-				mem_block(address) <= writedata;
+				mem_block(write_address) <= writedata;
 			end if;
-		read_address_reg <= address;
+		read_address_reg <= read_address;
 		end if;
 	end process;
 	readdata <= mem_block(read_address_reg);

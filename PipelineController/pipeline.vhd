@@ -137,7 +137,8 @@ architecture arch of pipeline is
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
-  signal instr_memory_address : integer range 0 to instruction_size-1;
+  signal instr_memory_write_address : integer range 0 to instruction_size-1;
+  signal instr_memory_read_address : integer range 0 to instruction_size-1;
   signal instr_memory_memwrite : std_logic;
   signal instr_memory_memread : std_logic;
   signal instr_memory_readdata : std_logic_vector(31 downto 0);
@@ -145,18 +146,22 @@ architecture arch of pipeline is
 
   signal data_memory_writedata : std_logic_vector(31 downto 0);
   signal data_memory_address : integer range 0 to data_size-1;
+  signal data_memory_address_fini : integer range 0 to data_size-1;
   signal data_memory_memwrite : std_logic;
   signal data_memory_memread : std_logic;
   signal data_memory_readdata : std_logic_vector(31 downto 0);
+  signal data_memory_readdata_fini : std_logic_vector(31 downto 0);
   signal data_memory_waitrequest : std_logic;
 
   signal reg_writedata : std_logic_vector(31 downto 0);
   signal reg_readreg1 : integer range 0 to 31;
   signal reg_readreg2 : integer range 0 to 31;
+  signal reg_readreg_fini : integer range 0 to 31;
   signal reg_writereg : integer range 0 to 31;
   signal reg_regwrite : std_logic;
   signal reg_readdata1 : std_logic_vector(31 downto 0);
   signal reg_readdata2 : std_logic_vector(31 downto 0);
+  signal reg_readdata_fini : std_logic_vector(31 downto 0);
 
   component instruction_memory
     generic(
@@ -168,7 +173,8 @@ architecture arch of pipeline is
   		clock : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-  		address : in integer range 0 to ram_size-1;
+  		write_address : in integer range 0 to ram_size-1;
+      read_address : in integer range 0 to ram_size-1;
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
@@ -187,9 +193,11 @@ architecture arch of pipeline is
   		writedata : in std_logic_vector(31 downto 0);
 
   		address : in integer range 0 to ram_size-1;
+      address_read_fini : in integer range 0 to ram_size-1;
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
+      readdata_fini : out std_logic_vector(31 downto 0);
   		waitrequest : out std_logic
   	);
   end component;
@@ -200,11 +208,13 @@ architecture arch of pipeline is
   		writedata : in std_logic_vector(31 downto 0);
   		readreg1 : in integer range 0 to 31;
   		readreg2 : in integer range 0 to 31;
+      readreg_fini : in integer range 0 to 31;
   		writereg : in integer range 0 to 31;
 
   		regwrite : in std_logic;
   		readdata1 : out std_logic_vector(31 downto 0);
-  		readdata2 : out std_logic_vector(31 downto 0)
+  		readdata2 : out std_logic_vector(31 downto 0);
+      readdata_fini : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -349,7 +359,8 @@ architecture arch of pipeline is
     port map(
       clock,
       instr_memory_writedata,
-      instr_memory_address,
+      instr_memory_write_address,
+      instr_memory_read_address,
       instr_memory_memwrite,
       instr_memory_memread,
       instr_memory_readdata,
@@ -361,9 +372,11 @@ architecture arch of pipeline is
       clock,
       data_memory_writedata,
       data_memory_address,
+      data_memory_address_fini,
       data_memory_memwrite,
       data_memory_memread,
       data_memory_readdata,
+      data_memory_readdata_fini,
       data_memory_waitrequest
     );
 
@@ -373,10 +386,12 @@ architecture arch of pipeline is
       reg_writedata,
       reg_readreg1,
       reg_readreg2,
+      reg_readreg_fini,
       reg_writereg,
       reg_regwrite,
       reg_readdata1,
-      reg_readdata2
+      reg_readdata2,
+      reg_readdata_fini
     );
 
     if_id_pipeline_bus : pipeline_register_bus
@@ -495,7 +510,7 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
-      read_instruction_address => instr_memory_address,
+      read_instruction_address => instr_memory_read_address,
       read_instruction => instr_memory_memread,
       instruction_in => instr_memory_readdata,
       wait_request => instr_memory_waitrequest,
@@ -621,7 +636,7 @@ architecture arch of pipeline is
         when init =>
           instr_memory_memwrite <= '1';
           if clock'event and clock = '1' then
-            instr_memory_address <= instruction_line_in_counter;
+            instr_memory_write_address <= instruction_line_in_counter;
             instr_memory_writedata <= program_in;
             instruction_line_in_counter <= instruction_line_in_counter + 1;
           end if;
@@ -636,11 +651,11 @@ architecture arch of pipeline is
           -- register does not require memread
 
           if (clock'event and clock = '1') then
-            data_memory_address <= memory_line_counter;
-            reg_readreg1 <= register_line_counter;
+            data_memory_address_fini <= memory_line_counter;
+            reg_readreg_fini <= register_line_counter;
 
-            memory_out <= data_memory_readdata;
-            register_out <= reg_readdata1;
+            memory_out <= data_memory_readdata_fini;
+            register_out <= reg_readdata_fini;
 
             memory_line_counter <= memory_line_counter + 1;
             register_line_counter <= register_line_counter + 1;
