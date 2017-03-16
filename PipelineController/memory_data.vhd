@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity data_memory is
 	generic(
-		ram_size : integer := 8192;
+		ram_size : integer := 32768;
 		mem_delay : time := 10 ns;
 		clock_period : time := 1 ns
 	);
@@ -24,7 +24,7 @@ end data_memory;
 
 architecture behavior of data_memory is
 
-	type mem is array(ram_size-1 downto 0) of std_logic_vector(31 downto 0);
+	type mem is array(ram_size-1 downto 0) of std_logic_vector(7 downto 0);
 	signal mem_block: mem;
 	signal read_address_reg: integer range 0 to ram_size-1;
 	signal read_address_reg_fini : integer range 0 to ram_size-1;
@@ -36,20 +36,23 @@ begin
 	begin
 		if(now < 1 ps) then
 			for i in 0 to ram_size-1 loop
-				mem_block(i) <= std_logic_vector(to_unsigned(0, 32));
+				mem_block(i) <= std_logic_vector(to_unsigned(0, 7));
 			end loop;
 		end if;
 
 		if clock'event and clock = '1' then
 			if memwrite = '1' then
-				mem_block(address) <= writedata;
+				mem_block(address) <= writedata(31 downto 24);
+				mem_block(address+1) <= writedata(23 downto 16);
+				mem_block(address+2) <= writedata(15 downto 8);
+				mem_block(address+3) <= writedata(7 downto 0);
 			end if;
 		read_address_reg <= address;
 		read_address_reg_fini <= address_read_fini;
 		end if;
 	end process;
-	readdata <= mem_block(read_address_reg);
-	readdata_fini <= mem_block(read_address_reg_fini);
+	readdata <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);
+	readdata_fini <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);
 
 	waitreq_w_proc: process(memwrite)
 	begin

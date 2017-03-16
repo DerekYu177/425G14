@@ -10,11 +10,17 @@ entity registers is
 		readreg2 : in integer range 0 to 31;
 		readreg_fini : in integer range 0 to 31;
 		writereg : in integer range 0 to 31;
+		data_in_hi : in std_logic_vector(31 downto 0);
+		data_in_lo : in std_logic_vector(31 downto 0);
+		write_hi : in std_logic;
+		write_lo : in std_logic;
 
 		regwrite : in std_logic;
 		readdata1 : out std_logic_vector(31 downto 0);
 		readdata2 : out std_logic_vector(31 downto 0);
-		readdata_fini : out std_logic_vector(31 downto 0)
+		readdata_fini : out std_logic_vector(31 downto 0);
+		data_out_hi : out std_logic_vector(31 downto 0);
+		data_out_lo : out std_logic_vector(31 downto 0)
 	);
 end registers;
 
@@ -25,6 +31,9 @@ architecture behavior of registers is
 	signal read_address_reg1: integer range 0 to 31;
 	signal read_address_reg2 : integer range 0 to 31;
 	signal read_address_reg_fini : integer range 0 to 31;
+	
+	signal hi_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
+	signal lo_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
 begin
 	mem_process : process(clock)
@@ -43,6 +52,12 @@ begin
 					mem_block(writereg) <= writedata;
 				end if;
 			end if;
+			if write_hi = '1' then
+				hi_reg <= data_in_hi;
+			end if;
+			if write_lo = '1' then
+				lo_reg <= data_in_lo;
+			end if;
 		read_address_reg1 <= readreg1;
 		read_address_reg2 <= readreg2;
 		read_address_reg_fini <= readreg_fini;
@@ -51,5 +66,7 @@ begin
 	readdata1 <= mem_block(read_address_reg1);
 	readdata2 <= mem_block(read_address_reg2);
 	readdata_fini <= mem_block(read_address_reg_fini);
+	data_out_hi <= hi_reg;
+	data_out_lo <= lo_reg;
 
 end behavior;
