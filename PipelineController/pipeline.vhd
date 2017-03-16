@@ -50,6 +50,8 @@ architecture arch of pipeline is
   signal if_id_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_hlodata_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_value_in : integer := 0;
   signal if_id_address_value_in : integer := 0;
   signal if_id_pc_valid_in : std_logic := '0';
@@ -57,10 +59,14 @@ architecture arch of pipeline is
   signal if_id_load_memory_valid_in : std_logic := '0';
   signal if_id_store_memory_valid_in : std_logic := '0';
   signal if_id_store_register_in : std_logic := '0';
+  signal if_id_hi_store_in : std_logic := '0';
+  signal if_id_lo_store_in : std_logic := '0';
 
   signal if_id_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_hlodata_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_value_out : integer := 0;
   signal if_id_address_value_out : integer := 0;
   signal if_id_pc_valid_out : std_logic := '0';
@@ -68,10 +74,14 @@ architecture arch of pipeline is
   signal if_id_load_memory_valid_out : std_logic := '0';
   signal if_id_store_memory_valid_out : std_logic := '0';
   signal if_id_store_register_out : std_logic := '0';
+  signal if_id_hi_store_out : std_logi := '0';
+  signal if_id_lo_store_out : std_logi := '0';
 
   signal id_ex_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_hlodata_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_value_in : integer := 0;
   signal id_ex_address_value_in : integer := 0;
   signal id_ex_pc_valid_in : std_logic := '0';
@@ -79,10 +89,14 @@ architecture arch of pipeline is
   signal id_ex_load_memory_valid_in : std_logic := '0';
   signal id_ex_store_memory_valid_in : std_logic := '0';
   signal id_ex_store_register_in : std_logic := '0';
+  signal id_ex_hi_store_in : std_logic := '0';
+  signal id_ex_lo_store_in : std_logic := '0';
 
   signal id_ex_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_hlodata_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_value_out : integer := 0;
   signal id_ex_address_value_out : integer := 0;
   signal id_ex_pc_valid_out : std_logic := '0';
@@ -90,10 +104,14 @@ architecture arch of pipeline is
   signal id_ex_load_memory_valid_out : std_logic := '0';
   signal id_ex_store_memory_valid_out : std_logic := '0';
   signal id_ex_store_register_out : std_logic := '0';
+  signal id_ex_hi_store_out : std_logi := '0';
+  signal id_ex_lo_store_out : std_logi := '0';
 
   signal ex_mem_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_pc_value_in : integer := 0;
   signal ex_mem_address_value_in : integer := 0;
   signal ex_mem_pc_valid_in : std_logic := '0';
@@ -101,10 +119,14 @@ architecture arch of pipeline is
   signal ex_mem_load_memory_valid_in : std_logic := '0';
   signal ex_mem_store_memory_valid_in : std_logic := '0';
   signal ex_mem_store_register_in : std_logic := '0';
+  signal ex_mem_hi_store_in : std_logic := '0';
+  signal ex_mem_lo_store_in : std_logic := '0';
 
   signal ex_mem_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_pc_value_out : integer := 0;
   signal ex_mem_address_value_out : integer := 0;
   signal ex_mem_pc_valid_out : std_logic := '0';
@@ -112,10 +134,14 @@ architecture arch of pipeline is
   signal ex_mem_load_memory_valid_out : std_logic := '0';
   signal ex_mem_store_memory_valid_out : std_logic := '0';
   signal ex_mem_store_register_out : std_logic := '0';
+  signal ex_mem_hi_store_out : std_logi := '0';
+  signal ex_mem_lo_store_out : std_logi := '0';
 
   signal mem_wb_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_pc_value_in : integer := 0;
   signal mem_wb_address_value_in : integer := 0;
   signal mem_wb_pc_valid_in : std_logic := '0';
@@ -123,10 +149,14 @@ architecture arch of pipeline is
   signal mem_wb_load_memory_valid_in : std_logic := '0';
   signal mem_wb_store_memory_valid_in : std_logic := '0';
   signal mem_wb_store_register_in : std_logic := '0';
+  signal mem_wb_hi_store_in : std_logic := '0';
+  signal mem_wb_lo_store_in : std_logic := '0';
 
   signal mem_wb_data_1_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_pc_value_out : integer := 0;
   signal mem_wb_address_value_out : integer := 0;
   signal mem_wb_pc_valid_out : std_logic := '0';
@@ -134,6 +164,8 @@ architecture arch of pipeline is
   signal mem_wb_load_memory_valid_out : std_logic := '0';
   signal mem_wb_store_memory_valid_out : std_logic := '0';
   signal mem_wb_store_register_out : std_logic := '0';
+  signal mem_wb_hi_store_out : std_logi := '0';
+  signal mem_wb_lo_store_out : std_logi := '0';
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
@@ -327,30 +359,38 @@ architecture arch of pipeline is
 
   component pipeline_register_bus is
     port (
-      clock : in std_logic;
-      reset : in std_logic;
+    clock : in std_logic;
+    reset : in std_logic;
 
-      stage_1_data_1 : in std_logic_vector(31 downto 0);
-      stage_1_data_2 : in std_logic_vector(31 downto 0);
-      stage_1_scratch : in std_logic_vector(31 downto 0);
-      stage_1_pc_value : in integer;
-      stage_1_address_value : in integer;
-      stage_1_pc_valid : in std_logic;
-      stage_1_address_valid : in std_logic;
-      stage_1_load_memory_valid : in std_logic;
-      stage_1_store_memory_valid : in std_logic;
-      stage_1_store_register : in std_logic;
+    stage_1_data_1 : in std_logic_vector(31 downto 0);
+    stage_1_data_2 : in std_logic_vector(31 downto 0);
+    stage_1_scratch : in std_logic_vector(31 downto 0);
+    stage_1_hi_data : in std_logic_vector(31 downto 0);
+    stage_1_lo_data : in std_logic_vector(31 downto 0);
+    stage_1_pc_value : in integer;
+    stage_1_address_value : in integer;
+    stage_1_pc_valid : in std_logic;
+    stage_1_address_valid : in std_logic;
+    stage_1_load_memory_valid : in std_logic;
+    stage_1_store_memory_valid : in std_logic;
+    stage_1_store_register : in std_logic;
+    stage_1_hi_store : in std_logic;
+    stage_1_lo_store : in std_logic;
 
-      stage_2_data_1 : out std_logic_vector(31 downto 0);
-      stage_2_data_2 : out std_logic_vector(31 downto 0);
-      stage_2_scratch : out std_logic_vector(31 downto 0);
-      stage_2_pc_value : out integer;
-      stage_2_address_value : out integer;
-      stage_2_pc_valid : out std_logic;
-      stage_2_address_valid : out std_logic;
-      stage_2_load_memory_valid : out std_logic;
-      stage_2_store_memory_valid : out std_logic;
-      stage_2_store_register : out std_logic
+    stage_2_data_1 : out std_logic_vector(31 downto 0);
+    stage_2_data_2 : out std_logic_vector(31 downto 0);
+    stage_2_scratch : out std_logic_vector(31 downto 0);
+    stage_2_hi_data : out std_logic_vector(31 downto 0);
+    stage_2_lo_data : out std_logic_vector(31 downto 0);
+    stage_2_pc_value : out integer;
+    stage_2_address_value : out integer;
+    stage_2_pc_valid : out std_logic;
+    stage_2_address_valid : out std_logic;
+    stage_2_load_memory_valid : out std_logic;
+    stage_2_store_memory_valid : out std_logic;
+    stage_2_store_register : out std_logic
+    stage_2_hi_store : out std_logic;
+    stage_2_lo_store : out std_logic
     );
   end component;
 
@@ -405,6 +445,8 @@ architecture arch of pipeline is
       if_id_data_1_in,
       if_id_data_2_in,
       if_id_scratch_in,
+      if_id_hi_data_in,
+      if_id_lo_data_in,
       if_id_pc_value_in,
       if_id_address_value_in,
       if_id_pc_valid_in,
@@ -412,10 +454,14 @@ architecture arch of pipeline is
       if_id_load_memory_valid_in,
       if_id_store_memory_valid_in,
       if_id_store_register_in,
+      if_id_hi_store_in,
+      if_id_lo_store_in
 
       if_id_data_1_out,
       if_id_data_2_out,
       if_id_scratch_out,
+      if_id_hi_data_out
+      if_id_lo_data_out,,
       if_id_pc_value_out,
       if_id_address_value_out,
       if_id_pc_valid_out,
@@ -423,6 +469,8 @@ architecture arch of pipeline is
       if_id_load_memory_valid_out,
       if_id_store_memory_valid_out,
       if_id_store_register_out
+      if_id_hi_store_out,
+      if_id_lo_store_out
     );
 
     id_ex_pipeline_bus : pipeline_register_bus
@@ -433,6 +481,8 @@ architecture arch of pipeline is
       id_ex_data_1_in,
       id_ex_data_2_in,
       id_ex_scratch_in,
+      id_ex_hi_data_in,
+      id_ex_lo_data_in,
       id_ex_pc_value_in,
       id_ex_address_value_in,
       id_ex_pc_valid_in,
@@ -440,10 +490,14 @@ architecture arch of pipeline is
       id_ex_load_memory_valid_in,
       id_ex_store_memory_valid_in,
       id_ex_store_register_in,
+      id_ex_hi_store_in,
+      id_ex_lo_store_in
 
       id_ex_data_1_out,
       id_ex_data_2_out,
       id_ex_scratch_out,
+      id_ex_hi_data_out
+      id_ex_lo_data_out,,
       id_ex_pc_value_out,
       id_ex_address_value_out,
       id_ex_pc_valid_out,
@@ -451,6 +505,8 @@ architecture arch of pipeline is
       id_ex_load_memory_valid_out,
       id_ex_store_memory_valid_out,
       id_ex_store_register_out
+      id_ex_hi_store_out,
+      id_ex_lo_store_out
     );
 
     ex_mem_pipeline_bus : pipeline_register_bus
@@ -461,6 +517,8 @@ architecture arch of pipeline is
       ex_mem_data_1_in,
       ex_mem_data_2_in,
       ex_mem_scratch_in,
+      ex_mem_hi_data_in,
+      ex_mem_lo_data_in,
       ex_mem_pc_value_in,
       ex_mem_address_value_in,
       ex_mem_pc_valid_in,
@@ -468,10 +526,14 @@ architecture arch of pipeline is
       ex_mem_load_memory_valid_in,
       ex_mem_store_memory_valid_in,
       ex_mem_store_register_in,
+      ex_mem_hi_store_in,
+      ex_mem_lo_store_in
 
       ex_mem_data_1_out,
       ex_mem_data_2_out,
       ex_mem_scratch_out,
+      ex_mem_hi_data_out
+      ex_mem_lo_data_out,,
       ex_mem_pc_value_out,
       ex_mem_address_value_out,
       ex_mem_pc_valid_out,
@@ -479,6 +541,8 @@ architecture arch of pipeline is
       ex_mem_load_memory_valid_out,
       ex_mem_store_memory_valid_out,
       ex_mem_store_register_out
+      ex_mem_hi_store_out,
+      ex_mem_lo_store_out
     );
 
     mem_wb_pipeline_bus : pipeline_register_bus
@@ -489,6 +553,8 @@ architecture arch of pipeline is
       mem_wb_data_1_in,
       mem_wb_data_2_in,
       mem_wb_scratch_in,
+      mem_wb_hi_data_in,
+      mem_wb_lo_data_in,
       mem_wb_pc_value_in,
       mem_wb_address_value_in,
       mem_wb_pc_valid_in,
@@ -496,10 +562,14 @@ architecture arch of pipeline is
       mem_wb_load_memory_valid_in,
       mem_wb_store_memory_valid_in,
       mem_wb_store_register_in,
+      mem_wb_hi_store_in,
+      mem_wb_lo_store_in
 
       mem_wb_data_1_out,
       mem_wb_data_2_out,
       mem_wb_scratch_out,
+      mem_wb_hi_data_out
+      mem_wb_lo_data_out,,
       mem_wb_pc_value_out,
       mem_wb_address_value_out,
       mem_wb_pc_valid_out,
@@ -507,6 +577,8 @@ architecture arch of pipeline is
       mem_wb_load_memory_valid_out,
       mem_wb_store_memory_valid_out,
       mem_wb_store_register_out
+      mem_wb_hi_store_out,
+      mem_wb_lo_store_out
     );
 
     instruction_fetch_module : instruction_fetch_stage
@@ -534,6 +606,8 @@ architecture arch of pipeline is
       register_1 => reg_readdata1,
       register_2 => reg_readdata2,
 
+      -- MODIFY FOR HI/LO
+
       instruction => if_id_scratch_out,
       id_ex_reg_1 => id_ex_data_1_in,
       id_ex_reg_2 => id_ex_data_2_in,
@@ -548,6 +622,8 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
+
+      -- MODIFY FOR HI/LO
 
       ALU_instruction => id_ex_scratch_out,
       ALU_operand1 => id_ex_data_1_out,
@@ -655,10 +731,13 @@ architecture arch of pipeline is
           ex_mem_load_memory_valid_in <= id_ex_load_memory_valid_out;
           ex_mem_store_memory_valid_in <= id_ex_store_memory_valid_out;
           ex_mem_store_register_in <= id_ex_store_register_out;
+          ex_mem_hi_store_in <= id_ex_hi_store_out;
+          ex_mem_lo_store_in <= id_ex_lo_store_out;
           mem_wb_store_register_in <= ex_mem_store_register_out;
-
-          -- connecting ex to if for jump/branch statements --
-
+          mem_wb_hi_data_in <= ex_mem_hi_data_out;
+          mem_wb_lo_data_in <= ex_mem_lo_data_out;
+          mem_wb_hi_store_in <= ex_mem_hi_store_out;
+          mem_wb_lo_store_in <= ex_mem_lo_store_out;
 
         when fini =>
           data_memory_memread <= '1';

@@ -10,6 +10,8 @@ entity pipeline_register_bus is
     stage_1_data_1 : in std_logic_vector(31 downto 0);
     stage_1_data_2 : in std_logic_vector(31 downto 0);
     stage_1_scratch : in std_logic_vector(31 downto 0);
+    stage_1_hi_data : in std_logic_vector(31 downto 0);
+    stage_1_lo_data : in std_logic_vector(31 downto 0);
     stage_1_pc_value : in integer;
     stage_1_address_value : in integer;
     stage_1_pc_valid : in std_logic;
@@ -17,10 +19,14 @@ entity pipeline_register_bus is
     stage_1_load_memory_valid : in std_logic;
     stage_1_store_memory_valid : in std_logic;
     stage_1_store_register : in std_logic;
+    stage_1_hi_store : in std_logic;
+    stage_1_lo_store : in std_logic;
 
     stage_2_data_1 : out std_logic_vector(31 downto 0);
-    stage_1_data_2 : out std_logic_vector(31 downto 0);
+    stage_2_data_2 : out std_logic_vector(31 downto 0);
     stage_2_scratch : out std_logic_vector(31 downto 0);
+    stage_2_hi_data : out std_logic_vector(31 downto 0);
+    stage_2_lo_data : out std_logic_vector(31 downto 0);
     stage_2_pc_value : out integer;
     stage_2_address_value : out integer;
     stage_2_pc_valid : out std_logic;
@@ -28,6 +34,8 @@ entity pipeline_register_bus is
     stage_2_load_memory_valid : out std_logic;
     stage_2_store_memory_valid : out std_logic;
     stage_2_store_register : out std_logic
+    stage_2_hi_store : out std_logic;
+    stage_2_lo_store : out std_logic
   );
 end pipeline_register_bus;
 
