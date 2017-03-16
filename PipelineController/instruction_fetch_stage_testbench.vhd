@@ -48,6 +48,7 @@ end COMPONENT;
  constant funct_mult: std_logic_vector(5 downto 0):= "011000";
  constant funct_xor: std_logic_vector(5 downto 0) := "100110";
  constant I_type_op_addi: std_logic_vector(5 downto 0) := "001000";
+ constant J_type_op_j: std_logic_vector(5 downto 0) := "000010";
 constant R_type_general_op_code: std_logic_vector(5 downto 0) := "000000";
  
  -- Instruction in will be equal to instruction out we will assert this
@@ -91,6 +92,14 @@ tb : PROCESS
 		ASSERT(instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
 		program_counter <= program_counter+4; 
+		
+		--j 1000
+		instruction_in <= (J_type_op_j)&("00000000000000001111101000");
+		ASSERT(instruction_out = instruction_in);
+		ASSERT(read_instruction_address = jump_program_counter);
+		program_counter <= jump_program_counter; 
+		jump_taken <= '1';
+		
 		
 		end if; 
 	--end if; 
