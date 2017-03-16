@@ -1,0 +1,1 @@
+addi $1, $0, 1 #put 1 in reg 1
