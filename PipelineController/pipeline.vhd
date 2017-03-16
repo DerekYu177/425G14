@@ -313,6 +313,9 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- register interface --
+      reg_writedata : out std_logic_vector(31 downto 0);
+      reg_writereg_address : out integer;
+      reg_regwrite : out std_logic;
 
       -- pipeline interface --
       write_data : in std_logic_vector(31 downto 0);
@@ -515,8 +518,8 @@ architecture arch of pipeline is
       instruction_in => instr_memory_readdata,
       wait_request => instr_memory_waitrequest,
 
-      jump_program_counter => if_id_pc_value_in,
-      jump_taken => if_id_pc_valid_in,
+      jump_program_counter => ex_mem_pc_value_in,
+      jump_taken => ex_mem_pc_valid_in,
       instruction_out => if_id_scratch_in,
       updated_program_counter => if_id_pc_value_in,
       program_counter_valid => if_id_pc_valid_in
@@ -645,7 +648,17 @@ architecture arch of pipeline is
           program_counter <= 0;
 
         when processor =>
-          null;
+          -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
+          id_ex_scratch_in <= if_id_scratch_out;
+          id_ex_pc_value_in <= if_id_pc_value_out;
+          id_ex_pc_valid_in <= if_id_pc_valid_out;
+          ex_mem_load_memory_valid_in <= id_ex_load_memory_valid_out;
+          ex_mem_store_memory_valid_in <= id_ex_store_memory_valid_out;
+          ex_mem_store_register_in <= id_ex_store_register_out;
+          mem_wb_store_register_in <= ex_mem_store_register_out;
+
+          -- connecting ex to if for jump/branch statements --
+
 
         when fini =>
           data_memory_memread <= '1';
