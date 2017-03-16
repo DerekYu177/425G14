@@ -94,11 +94,20 @@ tb : PROCESS
 		program_counter <= program_counter+4; 
 		
 		--j 1000
+		-- when the jump is valid
 		instruction_in <= (J_type_op_j)&("00000000000000001111101000");
 		ASSERT(instruction_out = instruction_in);
 		ASSERT(read_instruction_address = jump_program_counter);
 		program_counter <= jump_program_counter; 
 		jump_taken <= '1';
+
+		-- j 10000
+		-- In this case the jump is invalid 
+		instruction_in <= (J_type_op_j)&("00000000000010011100010000");
+		ASSERT( instruction_out = instruction_in); 
+		ASSERT(updated_program_counter = program_counter); 
+		program_counter <= program_counter+4; 
+		jump_taken <= '0';
 		
 		
 		end if; 
