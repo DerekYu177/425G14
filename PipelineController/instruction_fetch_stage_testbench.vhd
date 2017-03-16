@@ -74,24 +74,28 @@ tb : PROCESS
  		ASSERT (instruction_out = instruction_in);
  		ASSERT ( updated_program_counter = program_counter);
  		program_counter <= program_counter+4;
+ 		program_counter_valid <= '1'; 
  		
  		-- MULT R4 R5  
    		instruction_in <= (R_type_general_op_code)&("00100")&("00101")&("0000000000")&(funct_mult);
    		ASSERT (instruction_out = instruction_in); 
    		ASSERT (updated_program_counter = program_counter);
    		program_counter <= program_counter+4;
+   		program_counter_valid <= '1'; 
    		
    		-- XOR R11 R10 R9
 		instruction_in <= (R_type_general_op_code)&("01010")&("01001")&("01011")&("00000")&(funct_xor);
 		ASSERT(instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
 		program_counter <= program_counter+4; 
+		program_counter_valid <= '1'; 
 		
 		-- ADDI R2 R1 3
 		instruction_in <= (I_type_op_addi)&("00001")&("00010")&("0000000000000011"); 
 		ASSERT(instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
 		program_counter <= program_counter+4; 
+		program_counter_valid <= '1'; 
 		
 		--j 1000
 		-- when the jump is valid
