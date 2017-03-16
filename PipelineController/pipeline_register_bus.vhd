@@ -46,6 +46,8 @@ begin
     if reset = '1' then
       stage_2_data_1 <= (others => '0');
       stage_2_data_2 <= (others => '0');
+      stage_2_hi_store <= (others => '0');
+      stage_2_lo_store <= (others => '0');
       stage_2_scratch <= (others => '0');
       stage_2_pc_value <= 0;
       stage_2_address_value <= 0;
@@ -54,10 +56,14 @@ begin
       stage_2_load_memory_valid <= '0';
       stage_2_store_memory_valid <= '0';
       stage_2_store_register <= '0';
+      stage_2_hi_store <= '0';
+      stage_2_lo_store <= '0';
     elsif clock'event and clock = '1' then
       stage_2_data_1 <= stage_1_data_1;
       stage_2_data_2 <= stage_1_data_2;
       stage_2_scratch <= stage_1_scratch;
+      stage_2_hi_data <= stage_1_hi_data;
+      stage_2_lo_data <= stage_1_lo_data;
       stage_2_pc_value <= stage_1_pc_value;
       stage_2_address_value <= stage_1_address_value;
       stage_2_pc_valid <= stage_1_pc_valid;
@@ -65,6 +71,8 @@ begin
       stage_2_load_memory_valid <= stage_1_load_memory_valid;
       stage_2_store_memory_valid <= stage_1_store_memory_valid;
       stage_2_store_register <= stage_1_store_register;
+      stage_2_hi_store <= stage_1_hi_store;
+      stage_2_lo_store <= stage_1_lo_store;
     end if;
   end process;
 end arch;
