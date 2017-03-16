@@ -32,6 +32,7 @@ architecture arch of instruction_fetch_stage is
       if (reset = '1') then
         read_instruction <= '0';
         read_instruction_address <= 0;
+        updated_program_counter <= 0;
         program_counter <= 0;
         program_counter_valid <= '0';
       end if;
@@ -49,14 +50,6 @@ architecture arch of instruction_fetch_stage is
       read_instruction <= '1';
       read_instruction_address <= program_counter;
       updated_program_counter <= program_counter;
-    end process;
-
-    fetch_instruction : process(wait_request)
-    begin
-      if (wait_request'event) then
-        instruction_out <= instruction_in;
-        read_instruction <= '0';
-      end if;
     end process;
 
 end architecture;
