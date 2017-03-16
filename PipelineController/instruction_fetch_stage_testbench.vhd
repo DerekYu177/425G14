@@ -67,7 +67,7 @@ tb : PROCESS
  begin
  
  	--if(clock'event and clock = '1') then 
- 		if(( read_instruction = '1') and (program_counter = jump_program_counter)) then 
+ 		if(( read_instruction = '1') and (program_counter = read_instruction_address)) then 
  		
  		 -- ADD R3 R1 R2 
   		instruction_in <= (R_type_general_op_code)&("00001")&("00010")&("00011")&("00000")&(funct_add);
