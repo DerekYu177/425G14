@@ -13,8 +13,8 @@ entity data_memory is
 		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
-		address : in integer range 0 to ram_size-1;
-		address_read_fini : in integer range 0 to ram_size-1;
+		address : in integer  ;
+		address_read_fini : in integer  ;
 		memwrite : in std_logic;
 		memread : in std_logic;
 		readdata : out std_logic_vector(31 downto 0);
@@ -27,8 +27,8 @@ architecture behavior of data_memory is
 
 	type mem is array(ram_size-1 downto 0) of std_logic_vector(7 downto 0);
 	signal mem_block: mem;
-	signal read_address_reg: integer range 0 to ram_size-1;
-	signal read_address_reg_fini : integer range 0 to ram_size-1;
+	signal read_address_reg: integer  ;
+	signal read_address_reg_fini : integer  ;
 	signal write_waitreq_reg: std_logic := '1';
 	signal read_waitreq_reg: std_logic := '1';
 

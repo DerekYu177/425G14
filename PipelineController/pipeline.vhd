@@ -169,16 +169,16 @@ architecture arch of pipeline is
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal instr_memory_write_address : integer range 0 to instruction_size-1 := 0;
-  signal instr_memory_read_address : integer range 0 to instruction_size-1 := 0;
+  signal instr_memory_write_address : integer := 0;
+  signal instr_memory_read_address : integer := 0;
   signal instr_memory_memwrite : std_logic := '0';
   signal instr_memory_memread : std_logic := '0';
   signal instr_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
   signal instr_memory_waitrequest : std_logic := '0';
 
   signal data_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal data_memory_address : integer range 0 to data_size-1 := 0;
-  signal data_memory_address_fini : integer range 0 to data_size-1 := 0;
+  signal data_memory_address : integer := 0;
+  signal data_memory_address_fini : integer := 0;
   signal data_memory_memwrite : std_logic := '0';
   signal data_memory_memread : std_logic := '0';
   signal data_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
@@ -212,8 +212,8 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-  		write_address : in integer range 0 to ram_size-1;
-      read_address : in integer range 0 to ram_size-1;
+  		write_address : in integer  ;
+      read_address : in integer  ;
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
@@ -232,8 +232,8 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-  		address : in integer range 0 to ram_size-1;
-      address_read_fini : in integer range 0 to ram_size-1;
+  		address : in integer  ;
+      address_read_fini : in integer  ;
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
@@ -344,7 +344,7 @@ architecture arch of pipeline is
 
       -- data memory interface --
       data_memory_writedata : out std_logic_vector(31 downto 0);
-      data_memory_address : out integer range 0 to data_size-1;
+      data_memory_address : out integer;
       data_memory_memwrite : out std_logic;
       data_memory_memread : out std_logic;
       data_memory_readdata : in std_logic_vector(31 downto 0);
