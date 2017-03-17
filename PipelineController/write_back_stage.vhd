@@ -17,6 +17,14 @@ entity write_back_stage is
     write_address : in integer;
     write_address_valid : in std_logic;
     store_register : in std_logic
+    write_hi : out std_logic;
+    write_lo : out std_logic;
+
+    -- pipeline interface for HI/LO --
+    hi_data : in std_logic_vector(31 downto 0);
+    lo_data : in std_logic_vector(31 downto 0);
+    hi_store : in std_logic;
+    lo_store : in std_logic
   );
 end write_back_stage;
 
@@ -34,5 +42,14 @@ begin
       reg_writedata <= write_data;
       reg_writereg_address <= write_address;
     end if;
+
+    if hi_store = '1' then
+      
+    end if;
+
+    if lo_store = '1' then
+
+    end if;
+
   end process
 end arch;

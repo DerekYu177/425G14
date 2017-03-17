@@ -190,10 +190,16 @@ architecture arch of pipeline is
   signal reg_readreg2 : integer range 0 to 31;
   signal reg_readreg_fini : integer range 0 to 31;
   signal reg_writereg : integer range 0 to 31;
+  signal reg_data_in_hi : std_logic_vector(31 downto 0);
+  signal reg_data_in_lo : std_logic_vector(31 downto 0);
+  signal reg_write_hi : std_logic;
+  signal reg_write_lo : std_logic;
   signal reg_regwrite : std_logic;
   signal reg_readdata1 : std_logic_vector(31 downto 0);
   signal reg_readdata2 : std_logic_vector(31 downto 0);
   signal reg_readdata_fini : std_logic_vector(31 downto 0);
+  signal reg_data_out_hi : std_logic_vector(31 downto 0);
+  signal reg_data_out_lo : std_logic_vector(31 downto 0)
 
   component instruction_memory
     generic(
@@ -240,13 +246,19 @@ architecture arch of pipeline is
   		writedata : in std_logic_vector(31 downto 0);
   		readreg1 : in integer range 0 to 31;
   		readreg2 : in integer range 0 to 31;
-      readreg_fini : in integer range 0 to 31;
+  		readreg_fini : in integer range 0 to 31;
   		writereg : in integer range 0 to 31;
+  		data_in_hi : in std_logic_vector(31 downto 0);
+  		data_in_lo : in std_logic_vector(31 downto 0);
+  		write_hi : in std_logic;
+  		write_lo : in std_logic;
 
   		regwrite : in std_logic;
   		readdata1 : out std_logic_vector(31 downto 0);
   		readdata2 : out std_logic_vector(31 downto 0);
-      readdata_fini : out std_logic_vector(31 downto 0)
+  		readdata_fini : out std_logic_vector(31 downto 0);
+  		data_out_hi : out std_logic_vector(31 downto 0);
+  		data_out_lo : out std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -353,7 +365,15 @@ architecture arch of pipeline is
       write_data : in std_logic_vector(31 downto 0);
       write_address : in integer;
       write_address_valid : in std_logic;
-      store_register : in std_logic
+      store_register : in std_logic;
+      write_hi : out std_logic;
+      write_lo : out std_logic;
+
+      -- pipeline interface for HI/LO --
+      hi_data : in std_logic_vector(31 downto 0);
+      lo_data : in std_logic_vector(31 downto 0);
+      hi_store : in std_logic;
+      lo_store : in std_logic
     );
   end component;
 
@@ -431,10 +451,16 @@ architecture arch of pipeline is
       reg_readreg2,
       reg_readreg_fini,
       reg_writereg,
+      reg_data_in_hi,
+      reg_data_in_lo,
+      reg_write_hi,
+      reg_write_lo,
       reg_regwrite,
       reg_readdata1,
       reg_readdata2,
-      reg_readdata_fini
+      reg_readdata_fini,
+      reg_data_out_hi,
+      reg_data_out_lo
     );
 
     if_id_pipeline_bus : pipeline_register_bus
@@ -669,7 +695,16 @@ architecture arch of pipeline is
       write_data => mem_wb_data_1_out,
       write_address => mem_wb_pc_value_out,
       write_address_valid => mem_wb_pc_valid_out,
-      store_register => mem_wb_store_register_out
+      store_register => mem_wb_store_register_out,
+      data_in_hi => reg_data_in_hi,
+      data_in_lo => reg_data_in_lo,
+      write_hi => reg_write_hi,
+      write_lo => reg_write_lo,
+
+      hi_data => mem_wb_hi_data_out,
+      lo_data => mem_wb_lo_data_out,
+      hi_store => mem_wb_hi_store_out,
+      lo_store => mem_wb_lo_store_out
     );
 
     -- BEGIN PROCESSES --
@@ -731,8 +766,6 @@ architecture arch of pipeline is
           ex_mem_load_memory_valid_in <= id_ex_load_memory_valid_out;
           ex_mem_store_memory_valid_in <= id_ex_store_memory_valid_out;
           ex_mem_store_register_in <= id_ex_store_register_out;
-          ex_mem_hi_store_in <= id_ex_hi_store_out;
-          ex_mem_lo_store_in <= id_ex_lo_store_out;
           mem_wb_store_register_in <= ex_mem_store_register_out;
           mem_wb_hi_data_in <= ex_mem_hi_data_out;
           mem_wb_lo_data_in <= ex_mem_lo_data_out;
