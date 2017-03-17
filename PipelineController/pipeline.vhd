@@ -779,9 +779,11 @@ architecture arch of pipeline is
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
           id_ex_pc_valid_in <= if_id_pc_valid_out;
+          ex_mem_scratch_in <= id_ex_scratch_out
           ex_mem_load_memory_valid_in <= id_ex_load_memory_valid_out;
           ex_mem_store_memory_valid_in <= id_ex_store_memory_valid_out;
           ex_mem_store_register_in <= id_ex_store_register_out;
+          mem_wb_scratch_in <= ex_mem_scratch_out;
           mem_wb_store_register_in <= ex_mem_store_register_out;
           mem_wb_hi_data_in <= ex_mem_hi_data_out;
           mem_wb_lo_data_in <= ex_mem_lo_data_out;
