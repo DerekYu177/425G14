@@ -209,6 +209,7 @@ architecture arch of pipeline is
   	);
   	port(
   		clock : in std_logic;
+      reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
   		write_address : in integer range 0 to ram_size-1;
@@ -228,6 +229,7 @@ architecture arch of pipeline is
     );
   	port(
   		clock : in std_logic;
+      reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
   		address : in integer range 0 to ram_size-1;
@@ -243,6 +245,7 @@ architecture arch of pipeline is
   component registers
     port(
       clock : in std_logic;
+      reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
   		readreg1 : in integer range 0 to 31;
   		readreg2 : in integer range 0 to 31;
@@ -423,6 +426,7 @@ architecture arch of pipeline is
     instruction_memory_module :  instruction_memory
     port map(
       clock,
+      global_reset,
       instr_memory_writedata,
       instr_memory_write_address,
       instr_memory_read_address,
@@ -435,6 +439,7 @@ architecture arch of pipeline is
     data_memory_module : data_memory
     port map(
       clock,
+      global_reset,
       data_memory_writedata,
       data_memory_address,
       data_memory_address_fini,
@@ -448,6 +453,7 @@ architecture arch of pipeline is
     registers_module : registers
     port map(
       clock,
+      global_reset,
       reg_writedata,
       reg_readreg1,
       reg_readreg2,
