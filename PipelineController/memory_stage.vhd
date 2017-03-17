@@ -9,7 +9,7 @@ entity memory_stage is
 
     -- data memory interface --
     data_memory_writedata : out std_logic_vector(31 downto 0);
-    data_memory_address : out integer;
+    data_memory_address : out std_logic_vector(31 downto 0);
     data_memory_memwrite : out std_logic;
     data_memory_memread : out std_logic;
     data_memory_readdata : in std_logic_vector(31 downto 0);
@@ -17,10 +17,10 @@ entity memory_stage is
 
     -- pipeline interface --
     data_in : in std_logic_vector(31 downto 0);
-    data_in_address : in integer;
+    data_in_address : in std_logic_vector(31 downto 0);
     data_in_address_valid : in std_logic;
     data_out : out std_logic_vector(31 downto 0);
-    data_out_address : out integer;
+    data_out_address : out std_logic_vector(31 downto 0);
     data_out_address_valid : out std_logic;
     load_memory_valid : in std_logic;
     store_memory_valid : in std_logic
@@ -33,11 +33,11 @@ begin
   begin
     if reset = '1' then
       data_out <= (others => '0');
-      data_out_address <= 0;
+      data_out_address <= (others => '0');
       data_out_address_valid <= '0';
     elsif clock'event then
       if (load_memory_valid = '1' and data_in_address_valid = '1') then
-        data_memory_address <= to_integer(unsigned(data_in));
+        data_memory_address <= data_in;
         data_memory_memread <= '1';
 
         data_out <= data_memory_readdata;

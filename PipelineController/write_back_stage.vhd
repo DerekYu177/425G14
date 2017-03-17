@@ -9,7 +9,7 @@ entity write_back_stage is
 
     -- interface with register --
     reg_writedata : out std_logic_vector(31 downto 0);
-    reg_writereg_address : out integer;
+    reg_writereg_address : out std_logic_vector(31 downto 0);
     reg_regwrite : out std_logic;
     write_hi_data : out std_logic_vector(31 downto 0);
     write_lo_data : out std_logic_vector(31 downto 0);
@@ -18,7 +18,7 @@ entity write_back_stage is
 
     -- pipeline interface --
     write_data : in std_logic_vector(31 downto 0);
-    write_address : in integer;
+    write_address : in std_logic_vector(31 downto 0);
     write_address_valid : in std_logic;
     store_register : in std_logic;
 
@@ -38,7 +38,7 @@ begin
     if reset = '1' then
       reg_regwrite <= '0';
       reg_writedata <= (others => '0');
-      reg_writereg_address <= 0;
+      reg_writereg_address <= (others => '0');
     elsif clock'event then
       if (store_register = '1' and write_address_valid = '1') then
         reg_regwrite <= '1';

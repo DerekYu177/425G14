@@ -30,8 +30,8 @@ architecture arch of pipeline is
   signal present_state, next_state : state_type;
 
   -- INTERNAL CONTROL SIGNALS --
-  signal program_counter : integer := 0;
-  signal updated_program_counter : integer := 0;
+  signal program_counter : std_logic_vector(31 downto 0) := (others => '0');
+  signal updated_program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
 
@@ -52,8 +52,8 @@ architecture arch of pipeline is
   signal if_id_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal if_id_pc_value_in : integer := 0;
-  signal if_id_address_value_in : integer := 0;
+  signal if_id_pc_value_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_address_value_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_valid_in : std_logic := '0';
   signal if_id_address_valid_in : std_logic := '0';
   signal if_id_load_memory_valid_in : std_logic := '0';
@@ -67,9 +67,9 @@ architecture arch of pipeline is
   signal if_id_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal if_id_pc_value_out : integer := 0;
-  signal if_id_address_value_out : integer := 0;
-  signal if_id_pc_valid_out : std_logic := '0';
+  signal if_id_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_address_valid_out : std_logic := '0';
   signal if_id_load_memory_valid_out : std_logic := '0';
   signal if_id_store_memory_valid_out : std_logic := '0';
@@ -82,8 +82,8 @@ architecture arch of pipeline is
   signal id_ex_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal id_ex_pc_value_in : integer := 0;
-  signal id_ex_address_value_in : integer := 0;
+  signal id_ex_pc_value_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_address_value_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_valid_in : std_logic := '0';
   signal id_ex_address_valid_in : std_logic := '0';
   signal id_ex_load_memory_valid_in : std_logic := '0';
@@ -97,9 +97,9 @@ architecture arch of pipeline is
   signal id_ex_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal id_ex_pc_value_out : integer := 0;
-  signal id_ex_address_value_out : integer := 0;
-  signal id_ex_pc_valid_out : std_logic := '0';
+  signal id_ex_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_address_valid_out : std_logic := '0';
   signal id_ex_load_memory_valid_out : std_logic := '0';
   signal id_ex_store_memory_valid_out : std_logic := '0';
@@ -112,8 +112,8 @@ architecture arch of pipeline is
   signal ex_mem_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal ex_mem_pc_value_in : integer := 0;
-  signal ex_mem_address_value_in : integer := 0;
+  signal ex_mem_pc_value_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_address_value_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_pc_valid_in : std_logic := '0';
   signal ex_mem_address_valid_in : std_logic := '0';
   signal ex_mem_load_memory_valid_in : std_logic := '0';
@@ -127,9 +127,9 @@ architecture arch of pipeline is
   signal ex_mem_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal ex_mem_pc_value_out : integer := 0;
-  signal ex_mem_address_value_out : integer := 0;
-  signal ex_mem_pc_valid_out : std_logic := '0';
+  signal ex_mem_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_address_valid_out : std_logic := '0';
   signal ex_mem_load_memory_valid_out : std_logic := '0';
   signal ex_mem_store_memory_valid_out : std_logic := '0';
@@ -142,8 +142,8 @@ architecture arch of pipeline is
   signal mem_wb_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal mem_wb_pc_value_in : integer := 0;
-  signal mem_wb_address_value_in : integer := 0;
+  signal mem_wb_pc_value_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_address_value_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_pc_valid_in : std_logic := '0';
   signal mem_wb_address_valid_in : std_logic := '0';
   signal mem_wb_load_memory_valid_in : std_logic := '0';
@@ -157,9 +157,9 @@ architecture arch of pipeline is
   signal mem_wb_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal mem_wb_pc_value_out : integer := 0;
-  signal mem_wb_address_value_out : integer := 0;
-  signal mem_wb_pc_valid_out : std_logic := '0';
+  signal mem_wb_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_address_valid_out : std_logic := '0';
   signal mem_wb_load_memory_valid_out : std_logic := '0';
   signal mem_wb_store_memory_valid_out : std_logic := '0';
@@ -169,16 +169,16 @@ architecture arch of pipeline is
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal instr_memory_write_address : integer range 0 to instruction_size-1 := 0;
-  signal instr_memory_read_address : integer range 0 to instruction_size-1 := 0;
+  signal instr_memory_write_address : std_logic_vector(31 downto 0) := (others => '0');
+  signal instr_memory_read_address : std_logic_vector(31 downto 0) := (others => '0');
   signal instr_memory_memwrite : std_logic := '0';
   signal instr_memory_memread : std_logic := '0';
   signal instr_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
   signal instr_memory_waitrequest : std_logic := '0';
 
   signal data_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal data_memory_address : integer range 0 to data_size-1 := 0;
-  signal data_memory_address_fini : integer range 0 to data_size-1 := 0;
+  signal data_memory_address : std_logic_vector(31 downto 0) := (others => '0');
+  signal data_memory_address_fini : std_logic_vector(31 downto 0) := (others => '0');
   signal data_memory_memwrite : std_logic := '0';
   signal data_memory_memread : std_logic := '0';
   signal data_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
@@ -186,10 +186,10 @@ architecture arch of pipeline is
   signal data_memory_waitrequest : std_logic := '0';
 
   signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg1 : integer := 0;
-  signal reg_readreg2 : integer := 0;
-  signal reg_readreg_fini : integer := 0;
-  signal reg_writereg : integer := 0;
+  signal reg_readreg1 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_readreg2 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_readreg_fini : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_writereg : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_lo : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_write_hi : std_logic := '0';
@@ -212,8 +212,8 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-  		write_address : in integer range 0 to ram_size-1;
-      read_address : in integer range 0 to ram_size-1;
+  		write_address : in std_logic_vector(31 downto 0);
+      read_address : in std_logic_vector(31 downto 0);
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
@@ -232,8 +232,8 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-  		address : in integer range 0 to ram_size-1;
-      address_read_fini : in integer range 0 to ram_size-1;
+  		address : in std_logic_vector(31 downto 0);
+      address_read_fini : in std_logic_vector(31 downto 0);
   		memwrite : in std_logic;
   		memread : in std_logic;
   		readdata : out std_logic_vector(31 downto 0);
@@ -247,10 +247,10 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
-  		readreg1 : in integer range 0 to 31;
-  		readreg2 : in integer range 0 to 31;
-  		readreg_fini : in integer range 0 to 31;
-  		writereg : in integer range 0 to 31;
+  		readreg1 : in std_logic_vector(31 downto 0);
+  		readreg2 : in std_logic_vector(31 downto 0);
+  		readreg_fini : in std_logic_vector(31 downto 0);
+  		writereg : in std_logic_vector(31 downto 0);
   		data_in_hi : in std_logic_vector(31 downto 0);
   		data_in_lo : in std_logic_vector(31 downto 0);
   		write_hi : in std_logic;
@@ -273,16 +273,16 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- instruction memory interface --
-      read_instruction_address : out integer;
+      read_instruction_address : out std_logic_vector(31 downto 0);
       read_instruction : out std_logic;
       instruction_in : in std_logic_vector(31 downto 0);
       wait_request : in std_logic;
 
       -- pipeline interface --
-      jump_program_counter : in integer;
+      jump_program_counter : in std_logic_vector(31 downto 0);
       jump_taken : in std_logic;
       instruction_out : out std_logic_vector(31 downto 0);
-      updated_program_counter : out integer;
+      updated_program_counter : out std_logic_vector(31 downto 0);
       program_counter_valid : out std_logic
     );
   end component;
@@ -293,8 +293,8 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- register interface --
-      read_1_address : out integer range 0 to 31;
-      read_2_address : out integer range 0 to 31;
+      read_1_address : out std_logic_vector(31 downto 0);
+      read_2_address : out std_logic_vector(31 downto 0);
       register_1 : in std_logic_vector(31 downto 0);
       register_2 : in std_logic_vector(31 downto 0);
       register_hi : in std_logic_vector(31 downto 0);
@@ -304,7 +304,7 @@ architecture arch of pipeline is
       instruction : in std_logic_vector(31 downto 0);
       id_ex_reg_1 : out std_logic_vector(31 downto 0);
       id_ex_reg_2 : out std_logic_vector(31 downto 0);
-      load_store_address : out integer;
+      load_store_address : out std_logic_vector(31 downto 0);
       load_store_address_valid : out std_logic;
       load_memory_valid : out std_logic;
       store_memory_valid : out std_logic;
@@ -321,12 +321,12 @@ architecture arch of pipeline is
   		ALU_instruction : in std_logic_vector(31 downto 0);
       ALU_operand1 : in std_logic_vector(31 downto 0);
       ALU_operand2 : in std_logic_vector(31 downto 0);
-  		ALU_next_pc : in integer; -- for branching
+  		ALU_next_pc : in std_logic_vector(31 downto 0); -- for branching
       ALU_next_pc_valid : in std_logic;
-      load_store_address_in: in integer;
-  		load_store_address_out: out integer;
+      load_store_address_in: in std_logic_vector(31 downto 0);
+  		load_store_address_out: out std_logic_vector(31 downto 0);
   		load_store_address_valid : out std_logic;
-  		jump_address : out integer;
+  		jump_address : out std_logic_vector(31 downto 0);
   		jump_taken : out std_logic;
 
   		ALU_output: out std_logic_vector(31 downto 0);
@@ -344,7 +344,7 @@ architecture arch of pipeline is
 
       -- data memory interface --
       data_memory_writedata : out std_logic_vector(31 downto 0);
-      data_memory_address : out integer range 0 to data_size-1;
+      data_memory_address : out std_logic_vector(31 downto 0);
       data_memory_memwrite : out std_logic;
       data_memory_memread : out std_logic;
       data_memory_readdata : in std_logic_vector(31 downto 0);
@@ -352,10 +352,10 @@ architecture arch of pipeline is
 
       -- pipeline interface --
       data_in : in std_logic_vector(31 downto 0);
-      data_in_address : in integer;
+      data_in_address : in std_logic_vector(31 downto 0);
       data_in_address_valid : in std_logic;
       data_out : out std_logic_vector(31 downto 0);
-      data_out_address : out integer;
+      data_out_address : out std_logic_vector(31 downto 0);
       data_out_address_valid : out std_logic;
       load_memory_valid : in std_logic;
       store_memory_valid : in std_logic
@@ -369,7 +369,7 @@ architecture arch of pipeline is
 
       -- interface with register --
       reg_writedata : out std_logic_vector(31 downto 0);
-      reg_writereg_address : out integer;
+      reg_writereg_address : out std_logic_vector(31 downto 0);
       reg_regwrite : out std_logic;
       write_hi_data : out std_logic_vector(31 downto 0);
       write_lo_data : out std_logic_vector(31 downto 0);
@@ -378,7 +378,7 @@ architecture arch of pipeline is
 
       -- pipeline interface --
       write_data : in std_logic_vector(31 downto 0);
-      write_address : in integer;
+      write_address : in std_logic_vector(31 downto 0);
       write_address_valid : in std_logic;
       store_register : in std_logic;
 
@@ -400,8 +400,8 @@ architecture arch of pipeline is
     stage_1_scratch : in std_logic_vector(31 downto 0);
     stage_1_hi_data : in std_logic_vector(31 downto 0);
     stage_1_lo_data : in std_logic_vector(31 downto 0);
-    stage_1_pc_value : in integer;
-    stage_1_address_value : in integer;
+    stage_1_pc_value : in std_logic_vector(31 downto 0);
+    stage_1_address_value : in std_logic_vector(31 downto 0);
     stage_1_pc_valid : in std_logic;
     stage_1_address_valid : in std_logic;
     stage_1_load_memory_valid : in std_logic;
@@ -415,8 +415,8 @@ architecture arch of pipeline is
     stage_2_scratch : out std_logic_vector(31 downto 0);
     stage_2_hi_data : out std_logic_vector(31 downto 0);
     stage_2_lo_data : out std_logic_vector(31 downto 0);
-    stage_2_pc_value : out integer;
-    stage_2_address_value : out integer;
+    stage_2_pc_value : out std_logic_vector(31 downto 0);
+    stage_2_address_value : out std_logic_vector(31 downto 0);
     stage_2_pc_valid : out std_logic;
     stage_2_address_valid : out std_logic;
     stage_2_load_memory_valid : out std_logic;

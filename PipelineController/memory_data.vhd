@@ -13,8 +13,8 @@ entity data_memory is
 		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
-		address : in integer range 0 to ram_size-1;
-		address_read_fini : in integer range 0 to ram_size-1;
+		address : in std_logic_vector(31 downto 0);
+		address_read_fini : in std_logic_vector(31 downto 0);
 		memwrite : in std_logic;
 		memread : in std_logic;
 		readdata : out std_logic_vector(31 downto 0);
@@ -42,18 +42,25 @@ begin
 
 		elsif clock'event and clock = '1' then
 			if memwrite = '1' then
-				mem_block(address) <= writedata(31 downto 24);
-				mem_block(address+1) <= writedata(23 downto 16);
-				mem_block(address+2) <= writedata(15 downto 8);
-				mem_block(address+3) <= writedata(7 downto 0);
+				mem_block(to_integer(unsigned(address))) <= writedata(31 downto 24);
+				mem_block(to_integer(unsigned(address))+1) <= writedata(23 downto 16);
+				mem_block(to_integer(unsigned(address))+2) <= writedata(15 downto 8);
+				mem_block(to_integer(unsigned(address))+3) <= writedata(7 downto 0);
 			end if;
 		elsif clock'event and clock = '0' then
-			read_address_reg <= address;
+			read_address_reg <= to_integer(unsigned(address));
 			read_address_reg_fini <= address_read_fini;
 		end if;
 	end process;
-	readdata <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);
-	readdata_fini <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);
+	readdata <= mem_block(read_address_reg)
+		& mem_block(read_address_reg+1)
+		& mem_block(read_address_reg+2)
+		& mem_block(read_address_reg+3);
+
+	readdata_fini <= mem_block(read_address_reg)
+		& mem_block(read_address_reg+1)
+		& mem_block(read_address_reg+2)
+		& mem_block(read_address_reg+3);
 
 	waitreq_w_proc: process(memwrite)
 	begin

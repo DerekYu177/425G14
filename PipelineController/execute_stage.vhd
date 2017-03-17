@@ -8,10 +8,10 @@ entity execute_stage is
 		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
 		ALU_next_pc : in integer; -- for branching
 		ALU_next_pc_valid : in std_logic;
-		load_store_address_in: in integer;
-		load_store_address_out: out integer;
+		load_store_address_in: in std_logic_vector(31 downto 0);
+		load_store_address_out: out std_logic_vector(31 downto 0);
 		load_store_address_valid : out std_logic;
-		jump_address : out integer;
+		jump_address : out std_logic_vector(31 downto 0);
 		jump_taken : out std_logic;
 
 		-- ALU_output is only used for arithmetic actions, corresponding to non - load/store or jump instructions.
@@ -103,7 +103,7 @@ begin
 
 
 -- Decomposition assignment
-extended_immediate <= (31 downto 16 => immediate(15))&immediate;
+extended_immediate <= (31 downto 16 => immediate(15)) & immediate;
 op_code <= ALU_instruction(31 downto 26);
 
 -- R-type decomposition
@@ -116,7 +116,7 @@ immediate <= ALU_instruction(15 downto 0);
 jump_address_offset <= ALU_instruction(25 downto 0);
 shamt_int_value <= to_integer(unsigned(shamt));
 
-ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
+ALU_NPC <= to_integer(unsigned(ALU_next_pc)) + 4;
 
 	ALU_process:process(clock, reset)
 	begin
@@ -129,9 +129,9 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 		if reset = '1' then
 			-- Output initiated to all 0's
 			ALU_output <= (others => '0');
-			load_store_address_out <= 0;
+			load_store_address_out <= (others => '0');
 			load_store_address_valid <= '0';
-			jump_address <= 0;
+			jump_address <= (others => '0');
 			jump_taken <= '0';
 			ALU_LO_out <= (others => '0');
 			ALU_HI_out <= (others => '0');
@@ -144,7 +144,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 				jump_taken <= '0';
 					case funct is -- R-type
 						when funct_add =>
-						report"ADD matched";
+							report"ADD matched";
 							ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
@@ -155,7 +155,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_mult =>
-						report"MULT matched";
+							report"MULT matched";
 							ALU_output <= (others => '0');
 							ALU_LO_out <= std_logic_vector(to_signed((to_integer(signed(ALU_operand1)) * to_integer(signed(ALU_operand2))),32));
 							load_store_address_valid <= '1';
@@ -187,82 +187,82 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_or =>
-						report"OR matched";
+							report"OR matched";
 							ALU_output <= ALU_operand1 or ALU_operand2;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_nor =>
-						report"NOR matched";
+							report"NOR matched";
 							ALU_output <= ALU_operand1 NOR ALU_operand2;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_xor =>
-						report"XOR matched";
+							report"XOR matched";
 							ALU_output <= ALU_operand1 xor ALU_operand2;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_mfhi =>
-						report "MFHI matched";
+							report "MFHI matched";
 							ALU_output <= ALU_operand1;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_mflo =>
-						report"MFLO matched";
+							report"MFLO matched";
 							ALU_output <= ALU_operand1;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_sll =>
-						report "SLL matched";
+							report "SLL matched";
 						-- By convention, we shift operand2 (which should be in turn connected rt)
-							ALU_output(31 downto shamt_int_value) <= ALU_operand2(31-shamt_int_value downto 0);
-							ALU_output(shamt_int_value-1 downto 0) <= (others => '0');
+							ALU_output(31 downto shamt_int_value) <= ALU_operand2(31 - shamt_int_value downto 0);
+							ALU_output(shamt_int_value - 1 downto 0) <= (others => '0');
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_srl =>
-						report"SRL matched";
-							ALU_output(31 downto (31-shamt_int_value+1)) <= (others => '0');
-							ALU_output(31-shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
+							report"SRL matched";
+							ALU_output(31 downto (31 - shamt_int_value+1)) <= (others => '0');
+							ALU_output(31 - shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_sra =>
-						report"SRA matched";
-							ALU_output(31 downto (31-shamt_int_value+1)) <= (others => ALU_operand2(31));
-							ALU_output(31-shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
+							report"SRA matched";
+							ALU_output(31 downto (31 - shamt_int_value + 1)) <= (others => ALU_operand2(31));
+							ALU_output(31 - shamt_int_value downto 0) <= ALU_operand2(31 downto shamt_int_value);
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when funct_jr =>
-						report"JR matched";
+							report"JR matched";
 						-- Directly jump to address contained in register
 						-- Assume address contained comes from operand1
-							jump_address <= to_integer(signed(ALU_operand1));
+							jump_address <= ALU_operand1;
 							jump_taken <= '1';
 							-- ALU_output <= ALU_operand1;
 							load_store_address_valid <= '1';
 							ALU_LO_store_out <= '0';
 							ALU_HI_store_out <= '0';
 						when others =>
-						report"No funct of R-type matched matched";
+							report"No funct of R-type matched matched";
 							ALU_output <= (others => '0');
 					end case;
 
 				--We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
 				when I_type_op_addi =>
-				report "ADDI matched";
+					report "ADDI matched";
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 					load_store_address_valid <= '1';
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
 					jump_taken <= '0';
 				when I_type_op_slti =>
-				report "SLTI matched";
+					report "SLTI matched";
 					load_store_address_valid <= '1';
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
@@ -279,7 +279,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 					ALU_HI_store_out <= '0';
 					jump_taken <= '0';
 				when I_type_op_ori =>
-				report "ORI matched";
+					report "ORI matched";
 					ALU_output <= ALU_operand1 or ALU_operand2;
 					load_store_address_valid <= '1';
 					ALU_LO_store_out <= '0';
@@ -292,7 +292,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 					ALU_HI_store_out <= '0';
 					jump_taken <= '0';
 				when I_type_op_lui =>
-				report "LUI matched";
+					report "LUI matched";
 					ALU_output(31 downto 16) <= immediate(15 downto 0);
 					ALU_output(15 downto 0) <= (others => '0');
 					load_store_address_valid <= '1';
@@ -300,7 +300,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 					ALU_HI_store_out <= '0';
 					jump_taken <= '0';
 				when I_type_op_lw | I_type_op_sw =>
-				report "LOAD/STORE matched";
+					report "LOAD/STORE matched";
 					-- ALU outputs the effective address
 					ALU_output <= std_logic_vector(signed(ALU_operand1) + signed(ALU_operand2));
 					load_store_address_valid <= '1';
@@ -309,26 +309,26 @@ ALU_NPC <= std_logic_vector(to_unsigned(ALU_next_pc, 32));
 					ALU_HI_store_out <= '0';
 					jump_taken <= '0';
 				when I_type_op_beq =>
-				report "BEQ matched";
+					report "BEQ matched";
 					load_store_address_valid <= '0';
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
 					ALU_output <= (others => '0'); -- ALU_output is unused in this case, default to 0
 					if (ALU_operand1 = ALU_operand2) then
 						jump_taken <= '1';
-						jump_address <= ALU_next_pc + to_integer(signed(extended_immediate));
+						jump_address <= std_logic_vector(to_unsigned(ALU_next_pc + to_integer(signed(extended_immediate))));
 					else
 						jump_taken <= '0';
 					end if;
 				when I_type_op_bne =>
-				report "BNE matched";
+					report "BNE matched";
 					load_store_address_valid <= '0';
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
 					ALU_output <= (others => '0');
 					if not(ALU_operand1 = ALU_operand2) then
 						jump_taken <= '1';
-						jump_address <= ALU_next_pc + to_integer(signed(extended_immediate));
+						jump_address <= std_logic_vector(to_unsigned(ALU_next_pc + to_integer(signed(extended_immediate))));
 					else
 						jump_taken <= '0';
 					end if;
