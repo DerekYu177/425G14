@@ -51,7 +51,7 @@ architecture arch of pipeline is
   signal if_id_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal if_id_hlodata_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_value_in : integer := 0;
   signal if_id_address_value_in : integer := 0;
   signal if_id_pc_valid_in : std_logic := '0';
@@ -66,7 +66,7 @@ architecture arch of pipeline is
   signal if_id_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal if_id_hlodata_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_value_out : integer := 0;
   signal if_id_address_value_out : integer := 0;
   signal if_id_pc_valid_out : std_logic := '0';
@@ -81,7 +81,7 @@ architecture arch of pipeline is
   signal id_ex_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_scratch_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_hi_data_in : std_logic_vector(31 downto 0) := (others => '0');
-  signal id_ex_hlodata_in : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_lo_data_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_value_in : integer := 0;
   signal id_ex_address_value_in : integer := 0;
   signal id_ex_pc_valid_in : std_logic := '0';
@@ -96,7 +96,7 @@ architecture arch of pipeline is
   signal id_ex_data_2_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_scratch_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_hi_data_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal id_ex_hlodata_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_value_out : integer := 0;
   signal id_ex_address_value_out : integer := 0;
   signal id_ex_pc_valid_out : std_logic := '0';
@@ -297,6 +297,8 @@ architecture arch of pipeline is
       read_2_address : out integer range 0 to 31;
       register_1 : in std_logic_vector(31 downto 0);
       register_2 : in std_logic_vector(31 downto 0);
+      register_hi : in std_logic_vector(31 downto 0);
+      register_lo : in std_logic_vector(31 downto 0);
 
       -- pipeline interface --
       instruction : in std_logic_vector(31 downto 0);
@@ -645,8 +647,8 @@ architecture arch of pipeline is
       read_2_address => reg_readreg2,
       register_1 => reg_readdata1,
       register_2 => reg_readdata2,
-
-      -- MODIFY FOR HI/LO
+      register_hi => reg_data_out_hi,
+      register_lo => reg_data_out_lo,
 
       instruction => if_id_scratch_out,
       id_ex_reg_1 => id_ex_data_1_in,
