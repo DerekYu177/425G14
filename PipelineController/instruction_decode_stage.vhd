@@ -177,7 +177,14 @@ architecture arch of instruction_decode_stage is
 				 load_store_address_valid <= '0';
 
 			  when funct_mfhi | funct_mflo=>
-				 null; -- performed in WB
+				report "funct_mfhi | funct_mflo";
+				load_store_address <= rtype_rd;
+				load_store_address_valid <= '1';
+				reg_1_set <= '0';
+				reg_2_set <= '0';
+				load_memory_valid <= '0';
+				store_memory_valid <= '0';
+				store_register <= '1';
 
 			  when funct_sll | funct_srl | funct_sra =>
 				-- By convention, it's the 2nd operand that is used for shifting
@@ -188,7 +195,7 @@ architecture arch of instruction_decode_stage is
 				 load_memory_valid <= '0';
 				 store_memory_valid <= '0';
 				 load_store_address <= rtype_rd; -- rd as destination
-				 load_store_address_valid <= '0';
+				 load_store_address_valid <= '1';
 
 			  when funct_jr =>
 				 read_1_address <= rtype_rs;
