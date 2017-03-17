@@ -356,18 +356,20 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
 
-      -- register interface --
+      -- interface with register --
       reg_writedata : out std_logic_vector(31 downto 0);
       reg_writereg_address : out integer;
       reg_regwrite : out std_logic;
+      write_hi_data : out std_logic_vector(31 downto 0);
+      write_lo_data : out std_logic_vector(31 downto 0);
+      write_hi : out std_logic;
+      write_lo : out std_logic;
 
       -- pipeline interface --
       write_data : in std_logic_vector(31 downto 0);
       write_address : in integer;
       write_address_valid : in std_logic;
       store_register : in std_logic;
-      write_hi : out std_logic;
-      write_lo : out std_logic;
 
       -- pipeline interface for HI/LO --
       hi_data : in std_logic_vector(31 downto 0);
@@ -691,18 +693,18 @@ architecture arch of pipeline is
       reg_writedata => reg_writedata,
       reg_writereg_address => reg_writereg,
       reg_regwrite => reg_regwrite,
-
-      write_data => mem_wb_data_1_out,
-      write_address => mem_wb_pc_value_out,
-      write_address_valid => mem_wb_pc_valid_out,
-      store_register => mem_wb_store_register_out,
       data_in_hi => reg_data_in_hi,
       data_in_lo => reg_data_in_lo,
       write_hi => reg_write_hi,
       write_lo => reg_write_lo,
 
-      hi_data => reg_data_out_hi,
-      lo_data => reg_data_out_lo,
+      write_data => mem_wb_data_1_out,
+      write_address => mem_wb_pc_value_out,
+      write_address_valid => mem_wb_pc_valid_out,
+      store_register => mem_wb_store_register_out,
+
+      hi_data => mem_wb_hi_data_out,
+      lo_data => mem_wb_lo_data_out,
       hi_store => mem_wb_hi_store_out,
       lo_store => mem_wb_lo_store_out
     );
