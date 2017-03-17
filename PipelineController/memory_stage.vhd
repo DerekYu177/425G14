@@ -34,7 +34,9 @@ begin
     end if;
 
     if (load_memory_valid = '1' and data_in_address_valid = '1') then
-      data_memory_address <= data_in_address;
+      data_out_address <= data_in_address;
+      data_out_address_valid <= '1';
+      data_memory_address <= to_integer(unsigned(data_in));
       data_memory_memread <= '1';
       data_out <= data_memory_readdata;
     end if;
