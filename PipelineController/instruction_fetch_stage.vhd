@@ -41,9 +41,13 @@ architecture arch of instruction_fetch_stage is
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
           program_counter_valid <= '1';
+	        read_instruction_address <= program_counter;
+	        instruction_out <= instruction_in;
         else
           program_counter <= program_counter + 4;
           program_counter_valid <= '1';
+	        read_instruction_address <= program_counter;
+	        instruction_out <= instruction_in;
         end if;
       end if;
 
