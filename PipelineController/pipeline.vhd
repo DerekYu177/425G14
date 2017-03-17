@@ -701,8 +701,8 @@ architecture arch of pipeline is
       write_hi => reg_write_hi,
       write_lo => reg_write_lo,
 
-      hi_data => mem_wb_hi_data_out,
-      lo_data => mem_wb_lo_data_out,
+      hi_data => reg_data_out_hi,
+      lo_data => reg_data_out_lo,
       hi_store => mem_wb_hi_store_out,
       lo_store => mem_wb_lo_store_out
     );
