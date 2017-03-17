@@ -37,7 +37,7 @@ begin
 	begin
 		if reset = '1' then
 			for i in 0 to ram_size-1 loop
-				mem_block(i) <= std_logic_vector(to_unsigned(0, 7));
+				mem_block(i) <= std_logic_vector(to_unsigned(0, 8));
 			end loop;
 
 		elsif clock'event and clock = '1' then
@@ -47,8 +47,9 @@ begin
 				mem_block(address+2) <= writedata(15 downto 8);
 				mem_block(address+3) <= writedata(7 downto 0);
 			end if;
-		read_address_reg <= address;
-		read_address_reg_fini <= address_read_fini;
+		elsif clock'event and clock = '0' then
+			read_address_reg <= address;
+			read_address_reg_fini <= address_read_fini;
 		end if;
 	end process;
 	readdata <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);

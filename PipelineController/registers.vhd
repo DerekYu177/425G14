@@ -46,7 +46,7 @@ begin
 			hi_reg <= std_logic_vector(to_unsigned(0, 32));
 			lo_reg <= std_logic_vector(to_unsigned(0, 32));
 
-		elsif clock'event and clock = '1' then
+		elsif clock'event and clock = '1' then --write on rising edge
 			if regwrite = '1' then
 				if writereg = 0 then
 					mem_block(0) <= std_logic_vector(to_unsigned(0, 32)); --hard wire r0 to 0
@@ -60,9 +60,11 @@ begin
 			if write_lo = '1' then
 				lo_reg <= data_in_lo;
 			end if;
-		read_address_reg1 <= readreg1;
-		read_address_reg2 <= readreg2;
-		read_address_reg_fini <= readreg_fini;
+			
+		elsif clock'event and clock = '0' then --read on falling edge
+			read_address_reg1 <= readreg1;
+			read_address_reg2 <= readreg2;
+			read_address_reg_fini <= readreg_fini;
 		end if;
 	end process;
 	readdata1 <= mem_block(read_address_reg1);
