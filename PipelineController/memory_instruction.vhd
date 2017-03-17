@@ -45,7 +45,8 @@ begin
 				mem_block(write_address+2) <= writedata(15 downto 8);
 				mem_block(write_address+3) <= writedata(7 downto 0);
 			end if;
-		read_address_reg <= read_address;
+		elsif clock'event and clock = '0' then
+			read_address_reg <= read_address;
 		end if;
 	end process;
 	readdata <= mem_block(read_address_reg) & mem_block(read_address_reg+1) & mem_block(read_address_reg+2) & mem_block(read_address_reg+3);
