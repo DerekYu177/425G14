@@ -8,7 +8,7 @@ entity execute_stage is
 		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
 		ALU_next_pc : in integer; -- for branching
 		ALU_next_pc_valid : in std_logic;
-		load_store_address_in: integer;
+		load_store_address_in: in integer;
 		load_store_address_out: out integer;
 		load_store_address_valid : out std_logic;
 		jump_address : out integer;
