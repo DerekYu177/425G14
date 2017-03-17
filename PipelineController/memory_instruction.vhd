@@ -10,6 +10,7 @@ entity instruction_memory is
 	);
 	port(
 		clock : in std_logic;
+		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
 		write_address : in integer range 0 to ram_size-1;
@@ -32,13 +33,12 @@ architecture behavior of instruction_memory is
 begin
 	mem_process : process(clock)
 	begin
-		if(now < 1 ps) then
+		if reset = '1' then
 			for i in 0 to ram_size-1 loop
 				mem_block(i) <= std_logic_vector(to_unsigned(0, 8));
 			end loop;
-		end if;
-
-		if clock'event and clock = '1' then
+			
+		elsif clock'event and clock = '1' then
 			if memwrite = '1' then
 				mem_block(write_address) <= writedata(31 downto 24);
 				mem_block(write_address+1) <= writedata(23 downto 16);

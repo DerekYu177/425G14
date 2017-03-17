@@ -12,6 +12,8 @@ entity instruction_decode_stage is
     read_2_address : out integer range 0 to 31;
     register_1 : in std_logic_vector(31 downto 0);
     register_2 : in std_logic_vector(31 downto 0);
+    register_hi : in std_logic_vector(31 downto 0);
+    register_lo : in std_logic_vector(31 downto 0);
 
     -- main pipeline interface --
     instruction : in std_logic_vector(31 downto 0);
@@ -47,6 +49,8 @@ architecture arch of instruction_decode_stage is
   -- whenever we want to indicate garbage is on the read_1_address/read_0_address we set this to 0
   signal reg_1_set : std_logic := '0';
   signal reg_2_set : std_logic := '0';
+  signal reg_hi_set : std_logic := '0';
+  signal reg_lo_set : std_logic := '0';
 
   -- General op code
   signal op_code: std_logic_vector(5 downto 0) := instruction(31 downto 26);
@@ -155,6 +159,8 @@ architecture arch of instruction_decode_stage is
 		load_memory_valid <= '0';
 		store_memory_valid <= '0';
 		store_register <= '0';
+		reg_hi_set <= '0';
+		reg_lo_set <= '0';
 	end if;
 	  
 
@@ -175,13 +181,29 @@ architecture arch of instruction_decode_stage is
 				 store_memory_valid <= '0';
 				 load_store_address <= rtype_rd; -- rd as destination
 				 load_store_address_valid <= '0';
+				 reg_hi_set <= '0';
+				 reg_lo_set <= '0';
 
-			  when funct_mfhi | funct_mflo=>
-				report "funct_mfhi | funct_mflo";
+			  when funct_mfhi =>
+				report "funct_mfhi";
 				load_store_address <= rtype_rd;
 				load_store_address_valid <= '1';
 				reg_1_set <= '0';
 				reg_2_set <= '0';
+				reg_hi_set <= '1';
+				reg_lo_set <= '0';
+				load_memory_valid <= '0';
+				store_memory_valid <= '0';
+				store_register <= '1';
+				
+			  when funct_mflo =>
+				report "funct_mflo";
+				load_store_address <= rtype_rd;
+				load_store_address_valid <= '1';
+				reg_1_set <= '0';
+				reg_2_set <= '0';
+				reg_hi_set <= '0';
+				reg_lo_set <= '1';
 				load_memory_valid <= '0';
 				store_memory_valid <= '0';
 				store_register <= '1';
@@ -196,6 +218,8 @@ architecture arch of instruction_decode_stage is
 				 store_memory_valid <= '0';
 				 load_store_address <= rtype_rd; -- rd as destination
 				 load_store_address_valid <= '1';
+				 reg_hi_set <= '0';
+				 reg_lo_set <= '0';
 
 			  when funct_jr =>
 				 read_1_address <= rtype_rs;
@@ -206,6 +230,8 @@ architecture arch of instruction_decode_stage is
 				 store_memory_valid <= '0';
 				 load_store_address <= 0; -- When not used, default it to 0
 				 load_store_address_valid <= '0';
+				 reg_hi_set <= '0';
+				 reg_lo_set <= '0';
 
 			  when others =>
 				 report "No funct code matched for given r-type instruction";
@@ -219,6 +245,8 @@ architecture arch of instruction_decode_stage is
 				store_memory_valid <= '0';
 				load_store_address <= 0;
 				load_store_address_valid <= '0';
+				reg_hi_set <= '0';
+				reg_lo_set <= '0';
 
 			end case;
 
@@ -233,6 +261,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= itype_rt;
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when I_type_op_slti =>
 		 report "slti operation matched";
@@ -245,6 +275,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= rtype_rt; 
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when I_type_op_lui =>
 		 -- Handled within ALU, no need to do anything here
@@ -258,6 +290,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= 0;
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when I_type_op_lw =>
 		 report "load instruction matched";
@@ -271,6 +305,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= itype_rt; -- LOAD FROM MEM TO $RT
 			load_store_address_valid <= '1';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when I_type_op_sw =>
 		 report "store instruction matched";
@@ -283,6 +319,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '1';
 			load_store_address <= itype_rt; -- STORE FROM $RT TO MEM
 			load_store_address_valid <= '1';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when I_type_op_beq | I_type_op_bne =>
 		 report "Branching instruction matched";
@@ -295,6 +333,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= 0; -- When not used, default it to 0
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 --All J-type operations
 		 -- handled within ALU? Or can we resolve them here?
@@ -310,6 +350,8 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= 0;
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
 
 		 when others =>
 		 report "No instruction case matched...something went wrong.";
@@ -323,6 +365,9 @@ architecture arch of instruction_decode_stage is
 			store_memory_valid <= '0';
 			load_store_address <= 0;
 			load_store_address_valid <= '0';
+			reg_hi_set <= '0';
+			reg_lo_set <= '0';
+			
 	  end case;
 
 	  if reg_1_set = '1' then
@@ -332,5 +377,14 @@ architecture arch of instruction_decode_stage is
 	  if reg_2_set = '1' then
 		 id_ex_reg_2 <= register_2;
 	  end if;
+	  
+	  if reg_hi_set = '1' then
+	  	id_ex_reg_1 <= register_hi;
+	  end if;
+	  
+	  if reg_lo_set = '1' then
+	  	id_ex_reg_1 <= register_lo;
+	  end if;
+	
 	end process;
 end arch;

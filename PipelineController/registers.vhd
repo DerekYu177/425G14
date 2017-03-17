@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity registers is
 	port(
 		clock : in std_logic;
+		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 		readreg1 : in integer range 0 to 31;
 		readreg2 : in integer range 0 to 31;
@@ -36,15 +37,16 @@ architecture behavior of registers is
 	signal lo_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
 begin
-	mem_process : process(clock)
+	mem_process : process(clock, reset)
 	begin
-		if(now < 1 ps) then
+		if reset = '1' then
 			for i in 0 to 31 loop
 				mem_block(i) <= std_logic_vector(to_unsigned(0, 32));
 			end loop;
-		end if;
+			hi_reg <= std_logic_vector(to_unsigned(0, 32));
+			lo_reg <= std_logic_vector(to_unsigned(0, 32));
 
-		if clock'event and clock = '1' then
+		elsif clock'event and clock = '1' then
 			if regwrite = '1' then
 				if writereg = 0 then
 					mem_block(0) <= std_logic_vector(to_unsigned(0, 32)); --hard wire r0 to 0
