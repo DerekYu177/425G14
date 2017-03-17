@@ -7,10 +7,10 @@ entity registers is
 		clock : in std_logic;
 		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
-		readreg1 : in integer range 0 to 31;
-		readreg2 : in integer range 0 to 31;
-		readreg_fini : in integer range 0 to 31;
-		writereg : in integer range 0 to 31;
+		readreg1 : in integer  ;
+		readreg2 : in integer  ;
+		readreg_fini : in integer  ;
+		writereg : in integer  ;
 		data_in_hi : in std_logic_vector(31 downto 0);
 		data_in_lo : in std_logic_vector(31 downto 0);
 		write_hi : in std_logic;
@@ -29,10 +29,10 @@ architecture behavior of registers is
 
 	type mem is array(31 downto 0) of std_logic_vector(31 downto 0);
 	signal mem_block: mem;
-	signal read_address_reg1: integer range 0 to 31;
-	signal read_address_reg2 : integer range 0 to 31;
-	signal read_address_reg_fini : integer range 0 to 31;
-	
+	signal read_address_reg1: integer  ;
+	signal read_address_reg2 : integer  ;
+	signal read_address_reg_fini : integer  ;
+
 	signal hi_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 	signal lo_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
@@ -60,7 +60,7 @@ begin
 			if write_lo = '1' then
 				lo_reg <= data_in_lo;
 			end if;
-			
+
 		elsif clock'event and clock = '0' then --read on falling edge
 			read_address_reg1 <= readreg1;
 			read_address_reg2 <= readreg2;

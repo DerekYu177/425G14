@@ -247,10 +247,10 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
-  		readreg1 : in integer range 0 to 31;
-  		readreg2 : in integer range 0 to 31;
-  		readreg_fini : in integer range 0 to 31;
-  		writereg : in integer range 0 to 31;
+  		readreg1 : in integer  ;
+  		readreg2 : in integer  ;
+  		readreg_fini : in integer  ;
+  		writereg : in integer  ;
   		data_in_hi : in std_logic_vector(31 downto 0);
   		data_in_lo : in std_logic_vector(31 downto 0);
   		write_hi : in std_logic;
@@ -293,8 +293,8 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- register interface --
-      read_1_address : out integer range 0 to 31;
-      read_2_address : out integer range 0 to 31;
+      read_1_address : out integer  ;
+      read_2_address : out integer  ;
       register_1 : in std_logic_vector(31 downto 0);
       register_2 : in std_logic_vector(31 downto 0);
       register_hi : in std_logic_vector(31 downto 0);

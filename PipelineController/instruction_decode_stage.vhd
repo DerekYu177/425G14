@@ -8,8 +8,8 @@ entity instruction_decode_stage is
     reset : in std_logic;
 
     -- interface with the register memory --
-    read_1_address : out integer range 0 to 31;
-    read_2_address : out integer range 0 to 31;
+    read_1_address : out integer  ;
+    read_2_address : out integer  ;
     register_1 : in std_logic_vector(31 downto 0);
     register_2 : in std_logic_vector(31 downto 0);
     register_hi : in std_logic_vector(31 downto 0);
@@ -25,25 +25,25 @@ entity instruction_decode_stage is
 	 -- address of R-type destination register (rd), I-type destination register (rt)
     load_store_address : out integer;
     load_store_address_valid : out std_logic; -- indicate load_store_address is valid
-    
+
 	 -- Indicates that info Loading from memory
 	 load_memory_valid : out std_logic;
-	 -- Store to memory 
+	 -- Store to memory
     store_memory_valid : out std_logic;
-	 
+
 	 -- Indicate result of current instruction is to be stored in register
 	 -- Asserted when register storing is concerned, basically most R-types and I-types
     store_register : out std_logic
-	 
+
 	 -- Note: in general, if store_register is high, both load/store_memory_valid should be low, EXCEPT the case of Load instruction
-	 -- in which case both load_memory_valid store_register are high 
+	 -- in which case both load_memory_valid store_register are high
   );
 end instruction_decode_stage;
 
 architecture arch of instruction_decode_stage is
 
   -- internal control signals --
-  
+
   -- Active high reg_1_set and reg_2_set
   -- whenever we want to pull from register using index we set this to 1
   -- whenever we want to indicate garbage is on the read_1_address/read_0_address we set this to 0
@@ -141,7 +141,7 @@ architecture arch of instruction_decode_stage is
   -- J-type decomposition
   -- For j and jal
   jump_address_offset <= instruction(25 downto 0);
-  
+
   -- For sw/lw
   extended_immediate <= (31 downto 16 => immediate(15)) & immediate;
 
@@ -162,7 +162,7 @@ architecture arch of instruction_decode_stage is
 		reg_hi_set <= '0';
 		reg_lo_set <= '0';
 	end if;
-	  
+
 
 	  case op_code is
 		 when R_type_general_op_code =>
@@ -195,7 +195,7 @@ architecture arch of instruction_decode_stage is
 				load_memory_valid <= '0';
 				store_memory_valid <= '0';
 				store_register <= '1';
-				
+
 			  when funct_mflo =>
 				report "funct_mflo";
 				load_store_address <= rtype_rd;
@@ -236,7 +236,7 @@ architecture arch of instruction_decode_stage is
 			  when others =>
 				 report "No funct code matched for given r-type instruction";
 				 -- Everything defaulted to 0
-				read_1_address <= 0; 
+				read_1_address <= 0;
 				reg_1_set <= '0';
 				read_2_address <= 0;
 				reg_2_set <= '0';
@@ -273,7 +273,7 @@ architecture arch of instruction_decode_stage is
 			store_register <= '1';
 			load_memory_valid <= '0';
 			store_memory_valid <= '0';
-			load_store_address <= rtype_rt; 
+			load_store_address <= rtype_rt;
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';
@@ -281,7 +281,7 @@ architecture arch of instruction_decode_stage is
 		 when I_type_op_lui =>
 		 -- Handled within ALU, no need to do anything here
 			-- Everything defaulted to 0
-			read_1_address <= 0; 
+			read_1_address <= 0;
 			reg_1_set <= '0';
 			read_2_address <= 0;
 			reg_2_set <= '0';
@@ -341,7 +341,7 @@ architecture arch of instruction_decode_stage is
 		 when J_type_op_j | J_type_op_jal =>
 		 report "Jump instruction matched";
 		 -- Everything defaulted to 0
-			read_1_address <= 0; 
+			read_1_address <= 0;
 			reg_1_set <= '0';
 			read_2_address <= 0;
 			reg_2_set <= '0';
@@ -367,7 +367,7 @@ architecture arch of instruction_decode_stage is
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';
-			
+
 	  end case;
 
 	  if reg_1_set = '1' then
@@ -377,14 +377,14 @@ architecture arch of instruction_decode_stage is
 	  if reg_2_set = '1' then
 		 id_ex_reg_2 <= register_2;
 	  end if;
-	  
+
 	  if reg_hi_set = '1' then
 	  	id_ex_reg_1 <= register_hi;
 	  end if;
-	  
+
 	  if reg_lo_set = '1' then
 	  	id_ex_reg_1 <= register_lo;
 	  end if;
-	
+
 	end process;
 end arch;
