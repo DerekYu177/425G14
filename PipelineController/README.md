@@ -40,6 +40,38 @@ The Pipeline is:
   4. WB
       1. Takes the value of data_out, and inserts it into register memory at location data_out_address
 
+#### Special Cases for DIV
+  1. ID
+      1. DIV expression detected
+      2. ALU_op1 and ALU_op2 asserted with appropriate value
+      3. store_register asserted
+  2. EX
+      1. quotient stored on lo_data, rem stored on hi_data
+      2. assert lo_store, hi_store
+  3. MEM
+      1. pass through 
+  4. WB
+      1. lo_store, hi_store detected
+      2. store_register detected
+      2. assert write_lo, hi_store to register
+      3. store lo_data, hi_data to register
+      
+#### Special Cases for mfhi/mflo
+  1. ID
+      1. mfhi/mflo expression detected
+      2. sends register address to EX as data_1
+      3. asserts store_register
+      4. deasserts store_valid, load_valid
+  2. EX
+      1. also detects mfhi/mflo
+      2. sets data_1 as output
+      3. passthrough load_store_address, load_store_address_valid
+  3. MEM
+      1. pass through
+  4. WB
+      1. store_register detected
+      2. takes value of data_in, and stores it at load_store_address
+      
 #### Concrete Implementation of Forwarding
   
   1. At the EX stage, check if the instruction_register at the beginning holds an instruction (call this i_current) that:
