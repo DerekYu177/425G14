@@ -23,6 +23,23 @@ The Pipeline is:
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
   3. The idea of $[EX/MEM] -> EX input can be further generalized to cases of $[MEM/WB] -> EX input, and $[MEM/WB] -> MEM input. More if-statements should be addded with care.
 
+#### Special Cases for Load instruction
+  1. ID
+    1. asserts load_valid
+    2. asserts the value of the register index into load_store_address (int) 
+    3. sends the values of ALU_Op1 and ALU_Op2 to EX
+  2. EX
+    1. ALU_Output = memory index (32b)
+    2. load_store_address is pass through 
+    3. load_valid pass through 
+  3. MEM 
+    1. Observes that load_valid = 1 
+    1. Accesses data memory with the memory index converted from (32 bit) -> (int)
+    2. puts the the accessed data memory onto data_out for WB
+    3. data_out_address is the load_store_address
+  4. WB
+    1. Takes the value of data_out, and inserts it into register memory at location data_out_address
+
 #### Concrete Implementation of Forwarding
   
   1. At the EX stage, check if the instruction_register at the beginning holds an instruction (call this i_current) that:
