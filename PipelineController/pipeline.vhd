@@ -186,10 +186,10 @@ architecture arch of pipeline is
   signal data_memory_waitrequest : std_logic := '0';
 
   signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg1 : integer range 0 to 31 := 0;
-  signal reg_readreg2 : integer range 0 to 31 := 0;
-  signal reg_readreg_fini : integer range 0 to 31 := 0;
-  signal reg_writereg : integer range 0 to 31 := 0;
+  signal reg_readreg1 : integer := 0;
+  signal reg_readreg2 : integer := 0;
+  signal reg_readreg_fini : integer := 0;
+  signal reg_writereg : integer := 0;
   signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_lo : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_write_hi : std_logic := '0';
