@@ -168,38 +168,38 @@ architecture arch of pipeline is
   signal mem_wb_lo_store_out : std_logic := '0';
 
   -- COMPONENT INTERNAL SIGNALS --
-  signal instr_memory_writedata : std_logic_vector(31 downto 0);
-  signal instr_memory_write_address : integer range 0 to instruction_size-1;
-  signal instr_memory_read_address : integer range 0 to instruction_size-1;
-  signal instr_memory_memwrite : std_logic;
-  signal instr_memory_memread : std_logic;
-  signal instr_memory_readdata : std_logic_vector(31 downto 0);
-  signal instr_memory_waitrequest : std_logic;
+  signal instr_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
+  signal instr_memory_write_address : integer range 0 to instruction_size-1 := 0;
+  signal instr_memory_read_address : integer range 0 to instruction_size-1 := 0;
+  signal instr_memory_memwrite : std_logic := '0';
+  signal instr_memory_memread : std_logic := '0';
+  signal instr_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
+  signal instr_memory_waitrequest : std_logic := '0';
 
-  signal data_memory_writedata : std_logic_vector(31 downto 0);
-  signal data_memory_address : integer range 0 to data_size-1;
-  signal data_memory_address_fini : integer range 0 to data_size-1;
-  signal data_memory_memwrite : std_logic;
-  signal data_memory_memread : std_logic;
-  signal data_memory_readdata : std_logic_vector(31 downto 0);
-  signal data_memory_readdata_fini : std_logic_vector(31 downto 0);
-  signal data_memory_waitrequest : std_logic;
+  signal data_memory_writedata : std_logic_vector(31 downto 0) := (others => '0');
+  signal data_memory_address : integer range 0 to data_size-1 := 0;
+  signal data_memory_address_fini : integer range 0 to data_size-1 := 0;
+  signal data_memory_memwrite : std_logic := '0';
+  signal data_memory_memread : std_logic := '0';
+  signal data_memory_readdata : std_logic_vector(31 downto 0) := (others => '0');
+  signal data_memory_readdata_fini : std_logic_vector(31 downto 0) := (others => '0');
+  signal data_memory_waitrequest : std_logic := '0';
 
-  signal reg_writedata : std_logic_vector(31 downto 0);
-  signal reg_readreg1 : integer range 0 to 31;
-  signal reg_readreg2 : integer range 0 to 31;
-  signal reg_readreg_fini : integer range 0 to 31;
-  signal reg_writereg : integer range 0 to 31;
-  signal reg_data_in_hi : std_logic_vector(31 downto 0);
-  signal reg_data_in_lo : std_logic_vector(31 downto 0);
-  signal reg_write_hi : std_logic;
-  signal reg_write_lo : std_logic;
-  signal reg_regwrite : std_logic;
-  signal reg_readdata1 : std_logic_vector(31 downto 0);
-  signal reg_readdata2 : std_logic_vector(31 downto 0);
-  signal reg_readdata_fini : std_logic_vector(31 downto 0);
-  signal reg_data_out_hi : std_logic_vector(31 downto 0);
-  signal reg_data_out_lo : std_logic_vector(31 downto 0);
+  signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_readreg1 : integer range 0 to 31 := 0;
+  signal reg_readreg2 : integer range 0 to 31 := 0;
+  signal reg_readreg_fini : integer range 0 to 31 := 0;
+  signal reg_writereg : integer range 0 to 31 := 0;
+  signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_data_in_lo : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_write_hi : std_logic := '0';
+  signal reg_write_lo : std_logic := '0';
+  signal reg_regwrite : std_logic := '0';
+  signal reg_readdata1 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_readdata2 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_readdata_fini : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_data_out_hi : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_data_out_lo : std_logic_vector(31 downto 0) := (others => '0');
 
   component instruction_memory
     generic(
