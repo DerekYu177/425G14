@@ -1,3 +1,7 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 entity memory_stage is
   port(
     clock : in std_logic;
@@ -5,7 +9,7 @@ entity memory_stage is
 
     -- data memory interface --
     data_memory_writedata : out std_logic_vector(31 downto 0);
-    data_memory_address : out integer range 0 to ram_size-1;
+    data_memory_address : out integer;
     data_memory_memwrite : out std_logic;
     data_memory_memread : out std_logic;
     data_memory_readdata : in std_logic_vector(31 downto 0);
@@ -47,7 +51,7 @@ begin
         data_memory_memwrite <= '1';
 
         data_out <= (others => '0');
-        data_out_address <= (others => '0');
+        data_out_address <= 0;
         data_out_address_valid <= '0';
       end if;
 

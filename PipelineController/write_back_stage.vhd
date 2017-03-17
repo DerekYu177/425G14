@@ -38,7 +38,7 @@ begin
     if reset = '1' then
       reg_regwrite <= '0';
       reg_writedata <= (others => '0');
-      reg_writereg_address => 0;
+      reg_writereg_address <= 0;
     elsif clock'event then
       if (store_register = '1' and write_address_valid = '1') then
         reg_regwrite <= '1';
@@ -57,5 +57,5 @@ begin
       end if;
     end if;
 
-  end process
+  end process;
 end arch;

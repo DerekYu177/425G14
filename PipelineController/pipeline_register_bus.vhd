@@ -33,7 +33,7 @@ entity pipeline_register_bus is
     stage_2_address_valid : out std_logic;
     stage_2_load_memory_valid : out std_logic;
     stage_2_store_memory_valid : out std_logic;
-    stage_2_store_register : out std_logic
+    stage_2_store_register : out std_logic;
     stage_2_hi_store : out std_logic;
     stage_2_lo_store : out std_logic
   );
@@ -46,8 +46,8 @@ begin
     if reset = '1' then
       stage_2_data_1 <= (others => '0');
       stage_2_data_2 <= (others => '0');
-      stage_2_hi_store <= (others => '0');
-      stage_2_lo_store <= (others => '0');
+      stage_2_hi_store <= '0';
+      stage_2_lo_store <= '0';
       stage_2_scratch <= (others => '0');
       stage_2_pc_value <= 0;
       stage_2_address_value <= 0;

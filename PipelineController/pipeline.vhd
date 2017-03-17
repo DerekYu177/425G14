@@ -74,8 +74,8 @@ architecture arch of pipeline is
   signal if_id_load_memory_valid_out : std_logic := '0';
   signal if_id_store_memory_valid_out : std_logic := '0';
   signal if_id_store_register_out : std_logic := '0';
-  signal if_id_hi_store_out : std_logi := '0';
-  signal if_id_lo_store_out : std_logi := '0';
+  signal if_id_hi_store_out : std_logic := '0';
+  signal if_id_lo_store_out : std_logic := '0';
 
   signal id_ex_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -104,8 +104,8 @@ architecture arch of pipeline is
   signal id_ex_load_memory_valid_out : std_logic := '0';
   signal id_ex_store_memory_valid_out : std_logic := '0';
   signal id_ex_store_register_out : std_logic := '0';
-  signal id_ex_hi_store_out : std_logi := '0';
-  signal id_ex_lo_store_out : std_logi := '0';
+  signal id_ex_hi_store_out : std_logic := '0';
+  signal id_ex_lo_store_out : std_logic := '0';
 
   signal ex_mem_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -134,8 +134,8 @@ architecture arch of pipeline is
   signal ex_mem_load_memory_valid_out : std_logic := '0';
   signal ex_mem_store_memory_valid_out : std_logic := '0';
   signal ex_mem_store_register_out : std_logic := '0';
-  signal ex_mem_hi_store_out : std_logi := '0';
-  signal ex_mem_lo_store_out : std_logi := '0';
+  signal ex_mem_hi_store_out : std_logic := '0';
+  signal ex_mem_lo_store_out : std_logic := '0';
 
   signal mem_wb_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_data_2_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -164,8 +164,8 @@ architecture arch of pipeline is
   signal mem_wb_load_memory_valid_out : std_logic := '0';
   signal mem_wb_store_memory_valid_out : std_logic := '0';
   signal mem_wb_store_register_out : std_logic := '0';
-  signal mem_wb_hi_store_out : std_logi := '0';
-  signal mem_wb_lo_store_out : std_logi := '0';
+  signal mem_wb_hi_store_out : std_logic := '0';
+  signal mem_wb_lo_store_out : std_logic := '0';
 
   -- COMPONENT INTERNAL SIGNALS --
   signal instr_memory_writedata : std_logic_vector(31 downto 0);
@@ -199,7 +199,7 @@ architecture arch of pipeline is
   signal reg_readdata2 : std_logic_vector(31 downto 0);
   signal reg_readdata_fini : std_logic_vector(31 downto 0);
   signal reg_data_out_hi : std_logic_vector(31 downto 0);
-  signal reg_data_out_lo : std_logic_vector(31 downto 0)
+  signal reg_data_out_lo : std_logic_vector(31 downto 0);
 
   component instruction_memory
     generic(
@@ -421,7 +421,7 @@ architecture arch of pipeline is
     stage_2_address_valid : out std_logic;
     stage_2_load_memory_valid : out std_logic;
     stage_2_store_memory_valid : out std_logic;
-    stage_2_store_register : out std_logic
+    stage_2_store_register : out std_logic;
     stage_2_hi_store : out std_logic;
     stage_2_lo_store : out std_logic
     );
@@ -497,20 +497,20 @@ architecture arch of pipeline is
       if_id_store_memory_valid_in,
       if_id_store_register_in,
       if_id_hi_store_in,
-      if_id_lo_store_in
+      if_id_lo_store_in,
 
       if_id_data_1_out,
       if_id_data_2_out,
       if_id_scratch_out,
-      if_id_hi_data_out
-      if_id_lo_data_out,,
+      if_id_hi_data_out,
+      if_id_lo_data_out,
       if_id_pc_value_out,
       if_id_address_value_out,
       if_id_pc_valid_out,
       if_id_address_valid_out,
       if_id_load_memory_valid_out,
       if_id_store_memory_valid_out,
-      if_id_store_register_out
+      if_id_store_register_out,
       if_id_hi_store_out,
       if_id_lo_store_out
     );
@@ -533,20 +533,20 @@ architecture arch of pipeline is
       id_ex_store_memory_valid_in,
       id_ex_store_register_in,
       id_ex_hi_store_in,
-      id_ex_lo_store_in
+      id_ex_lo_store_in,
 
       id_ex_data_1_out,
       id_ex_data_2_out,
       id_ex_scratch_out,
-      id_ex_hi_data_out
-      id_ex_lo_data_out,,
+      id_ex_hi_data_out,
+      id_ex_lo_data_out,
       id_ex_pc_value_out,
       id_ex_address_value_out,
       id_ex_pc_valid_out,
       id_ex_address_valid_out,
       id_ex_load_memory_valid_out,
       id_ex_store_memory_valid_out,
-      id_ex_store_register_out
+      id_ex_store_register_out,
       id_ex_hi_store_out,
       id_ex_lo_store_out
     );
@@ -569,20 +569,20 @@ architecture arch of pipeline is
       ex_mem_store_memory_valid_in,
       ex_mem_store_register_in,
       ex_mem_hi_store_in,
-      ex_mem_lo_store_in
+      ex_mem_lo_store_in,
 
       ex_mem_data_1_out,
       ex_mem_data_2_out,
       ex_mem_scratch_out,
-      ex_mem_hi_data_out
-      ex_mem_lo_data_out,,
+      ex_mem_hi_data_out,
+      ex_mem_lo_data_out,
       ex_mem_pc_value_out,
       ex_mem_address_value_out,
       ex_mem_pc_valid_out,
       ex_mem_address_valid_out,
       ex_mem_load_memory_valid_out,
       ex_mem_store_memory_valid_out,
-      ex_mem_store_register_out
+      ex_mem_store_register_out,
       ex_mem_hi_store_out,
       ex_mem_lo_store_out
     );
@@ -605,20 +605,20 @@ architecture arch of pipeline is
       mem_wb_store_memory_valid_in,
       mem_wb_store_register_in,
       mem_wb_hi_store_in,
-      mem_wb_lo_store_in
+      mem_wb_lo_store_in,
 
       mem_wb_data_1_out,
       mem_wb_data_2_out,
       mem_wb_scratch_out,
-      mem_wb_hi_data_out
-      mem_wb_lo_data_out,,
+      mem_wb_hi_data_out,
+      mem_wb_lo_data_out,
       mem_wb_pc_value_out,
       mem_wb_address_value_out,
       mem_wb_pc_valid_out,
       mem_wb_address_valid_out,
       mem_wb_load_memory_valid_out,
       mem_wb_store_memory_valid_out,
-      mem_wb_store_register_out
+      mem_wb_store_register_out,
       mem_wb_hi_store_out,
       mem_wb_lo_store_out
     );
@@ -709,8 +709,8 @@ architecture arch of pipeline is
       reg_writedata => reg_writedata,
       reg_writereg_address => reg_writereg,
       reg_regwrite => reg_regwrite,
-      data_in_hi => reg_data_in_hi,
-      data_in_lo => reg_data_in_lo,
+      write_hi_data => reg_data_in_hi,
+      write_lo_data => reg_data_in_lo,
       write_hi => reg_write_hi,
       write_lo => reg_write_lo,
 
@@ -781,7 +781,7 @@ architecture arch of pipeline is
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
           id_ex_pc_valid_in <= if_id_pc_valid_out;
-          ex_mem_scratch_in <= id_ex_scratch_out
+          ex_mem_scratch_in <= id_ex_scratch_out;
           ex_mem_load_memory_valid_in <= id_ex_load_memory_valid_out;
           ex_mem_store_memory_valid_in <= id_ex_store_memory_valid_out;
           ex_mem_store_register_in <= id_ex_store_register_out;

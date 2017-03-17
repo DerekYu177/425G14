@@ -12,10 +12,10 @@ The Pipeline is:
 #### Pipeline Register Bus (PRB)
   1. The PRB is the principle way of communicating between components. It is a straightforward active-high clock & asynchronous clear register. 
   2. The PRB contains 10 inputs and 10 outputs. These are
-      1. 3 x 32b registers, named data_1, data_2, and scratch
-      2. 2 x integer registers, one for PC, and the other for Address
-      3. 2 x 1b valid registers, one for PC and the other for Address
-      4. 3 x 1b valid registers, one for loading into memory, one for storing into memory, and one for storing into the registers. 
+    1. 3 x 32b registers, named data_1, data_2, and scratch
+    2. 2 x integer registers, one for PC, and the other for Address
+    3. 2 x 1b valid registers, one for PC and the other for Address
+    4. 3 x 1b valid registers, one for loading into memory, one for storing into memory, and one for storing into the registers. 
   3. The connections between the components and the PRB is outlined in the PR located here: https://github.com/DerekYu177/425G14/pull/17
 
 #### Forwarding
@@ -23,55 +23,6 @@ The Pipeline is:
   2. It should ALWAYS choose the current output (fed back) IF  AND ONLY IF the destination register of the previous instruction matches the (or one of the) source register of the current instruction. In other words, the operand provided by the ID stage is MEANT TO BE UPDATED, and hence invalid.
   3. The idea of $[EX/MEM] -> EX input can be further generalized to cases of $[MEM/WB] -> EX input, and $[MEM/WB] -> MEM input. More if-statements should be addded with care.
 
-#### Special Cases for Load instruction
-  1. ID
-      1. asserts load_valid
-      2. asserts the value of the register index into load_store_address (int) 
-      3. sends the values of ALU_Op1 and ALU_Op2 to EX
-  2. EX
-      1. ALU_Output = memory index (32b)
-      2. load_store_address is pass through 
-      3. load_valid pass through 
-  3. MEM 
-      1. Observes that load_valid = 1 
-      1. Accesses data memory with the memory index converted from (32 bit) -> (int)
-      2. puts the the accessed data memory onto data_out for WB
-      3. data_out_address is the load_store_address
-  4. WB
-      1. Takes the value of data_out, and inserts it into register memory at location data_out_address
-
-#### Special Cases for DIV
-  1. ID
-      1. DIV expression detected
-      2. ALU_op1 and ALU_op2 asserted with appropriate value
-      3. store_register asserted
-  2. EX
-      1. quotient stored on lo_data, rem stored on hi_data
-      2. assert lo_store, hi_store
-  3. MEM
-      1. pass through 
-  4. WB
-      1. lo_store, hi_store detected
-      2. store_register detected
-      2. assert write_lo, hi_store to register
-      3. store lo_data, hi_data to register
-      
-#### Special Cases for mfhi/mflo
-  1. ID
-      1. mfhi/mflo expression detected
-      2. sends register address to EX as data_1
-      3. asserts store_register
-      4. deasserts store_valid, load_valid
-  2. EX
-      1. also detects mfhi/mflo
-      2. sets data_1 as output
-      3. passthrough load_store_address, load_store_address_valid
-  3. MEM
-      1. pass through
-  4. WB
-      1. store_register detected
-      2. takes value of data_in, and stores it at load_store_address
-      
 #### Concrete Implementation of Forwarding
   
   1. At the EX stage, check if the instruction_register at the beginning holds an instruction (call this i_current) that:
