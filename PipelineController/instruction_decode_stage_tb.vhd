@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 ENTITY instruction_decode_stage_tb IS
-END instrcution_decode_stage_tb;
+END instruction_decode_stage_tb;
 
 ARCHITECTURE behaviour of instruction_decode_stage_tb is 
 
@@ -35,11 +35,28 @@ end component;
 -- INITIALISING THE INPUT WITH THE INITIAL VALUES 
 -- NOT COMPLETELTY INITIALISED THE VALUES  
 SIGNAL clock, reset : STD_LOGIC := '0';
+signal read_1_address :  integer range 0 to 31;
+signal read_2_address : integer range 0 to 31;
+signal register_1 : std_logic_vector(31 downto 0);
+signal register_2 :  std_logic_vector(31 downto 0);
+
+    -- main pipeline interface --
+signal instruction : std_logic_vector(31 downto 0);
+signal id_ex_reg_1 : std_logic_vector(31 downto 0);
+signal id_ex_reg_2 : std_logic_vector(31 downto 0);
+
+    -- pipeline data store address --
+signal  load_store_address : integer; -- still unused!
+signal  load_store_address_valid :std_logic; -- still unused!
+signal  load_memory_valid : std_logic;
+signal  store_memory_valid : std_logic;
+signal  store_register : std_logic ;
 
 
 -- FUNCT constants for R-type instructions
 	-------------------------------------------------
-  constant R_type_general_op_code: std_logic_vector(5 downto 0) := "000000";
+constant R_type_general_op_code: std_logic_vector(5 downto 0) := "000000";
+constant clk_period : time := 1ns ; 
 
 	-- Reg arithmetic
   constant funct_add: std_logic_vector(5 downto 0) := "100000";
@@ -86,22 +103,42 @@ SIGNAL clock, reset : STD_LOGIC := '0';
   constant J_type_op_jal: std_logic_vector(5 downto 0) := "000011";
 
 	-- OTHERS
-  constant shamt_int_value: integer := to_integer(unsigned(shamt));
-  
-  --SIGNALS 
-  
 
- 
- 
+  
  begin
- 
- 	clock <= '0';
- 	reset <='0';
-	
- 
+
+dut : instruction_decode_stage
+ PORT MAP (clock ,
+    reset,
+    -- interface with the register memory --
+    read_1_address ,
+    read_2_address ,
+    register_1 ,
+    register_2 ,
+    -- main pipeline interface --
+    instruction ,
+    id_ex_reg_1 ,
+    id_ex_reg_2 ,
+    -- pipeline data store address --
+    load_store_address ,
+    load_store_address_valid ,
+    load_memory_valid ,
+    store_memory_valid ,
+    store_register );
+
+clk :process
+BEGIN
+	clock <= '0';
+	WAIT FOR clk_period/2;
+ 	clock <='1';
+	WAIT FOR clk_period/2;
+END PROCESS;
+
+ tb:process
+begin
  -- R TYPE INSTRCUTIONS
  -- ADD R3 R1 R2 
-  instruction <= (R_type_general_op_code)&("00001")&("00010")&("00011")&("00000")&(funct_add);
+	instruction <= (R_type_general_op_code)&("00100")&("00101")&("0000000000")&(funct_add);
   
 -- MULT R4 R5  
    instruction <= (R_type_general_op_code)&("00100")&("00101")&("0000000000")&(funct_mult);
@@ -140,10 +177,5 @@ SIGNAL clock, reset : STD_LOGIC := '0';
 --  BEQ R10 R11 3
 	instruction <= (I_type_op_beq)&("01010")&("01011")&("0000000000000011");
 	
+END PROCESS;
 	end; 
-	
-	
-
- 
- 
- 
