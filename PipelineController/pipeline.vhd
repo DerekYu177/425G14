@@ -29,6 +29,8 @@ architecture arch of pipeline is
 
   signal present_state, next_state : state_type;
 
+  subtype 32b_int is 32b_int;
+
   -- INTERNAL CONTROL SIGNALS --
   signal program_counter : integer := 0;
   signal updated_program_counter : integer := 0;
@@ -186,10 +188,10 @@ architecture arch of pipeline is
   signal data_memory_waitrequest : std_logic := '0';
 
   signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg1 : integer := 0;
-  signal reg_readreg2 : integer := 0;
-  signal reg_readreg_fini : integer := 0;
-  signal reg_writereg : integer := 0;
+  signal reg_readreg1 : 32b_int;
+  signal reg_readreg2 : 32b_int;
+  signal reg_readreg_fini : 32b_int;
+  signal reg_writereg : 32b_int;
   signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_lo : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_write_hi : std_logic := '0';
@@ -247,10 +249,10 @@ architecture arch of pipeline is
       clock : in std_logic;
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
-  		readreg1 : in integer range 0 to 31;
-  		readreg2 : in integer range 0 to 31;
-  		readreg_fini : in integer range 0 to 31;
-  		writereg : in integer range 0 to 31;
+  		readreg1 : in integer 32b_int;
+  		readreg2 : in integer 32b_int;
+  		readreg_fini : in integer 32b_int;
+  		writereg : in integer 32b_int;
   		data_in_hi : in std_logic_vector(31 downto 0);
   		data_in_lo : in std_logic_vector(31 downto 0);
   		write_hi : in std_logic;
@@ -293,8 +295,8 @@ architecture arch of pipeline is
       reset : in std_logic;
 
       -- register interface --
-      read_1_address : out integer range 0 to 31;
-      read_2_address : out integer range 0 to 31;
+      read_1_address : out integer 32b_int;
+      read_2_address : out integer 32b_int;
       register_1 : in std_logic_vector(31 downto 0);
       register_2 : in std_logic_vector(31 downto 0);
       register_hi : in std_logic_vector(31 downto 0);
