@@ -85,11 +85,8 @@ constant clk_period : time := 1ns ;
   constant I_type_op_sw: std_logic_vector(5 downto 0) := "101011";
 	-- Control
   constant I_type_op_beq: std_logic_vector(5 downto 0) := "000100";
- 
 
-  
- begin
-
+BEGIN
 dut : instruction_decode_stage
  PORT MAP (clock ,
     reset,
@@ -117,8 +114,8 @@ BEGIN
 	WAIT FOR clk_period/2;
 END PROCESS;
 
- tb:process
-begin
+tb:PROCESS
+BEGIN
  -- R TYPE INSTRCUTIONS
  -- ADD R3 R1 R2 
 	instruction <= (R_type_general_op_code)&("00100")&("00101")&("0000000000")&(funct_add);
@@ -161,4 +158,4 @@ begin
 	instruction <= (I_type_op_beq)&("01010")&("01011")&("0000000000000011");
 	
 END PROCESS;
-	end; 
+END; 
