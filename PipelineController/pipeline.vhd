@@ -780,7 +780,7 @@ architecture arch of pipeline is
           program_counter <= (others => '0');
 
         when processor =>
-          instr_memory_writedata <= '0';
+          instr_memory_memwrite <= '0';
           global_reset <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
