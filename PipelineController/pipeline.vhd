@@ -767,7 +767,6 @@ architecture arch of pipeline is
       case present_state is
         when clear =>
           instruction_line_in_counter <= 0;
-          present_state <= init;
           global_reset <= '1';
 
         when init =>
