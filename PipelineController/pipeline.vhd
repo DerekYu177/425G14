@@ -770,18 +770,17 @@ architecture arch of pipeline is
           global_reset <= '1';
 
         when init =>
+          global_reset <= '0';
           instr_memory_memwrite <= '1';
           if clock'event and clock = '1' then
             instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
             instr_memory_writedata <= program_in;
             instruction_line_in_counter <= instruction_line_in_counter + 1;
           end if;
-          global_reset <= '1';
           program_counter <= (others => '0');
 
         when processor =>
           instr_memory_memwrite <= '0';
-          global_reset <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
