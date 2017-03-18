@@ -13,16 +13,16 @@ COMPONENT instruction_fetch_stage is
   reset : in std_logic;
 
   -- instruction memory interface --
-  read_instruction_address : out integer;
+  read_instruction_address : out std_logic_vector(31 downto 0);
   read_instruction : out std_logic;
   instruction_in : in std_logic_vector(31 downto 0);
   wait_request : in std_logic;
 
   -- pipeline interface --
-  jump_program_counter : in integer;
+  jump_program_counter : in std_logic_vector(31 downto 0);
   jump_taken : in std_logic;
   instruction_out : out std_logic_vector(31 downto 0);
-  updated_program_counter : out integer;
+  updated_program_counter : out std_logic_vector(31 downto 0);
   program_counter_valid : out std_logic
   );
 
@@ -32,17 +32,17 @@ end COMPONENT;
 
 -- ASSIGN PROGRAM COUNTER TO 0
  
- signal program_counter : integer; -- this will keep track of the PC
+ signal program_counter : std_logic_vector(31 downto 0) := (others =>'0'); -- this will keep track of the PC
  signal clock :  std_logic; 
  signal reset : std_logic;
- signal read_instruction_address : integer;
+ signal read_instruction_address : std_logic_vector(31 downto 0);
  signal read_instruction : std_logic;
  signal instruction_in : std_logic_vector(31 downto 0);
  signal wait_request : std_logic;
- signal jump_program_counter : integer;
+ signal jump_program_counter : std_logic_vector(31 downto 0);
  signal jump_taken : std_logic;
  signal instruction_out : std_logic_vector(31 downto 0); 
- signal updated_program_counter : integer;
+ signal updated_program_counter : std_logic_vector(31 downto 0);
  signal program_counter_valid : std_logic;
  constant clk_period : time := 1 ns ; 
  constant funct_add: std_logic_vector(5 downto 0) := "100000";
@@ -73,9 +73,9 @@ clk_process : PROCESS
 BEGIN
 	REPORT " IN CLOCK PROCESS ";
 	clock <= '1';
-	WAIT FOR clk_period/2;
+	WAIT FOR clk_period;
 	clock <= '0';
-	WAIT FOR clk_period/2;
+	WAIT FOR clk_period;
 END PROCESS;
 
 tb : PROCESS
@@ -91,16 +91,21 @@ tb : PROCESS
 		-- ASSIGN RANDOM VALUES TO INSTRUCTION_IN 
 		---instruction_in <= (others => '0');
 		---wait for clk_period; 
-		instruction_in <= (R_type_general_op_code)&("00001")&("00010")&("00011")&("00000")&(funct_add);
-		wait for clk_period; 
-
- 		if(( read_instruction = '1') and (program_counter = read_instruction_address)) then 
+		--instruction_in <= (R_type_general_op_code)&("00001")&("00010")&("00011")&("00000")&(funct_add);
+		--swait for clk_period; 
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) - 4, 32));
+ 		if(( read_instruction = '1') and (updated_program_counter = read_instruction_address)) then 
  		
  		 -- ADD R3 R1 R2 
   		instruction_in <= (R_type_general_op_code)&("00001")&("00010")&("00011")&("00000")&(funct_add);
  		ASSERT (instruction_out = instruction_in);
  		ASSERT ( updated_program_counter = program_counter);
- 		program_counter <= program_counter+4;
+ 		--program_counter <= program_counter+4;
+		
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
+		--program_counter <= std_logic_vector( unsigned(program_counter) + 4 );
+		
+		
 		program_counter_valid <= '1'; 
 		wait for clk_period; 
  		
@@ -108,7 +113,10 @@ tb : PROCESS
    		instruction_in <= (R_type_general_op_code)&("00100")&("00101")&("0000000000")&(funct_mult);
    		ASSERT (instruction_out = instruction_in); 
    		ASSERT (updated_program_counter = program_counter);
-   		program_counter <= program_counter+4;
+   		--program_counter <= program_counter+4;
+		
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
+		--program_counter <= std_logic_vector( unsigned(program_counter) + 4 );
 		program_counter_valid <= '1';
    		wait for clk_period; 
 
@@ -116,7 +124,10 @@ tb : PROCESS
 		instruction_in <= (R_type_general_op_code)&("01010")&("01001")&("01011")&("00000")&(funct_xor);
 		ASSERT(instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
-		program_counter <= program_counter+4; 
+		--program_counter <= program_counter+4; 
+		
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
+		--program_counter <= std_logic_vector( unsigned(program_counter) + 4 );
 		program_counter_valid <= '1';
 		wait for clk_period; 
 		
@@ -124,7 +135,10 @@ tb : PROCESS
 		instruction_in <= (I_type_op_addi)&("00001")&("00010")&("0000000000000011"); 
 		ASSERT(instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
-		program_counter <= program_counter+4; 
+		--program_counter <= program_counter+4; 
+		
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
+		--program_counter <= std_logic_vector( unsigned(program_counter) + 4 );
 		program_counter_valid <= '1';
 		wait for clk_period; 
 		
@@ -142,7 +156,10 @@ tb : PROCESS
 		instruction_in <= (J_type_op_j)&("00000000000010011100010000");
 		ASSERT( instruction_out = instruction_in); 
 		ASSERT(updated_program_counter = program_counter); 
-		program_counter <= program_counter+4; 
+		--program_counter <= program_counter+4; 
+		--program_counter <= std_logic_vector(to_unsigned(to_integer(program_counter))+4,32);
+		program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
+		--program_counter <= std_logic_vector( unsigned(program_counter) + 4 );
 		jump_taken <= '0';
 		wait for clk_period; 
 		
