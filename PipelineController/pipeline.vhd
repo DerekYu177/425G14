@@ -754,8 +754,12 @@ architecture arch of pipeline is
 
         when fini =>
           next_state <= fini;
-
       end case;
+
+      if clock'event and clock = '1' then
+        present_state <= next_state;
+      end if;
+
     end process;
 
     pipeline_functional_logic : process (clock, reset, present_state, program_in)
