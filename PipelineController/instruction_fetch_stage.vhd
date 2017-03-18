@@ -35,9 +35,7 @@ architecture arch of instruction_fetch_stage is
         updated_program_counter <= (others => '0');
         program_counter <= (others => '0');
         program_counter_valid <= '0';
-      end if;
-
-      if (clock'event and clock = '1') then
+      elsif (clock'event and clock = '1') then
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
           program_counter_valid <= '1';
