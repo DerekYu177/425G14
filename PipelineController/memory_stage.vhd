@@ -51,7 +51,7 @@ begin
         data_memory_memwrite <= '1';
 
         data_out <= (others => '0');
-        data_out_address <= 0;
+        data_out_address <= (others => '0');
         data_out_address_valid <= '0';
       end if;
 

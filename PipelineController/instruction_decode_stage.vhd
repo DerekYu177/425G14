@@ -56,15 +56,15 @@ architecture arch of instruction_decode_stage is
   signal op_code: std_logic_vector(5 downto 0) := instruction(31 downto 26);
 
 	-- R-type decomposition
-  signal rtype_rs: std_logic_vector := (31 downto 5 => '0', 4 downto 0 => instruction(25 downto 21));
-  signal rtype_rt: std_logic_vector := (31 downto 5 => '0', 4 downto 0 => instruction(20 downto 16));
-  signal rtype_rd: std_logic_vector := (31 downto 5 => '0', 4 downto 0 => instruction(15 downto 11));
+  signal rtype_rs: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(25 downto 21);
+  signal rtype_rt: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(20 downto 16);
+  signal rtype_rd: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(15 downto 11);
   signal shamt: std_logic_vector(4 downto 0) := instruction(10 downto 6);
   signal funct: std_logic_vector(5 downto 0) := instruction(5 downto 0);
 
 	-- I-type decomposition
-  signal itype_rs: std_logic_vector := (31 downto 5 => '0', 4 downto 0 => instruction(25 downto 21));
-  signal itype_rt: std_logic_vector := (31 downto 5 => '0', 4 downto 0 => instruction(20 downto 16));
+  signal itype_rs: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(25 downto 21);
+  signal itype_rt: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(20 downto 16);
   signal immediate: std_logic_vector(15 downto 0) := instruction(15 downto 0);
   signal blank_immediate_header : std_logic_vector(15 downto 0) := (others => '0');
   signal extended_immediate: std_logic_vector(31 downto 0);
@@ -127,14 +127,14 @@ architecture arch of instruction_decode_stage is
   op_code <= instruction(31 downto 26);
 
 	-- R-type decomposition
-  rtype_rs <= (31 downto 5 => '0', 4 downto 0 => instruction(25 downto 21));
-  rtype_rt <= (31 downto 5 => '0', 4 downto 0 => instruction(20 downto 16));
-  rtype_rd <= (31 downto 5 => '0', 4 downto 0 => instruction(15 downto 11));
+  rtype_rs <= (31 downto 5 => '0') & instruction(25 downto 21);
+  rtype_rt <= (31 downto 5 => '0') & instruction(20 downto 16);
+  rtype_rd <= (31 downto 5 => '0') & instruction(15 downto 11);
   shamt <= instruction(10 downto 6);
   funct <=  instruction(5 downto 0);
   -- I-type decomposition
-  itype_rs <= (31 downto 5 => '0', 4 downto 0 => instruction(25 downto 21));
-  itype_rt <= (31 downto 5 => '0', 4 downto 0 => instruction(20 downto 16));
+  itype_rs <= (31 downto 5 => '0') & instruction(25 downto 21);
+  itype_rt <= (31 downto 5 => '0') & instruction(20 downto 16);
   immediate <= instruction(15 downto 0);
   blank_immediate_header <= (others => '0');
 
@@ -228,7 +228,7 @@ architecture arch of instruction_decode_stage is
 				 store_register <= '0'; -- We are not storing anything in register
 				 load_memory_valid <= '0';
 				 store_memory_valid <= '0';
-				 load_store_address <= 0; -- When not used, default it to 0
+				 load_store_address <= (others => '0'); -- When not used, default it to 0
 				 load_store_address_valid <= '0';
 				 reg_hi_set <= '0';
 				 reg_lo_set <= '0';
@@ -236,14 +236,14 @@ architecture arch of instruction_decode_stage is
 			  when others =>
 				 report "No funct code matched for given r-type instruction";
 				 -- Everything defaulted to 0
-				read_1_address <= 0;
+				read_1_address <= (others => '0');
 				reg_1_set <= '0';
-				read_2_address <= 0;
+				read_2_address <= (others => '0');
 				reg_2_set <= '0';
 				store_register <= '0';
 				load_memory_valid <= '0';
 				store_memory_valid <= '0';
-				load_store_address <= 0;
+				load_store_address <= (others => '0');
 				load_store_address_valid <= '0';
 				reg_hi_set <= '0';
 				reg_lo_set <= '0';
@@ -281,14 +281,14 @@ architecture arch of instruction_decode_stage is
 		 when I_type_op_lui =>
 		 -- Handled within ALU, no need to do anything here
 			-- Everything defaulted to 0
-			read_1_address <= 0;
+			read_1_address <= (others => '0');
 			reg_1_set <= '0';
-			read_2_address <= 0;
+			read_2_address <= (others => '0');
 			reg_2_set <= '0';
 			store_register <= '0';
 			load_memory_valid <= '0';
 			store_memory_valid <= '0';
-			load_store_address <= 0;
+			load_store_address <= (others => '0');
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';
@@ -331,7 +331,7 @@ architecture arch of instruction_decode_stage is
 			store_register <= '0'; -- Not storing in register
 			load_memory_valid <= '0';
 			store_memory_valid <= '0';
-			load_store_address <= 0; -- When not used, default it to 0
+			load_store_address <= (others => '0'); -- When not used, default it to 0
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';
@@ -341,14 +341,14 @@ architecture arch of instruction_decode_stage is
 		 when J_type_op_j | J_type_op_jal =>
 		 report "Jump instruction matched";
 		 -- Everything defaulted to 0
-			read_1_address <= 0;
+			read_1_address <= (others => '0');
 			reg_1_set <= '0';
-			read_2_address <= 0;
+			read_2_address <= (others => '0');
 			reg_2_set <= '0';
 			store_register <= '0';
 			load_memory_valid <= '0';
 			store_memory_valid <= '0';
-			load_store_address <= 0;
+			load_store_address <= (others => '0');
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';
@@ -356,14 +356,14 @@ architecture arch of instruction_decode_stage is
 		 when others =>
 		 report "No instruction case matched...something went wrong.";
 		 -- DEFAULT IDLE CASE
-			read_1_address <= 0; -- default
+			read_1_address <= (others => '0'); -- default
 			reg_1_set <= '0';
-			read_2_address <= 0; -- default;
+			read_2_address <= (others => '0'); -- default;
 			reg_2_set <= '0';
 			store_register <= '0';
 			load_memory_valid <= '0';
 			store_memory_valid <= '0';
-			load_store_address <= 0;
+			load_store_address <= (others => '0');
 			load_store_address_valid <= '0';
 			reg_hi_set <= '0';
 			reg_lo_set <= '0';

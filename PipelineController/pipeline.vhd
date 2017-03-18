@@ -69,7 +69,7 @@ architecture arch of pipeline is
   signal if_id_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
   signal if_id_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal if_id_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal if_id_pc_valid_out : std_logic := '0';
   signal if_id_address_valid_out : std_logic := '0';
   signal if_id_load_memory_valid_out : std_logic := '0';
   signal if_id_store_memory_valid_out : std_logic := '0';
@@ -99,7 +99,7 @@ architecture arch of pipeline is
   signal id_ex_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
   signal id_ex_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal id_ex_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal id_ex_pc_valid_out : std_logic := '0';
   signal id_ex_address_valid_out : std_logic := '0';
   signal id_ex_load_memory_valid_out : std_logic := '0';
   signal id_ex_store_memory_valid_out : std_logic := '0';
@@ -129,7 +129,7 @@ architecture arch of pipeline is
   signal ex_mem_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
   signal ex_mem_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal ex_mem_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal ex_mem_pc_valid_out : std_logic := '0';
   signal ex_mem_address_valid_out : std_logic := '0';
   signal ex_mem_load_memory_valid_out : std_logic := '0';
   signal ex_mem_store_memory_valid_out : std_logic := '0';
@@ -159,7 +159,7 @@ architecture arch of pipeline is
   signal mem_wb_lo_data_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_pc_value_out : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_wb_address_value_out : std_logic_vector(31 downto 0) := (others => '0');
-  signal mem_wb_pc_valid_out : std_logic_vector(31 downto 0) := (others => '0');
+  signal mem_wb_pc_valid_out : std_logic := '0';
   signal mem_wb_address_valid_out : std_logic := '0';
   signal mem_wb_load_memory_valid_out : std_logic := '0';
   signal mem_wb_store_memory_valid_out : std_logic := '0';
@@ -319,11 +319,11 @@ architecture arch of pipeline is
 
       -- pipeline interface --
   		ALU_instruction : in std_logic_vector(31 downto 0);
-      ALU_operand1 : in std_logic_vector(31 downto 0);
-      ALU_operand2 : in std_logic_vector(31 downto 0);
+     		ALU_operand1 : in std_logic_vector(31 downto 0);
+      		ALU_operand2 : in std_logic_vector(31 downto 0);
   		ALU_next_pc : in std_logic_vector(31 downto 0); -- for branching
-      ALU_next_pc_valid : in std_logic;
-      load_store_address_in: in std_logic_vector(31 downto 0);
+      		ALU_next_pc_valid : in std_logic;
+      		load_store_address_in: in std_logic_vector(31 downto 0);
   		load_store_address_out: out std_logic_vector(31 downto 0);
   		load_store_address_valid : out std_logic;
   		jump_address : out std_logic_vector(31 downto 0);
@@ -743,7 +743,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (program_counter >= 10000) then
+          if (to_integer(unsigned(program_counter)) >= 10000) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
@@ -769,12 +769,12 @@ architecture arch of pipeline is
         when init =>
           instr_memory_memwrite <= '1';
           if clock'event and clock = '1' then
-            instr_memory_write_address <= instruction_line_in_counter;
+            instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
             instr_memory_writedata <= program_in;
             instruction_line_in_counter <= instruction_line_in_counter + 1;
           end if;
           global_reset <= '1';
-          program_counter <= 0;
+          program_counter <= (others => '0');
 
         when processor =>
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
@@ -797,8 +797,8 @@ architecture arch of pipeline is
           -- register does not require memread
 
           if (clock'event and clock = '1') then
-            data_memory_address_fini <= memory_line_counter;
-            reg_readreg_fini <= register_line_counter;
+            data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
+            reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
 
             memory_out <= data_memory_readdata_fini;
             register_out <= reg_readdata_fini;

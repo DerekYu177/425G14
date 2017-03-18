@@ -6,7 +6,7 @@ entity execute_stage is
 	port(
 		clock, reset: in std_logic;
 		ALU_instruction, ALU_operand1, ALU_operand2: in std_logic_vector(31 downto 0);
-		ALU_next_pc : in integer; -- for branching
+		ALU_next_pc : in std_logic_vector(31 downto 0); -- for branching
 		ALU_next_pc_valid : in std_logic;
 		load_store_address_in: in std_logic_vector(31 downto 0);
 		load_store_address_out: out std_logic_vector(31 downto 0);
@@ -116,7 +116,7 @@ immediate <= ALU_instruction(15 downto 0);
 jump_address_offset <= ALU_instruction(25 downto 0);
 shamt_int_value <= to_integer(unsigned(shamt));
 
-ALU_NPC <= to_integer(unsigned(ALU_next_pc)) + 4;
+ALU_NPC <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + 4, 32));
 
 	ALU_process:process(clock, reset)
 	begin
@@ -316,7 +316,7 @@ ALU_NPC <= to_integer(unsigned(ALU_next_pc)) + 4;
 					ALU_output <= (others => '0'); -- ALU_output is unused in this case, default to 0
 					if (ALU_operand1 = ALU_operand2) then
 						jump_taken <= '1';
-						jump_address <= std_logic_vector(to_unsigned(ALU_next_pc + to_integer(signed(extended_immediate))));
+						jump_address <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + to_integer(signed(extended_immediate)), 32));
 					else
 						jump_taken <= '0';
 					end if;
@@ -328,8 +328,7 @@ ALU_NPC <= to_integer(unsigned(ALU_next_pc)) + 4;
 					ALU_output <= (others => '0');
 					if not(ALU_operand1 = ALU_operand2) then
 						jump_taken <= '1';
-						jump_address <= std_logic_vector(to_unsigned(ALU_next_pc + to_integer(signed(extended_immediate))));
-					else
+						jump_address <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + to_integer(signed(extended_immediate)), 32));					else
 						jump_taken <= '0';
 					end if;
 

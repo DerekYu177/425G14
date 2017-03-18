@@ -36,6 +36,8 @@ architecture behavior of registers is
 	signal hi_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 	signal lo_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 
+	signal blank : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
+
 begin
 	mem_process : process(clock, reset)
 	begin
@@ -48,10 +50,10 @@ begin
 
 		elsif clock'event and clock = '1' then --write on rising edge
 			if regwrite = '1' then
-				if writereg = 0 then
+				if writereg = blank then
 					mem_block(0) <= std_logic_vector(to_unsigned(0, 32)); --hard wire r0 to 0
 				else
-					mem_block(writereg) <= writedata;
+					mem_block(to_integer(unsigned(writereg))) <= writedata;
 				end if;
 			end if;
 			if write_hi = '1' then

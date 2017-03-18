@@ -26,7 +26,7 @@ architecture behavior of instruction_memory is
 
 	type mem is array(ram_size-1 downto 0) of std_logic_vector(7 downto 0);
 	signal mem_block: mem;
-	signal read_address_reg: std_logic_vector(31 downto 0) := (others => '0');
+	signal read_address_reg: integer := 0;
 	signal write_waitreq_reg: std_logic := '1';
 	signal read_waitreq_reg: std_logic := '1';
 
@@ -47,13 +47,13 @@ begin
 			end if;
 		elsif clock'event and clock = '0' then
 			read_address_reg <= to_integer(unsigned(read_address));
+			
+			readdata <= mem_block(read_address_reg) 
+				& mem_block(read_address_reg + 1) 
+				& mem_block(read_address_reg + 2) 
+				& mem_block(read_address_reg + 3);
 		end if;
 	end process;
-
-	readdata <= mem_block(read_address_reg))
-		& mem_block(read_address_reg)+1)
-		& mem_block(read_address_reg)+2)
-		& mem_block(read_address_reg)+3);
 
 	waitreq_w_proc: process(memwrite)
 	begin
