@@ -186,9 +186,9 @@ architecture arch of pipeline is
   signal data_memory_readdata_fini : std_logic_vector(31 downto 0) := (others => '0');
   signal data_memory_waitrequest : std_logic := '0';
 
-  signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg1 : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg2 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_writedata : std_logic_vector(31 downto 0);
+  signal reg_readreg1 : std_logic_vector(31 downto 0);
+  signal reg_readreg2 : std_logic_vector(31 downto 0);
   signal reg_readreg_fini : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_writereg : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
