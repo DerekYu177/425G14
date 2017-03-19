@@ -34,6 +34,7 @@ architecture arch of pipeline is
   signal updated_program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
+  signal initializing : std_logic := '1';
 
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
@@ -271,6 +272,7 @@ architecture arch of pipeline is
     port(
       clock : in std_logic;
       reset : in std_logic;
+      initializing : in std_logic;
 
       -- instruction memory interface --
       read_instruction_address : out std_logic_vector(31 downto 0);
@@ -627,6 +629,7 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
+      initializing => initializing,
       read_instruction_address => instr_memory_read_address,
       read_instruction => instr_memory_memread,
       instruction_in => instr_memory_readdata,
@@ -778,6 +781,7 @@ architecture arch of pipeline is
         when init =>
           global_reset <= '0';
           program_counter <= (others => '0');
+          initializing <= '1';
 
         when instruction_load =>
           instr_memory_memwrite <= '1';
@@ -789,6 +793,7 @@ architecture arch of pipeline is
           instruction_line_in_counter <= instruction_line_in_counter + 4;
 
         when processor =>
+          intializing <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
