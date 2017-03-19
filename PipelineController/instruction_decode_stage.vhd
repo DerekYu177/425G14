@@ -60,6 +60,7 @@ architecture arch of instruction_decode_stage is
   signal rtype_rt: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(20 downto 16);
   signal rtype_rd: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(15 downto 11);
   signal shamt: std_logic_vector(4 downto 0) := instruction(10 downto 6);
+  signal shamt_int_value : integer := to_integer(unsigned(shamt));
   signal funct: std_logic_vector(5 downto 0) := instruction(5 downto 0);
 
   -- I-type decomposition
@@ -119,9 +120,6 @@ architecture arch of instruction_decode_stage is
   ----------------------------------------------
   constant J_type_op_j: std_logic_vector(5 downto 0) := "000010";
   constant J_type_op_jal: std_logic_vector(5 downto 0) := "000011";
-
-  -- OTHERS
-  constant shamt_int_value : integer := to_integer(unsigned(shamt));
 
   begin
   op_code <= instruction(31 downto 26);
