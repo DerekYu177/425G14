@@ -734,10 +734,10 @@ architecture arch of pipeline is
           next_state <= init;
 
         when init =>
+          next_state <= init;
+
           if program_in_finished = '1' then
             next_state <= processor;
-          else
-            next_state <= init;
           end if;
 
         when processor =>
@@ -772,11 +772,9 @@ architecture arch of pipeline is
         when init =>
           global_reset <= '0';
           instr_memory_memwrite <= '1';
-          if clock'event and clock = '1' then
-            instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
-            instr_memory_writedata <= program_in;
-            instruction_line_in_counter <= instruction_line_in_counter + 1;
-          end if;
+          instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
+          instr_memory_writedata <= program_in;
+          instruction_line_in_counter <= instruction_line_in_counter + 1;
           program_counter <= (others => '0');
 
         when processor =>
