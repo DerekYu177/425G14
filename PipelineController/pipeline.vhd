@@ -793,6 +793,7 @@ architecture arch of pipeline is
           instruction_line_in_counter <= instruction_line_in_counter + 4;
 
         when processor =>
+          instr_memory_memwrite <= '0';
           initializing <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
