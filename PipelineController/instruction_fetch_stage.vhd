@@ -39,20 +39,17 @@ architecture arch of instruction_fetch_stage is
       elsif (initializing = '0') then
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
-          program_counter_valid <= '1';
-	        read_instruction_address <= program_counter;
-	        instruction_out <= instruction_in;
         else
           program_counter <= std_logic_vector(to_unsigned(to_integer(unsigned(program_counter)) + 4, 32));
-          program_counter_valid <= '1';
-	        read_instruction_address <= program_counter;
-	        instruction_out <= instruction_in;
         end if;
 
+        program_counter_valid <= '1';
         read_instruction <= '1';
-        read_instruction_address <= program_counter;
         updated_program_counter <= program_counter;
       end if;
     end process;
+
+  read_instruction_address <= program_counter;
+  instruction_out <= instruction_in;
 
 end architecture;
