@@ -366,22 +366,27 @@ architecture arch of instruction_decode_stage is
       reg_hi_set <= '0';
       reg_lo_set <= '0';
 
-  end case;
+    end case;
+  end process;
 
-  if reg_1_set = '1' then
-    id_ex_reg_1 <= register_1;
-  end if;
+  process(reg_1_set, reg_2_set, reg_hi_set, reg_lo_set)
+  begin
+    
+    if reg_1_set = '1' then
+      id_ex_reg_1 <= register_1;
+    end if;
 
-  if reg_2_set = '1' then
-    id_ex_reg_2 <= register_2;
-  end if;
+    if reg_2_set = '1' then
+      id_ex_reg_2 <= register_2;
+    end if;
 
-  if reg_hi_set = '1' then
-    id_ex_reg_1 <= register_hi;
-  end if;
+    if reg_hi_set = '1' then
+      id_ex_reg_1 <= register_hi;
+    end if;
 
-  if reg_lo_set = '1' then
-    id_ex_reg_1 <= register_lo;
-  end if;
-end process;
+    if reg_lo_set = '1' then
+      id_ex_reg_1 <= register_lo;
+    end if;
+
+  end process;
 end arch;
