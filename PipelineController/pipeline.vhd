@@ -24,7 +24,7 @@ architecture arch of pipeline is
 
   -- STATE DEFINITION --
   type state_type is (
-    clear, init, processor, fini
+    clear, init, instruction_load, instruction_load_increment, processor, fini
   );
 
   signal present_state, next_state : state_type;
@@ -734,11 +734,17 @@ architecture arch of pipeline is
           next_state <= init;
 
         when init =>
+          next_state <= instruction_load;
+
+        when instruction_load =>
           if program_in_finished = '1' then
             next_state <= processor;
           else
-            next_state <= init;
+            next_state <= instruction_load_increment;
           end if;
+
+        when instruction_load_increment =>
+          next_state <= instruction_load;
 
         when processor =>
           -- this is where forwarding and hazard detection will take place --
@@ -771,14 +777,16 @@ architecture arch of pipeline is
 
         when init =>
           global_reset <= '0';
+          program_counter <= (others => '0');
+
+        when instruction_load =>
           instr_memory_memwrite <= '1';
           instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
           instr_memory_writedata <= program_in;
-          if clock'event then
-            instruction_line_in_counter <= instruction_line_in_counter + 4;
-            instr_memory_memwrite <= '0';
-          end if;
-          program_counter <= (others => '0');
+
+        when instruction_load_increment =>
+          instr_memory_memwrite <= '0';
+          instruction_line_in_counter <= instruction_line_in_counter + 4;
 
         when processor =>
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
