@@ -47,10 +47,10 @@ architecture arch of instruction_decode_stage is
   -- Active high reg_1_set and reg_2_set
   -- whenever we want to pull from register using index we set this to 1
   -- whenever we want to indicate garbage is on the read_1_address/read_0_address we set this to 0
-  signal reg_1_set : std_logic := '0';
-  signal reg_2_set : std_logic := '0';
-  signal reg_hi_set : std_logic := '0';
-  signal reg_lo_set : std_logic := '0';
+--  signal reg_1_set : std_logic := '0';
+--  signal reg_2_set : std_logic := '0';
+--  signal reg_hi_set : std_logic := '0';
+--  signal reg_lo_set : std_logic := '0';
 
   -- General op code
   signal op_code: std_logic_vector(5 downto 0) := instruction(31 downto 26);
@@ -156,8 +156,10 @@ architecture arch of instruction_decode_stage is
     load_memory_valid <= '0';
     store_memory_valid <= '0';
     store_register <= '0';
-    reg_hi_set <= '0';
-    reg_lo_set <= '0';
+    id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+    id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--    reg_hi_set <= '0';
+--    reg_lo_set <= '0';
   end if;
 
   case op_code is
@@ -169,24 +171,28 @@ architecture arch of instruction_decode_stage is
           report "Either a funct_add | funct_sub | funct_mult | funct_div | funct_slt | funct_and | funct_or | funct_nor | funct_xor ";
           read_1_address <= rtype_rs;
           read_2_address <= rtype_rt;
-          reg_1_set <= '1';
-          reg_2_set <= '1';
+          id_ex_reg_1 <= register_1;
+          id_ex_reg_2 <= register_2;
+--          reg_1_set <= '1';
+--          reg_2_set <= '1';
           store_register <= '1';
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           load_store_address <= rtype_rd; -- rd as destination
           load_store_address_valid <= '0';
-          reg_hi_set <= '0';
-          reg_lo_set <= '0';
+--          reg_hi_set <= '0';
+--          reg_lo_set <= '0';
 
         when funct_mfhi =>
           report "funct_mfhi";
           load_store_address <= rtype_rd;
           load_store_address_valid <= '1';
-          reg_1_set <= '0';
-          reg_2_set <= '0';
-          reg_hi_set <= '1';
-          reg_lo_set <= '0';
+          id_ex_reg_1 <= register_hi;
+          id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--          reg_1_set <= '0';
+--          reg_2_set <= '0';
+--          reg_hi_set <= '1';
+--          reg_lo_set <= '0';
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           store_register <= '1';
@@ -195,10 +201,12 @@ architecture arch of instruction_decode_stage is
           report "funct_mflo";
           load_store_address <= rtype_rd;
           load_store_address_valid <= '1';
-          reg_1_set <= '0';
-          reg_2_set <= '0';
-          reg_hi_set <= '0';
-          reg_lo_set <= '1';
+          id_ex_reg_1 <= register_lo;
+          id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--          reg_1_set <= '0';
+--          reg_2_set <= '0';
+--          reg_hi_set <= '0';
+--          reg_lo_set <= '1';
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           store_register <= '1';
@@ -207,43 +215,49 @@ architecture arch of instruction_decode_stage is
           report "funct_sll | funct_srl | funct_sra";
         -- By convention, it's the 2nd operand that is used for shifting
           read_2_address <= rtype_rt;
-          reg_1_set <= '0';
-          reg_2_set <= '1';
+          id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+          id_ex_reg_2 <= register_2;
+--          reg_1_set <= '0';
+--          reg_2_set <= '1';
           store_register <= '1';
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           load_store_address <= rtype_rd; -- rd as destination
           load_store_address_valid <= '1';
-          reg_hi_set <= '0';
-          reg_lo_set <= '0';
+--          reg_hi_set <= '0';
+--          reg_lo_set <= '0';
 
         when funct_jr =>
           report "funct_jr";
           read_1_address <= rtype_rs;
-          reg_1_set <= '1';
-          reg_2_set <= '0';
+          id_ex_reg_1 <= register_1;
+          id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--          reg_1_set <= '1';
+--          reg_2_set <= '0';
           store_register <= '0'; -- We are not storing anything in register
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           load_store_address <= (others => '0'); -- When not used, default it to 0
           load_store_address_valid <= '0';
-          reg_hi_set <= '0';
-          reg_lo_set <= '0';
+--          reg_hi_set <= '0';
+--          reg_lo_set <= '0';
 
         when others =>
           report "No funct code matched for given r-type instruction";
           -- Everything defaulted to 0
           read_1_address <= (others => '0');
-          reg_1_set <= '0';
+--          reg_1_set <= '0';
           read_2_address <= (others => '0');
-          reg_2_set <= '0';
+--          reg_2_set <= '0';
           store_register <= '0';
           load_memory_valid <= '0';
           store_memory_valid <= '0';
           load_store_address <= (others => '0');
           load_store_address_valid <= '0';
-          reg_hi_set <= '0';
-          reg_lo_set <= '0';
+          id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+          id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--          reg_hi_set <= '0';
+--          reg_lo_set <= '0';
 
       end case;
 
@@ -251,51 +265,56 @@ architecture arch of instruction_decode_stage is
     when I_type_op_addi | I_type_op_andi | I_type_op_ori | I_type_op_xori =>
       report "I type addi / andi / ori / xori";
       read_1_address <= itype_rs;
-      reg_1_set <= '1';
-      reg_2_set <= '0';
+--      reg_1_set <= '1';
+--      reg_2_set <= '0';
       id_ex_reg_2 <= blank_immediate_header & immediate;
+      id_ex_reg_1 <= register_1;
       store_register <= '1';
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= itype_rt;
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     when I_type_op_slti =>
       report "slti operation matched";
       read_1_address <= itype_rs;
-      reg_1_set <= '1';
-      reg_2_set <= '0';
+--      reg_1_set <= '1';
+--      reg_2_set <= '0';
       id_ex_reg_2 <= extended_immediate;
+      id_ex_reg_1 <= register_1;
       store_register <= '1';
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= rtype_rt;
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
      when I_type_op_lui =>
      -- Handled within ALU, no need to do anything here
       -- Everything defaulted to 0
       read_1_address <= (others => '0');
-      reg_1_set <= '0';
+--      reg_1_set <= '0';
       read_2_address <= (others => '0');
-      reg_2_set <= '0';
+--      reg_2_set <= '0';
       store_register <= '0';
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= (others => '0');
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+      id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+      id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     when I_type_op_lw =>
       report "load instruction matched";
       read_1_address <= itype_rs;
-      reg_1_set <= '1';
-      reg_2_set <= '0';
+--      reg_1_set <= '1';
+--      reg_2_set <= '0';
+      id_ex_reg_1 <= register_1;
       id_ex_reg_2 <= extended_immediate;
       -- Special case where both store_register and load_memory_valid is high
       store_register <= '1';
@@ -303,36 +322,39 @@ architecture arch of instruction_decode_stage is
       store_memory_valid <= '0';
       load_store_address <= itype_rt; -- LOAD FROM MEM TO $RT
       load_store_address_valid <= '1';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     when I_type_op_sw =>
       report "store instruction matched";
       read_1_address <= itype_rs;
-      reg_1_set <= '1';
-      reg_2_set <= '0';
+--      reg_1_set <= '1';
+--      reg_2_set <= '0';
+      id_ex_reg_1 <= register_1;
       id_ex_reg_2 <= extended_immediate;
       store_register <= '0'; -- Not storing in register
       load_memory_valid <= '0';
       store_memory_valid <= '1';
       load_store_address <= itype_rt; -- STORE FROM $RT TO MEM
       load_store_address_valid <= '1';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     when I_type_op_beq | I_type_op_bne =>
       report "Branching instruction matched";
       read_1_address <= itype_rs;
-      reg_1_set <= '1';
+--      reg_1_set <= '1';
       read_2_address <= itype_rt;
-      reg_2_set <= '1';
+--      reg_2_set <= '1';
+      id_ex_reg_1 <= register_1;
+      id_ex_reg_2 <= register_2;
       store_register <= '0'; -- Not storing in register
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= (others => '0'); -- When not used, default it to 0
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
      --All J-type operations
      -- handled within ALU? Or can we resolve them here?
@@ -340,53 +362,57 @@ architecture arch of instruction_decode_stage is
       report "Jump instruction matched";
      -- Everything defaulted to 0
       read_1_address <= (others => '0');
-      reg_1_set <= '0';
+--      reg_1_set <= '0';
       read_2_address <= (others => '0');
-      reg_2_set <= '0';
+--      reg_2_set <= '0';
+      id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+      id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
       store_register <= '0';
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= (others => '0');
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     when others =>
       report "No instruction case matched...something went wrong.";
      -- DEFAULT IDLE CASE
       read_1_address <= (others => '0'); -- default
-      reg_1_set <= '0';
+--      reg_1_set <= '0';
       read_2_address <= (others => '0'); -- default;
-      reg_2_set <= '0';
+--      reg_2_set <= '0';
       store_register <= '0';
       load_memory_valid <= '0';
       store_memory_valid <= '0';
       load_store_address <= (others => '0');
       load_store_address_valid <= '0';
-      reg_hi_set <= '0';
-      reg_lo_set <= '0';
+      id_ex_reg_1 <= std_logic_vector(to_unsigned(0, 32));
+      id_ex_reg_2 <= std_logic_vector(to_unsigned(0, 32));
+--      reg_hi_set <= '0';
+--      reg_lo_set <= '0';
 
     end case;
   end process;
 
-  process(reg_1_set, reg_2_set, reg_hi_set, reg_lo_set)
-  begin
-    
-    if reg_1_set = '1' then
-      id_ex_reg_1 <= register_1;
-    end if;
+--  process(reg_1_set, reg_2_set, reg_hi_set, reg_lo_set)
+--  begin
+--    
+--    if reg_1_set = '1' then
+--      id_ex_reg_1 <= register_1;
+--    end if;
+--
+--    if reg_2_set = '1' then
+--      id_ex_reg_2 <= register_2;
+--    end if;
+--
+--    if reg_hi_set = '1' then
+--      id_ex_reg_1 <= register_hi;
+--    end if;
+--
+--    if reg_lo_set = '1' then
+--      id_ex_reg_1 <= register_lo;
+--    end if;
 
-    if reg_2_set = '1' then
-      id_ex_reg_2 <= register_2;
-    end if;
-
-    if reg_hi_set = '1' then
-      id_ex_reg_1 <= register_hi;
-    end if;
-
-    if reg_lo_set = '1' then
-      id_ex_reg_1 <= register_lo;
-    end if;
-
-  end process;
+--  end process;
 end arch;
