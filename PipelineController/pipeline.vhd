@@ -774,8 +774,10 @@ architecture arch of pipeline is
           instr_memory_memwrite <= '1';
           instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
           instr_memory_writedata <= program_in;
-          instruction_line_in_counter <= instruction_line_in_counter + 4;
-          instr_memory_memwrite <= '0';
+          if clock'event then
+            instruction_line_in_counter <= instruction_line_in_counter + 4;
+            instr_memory_memwrite <= '0';
+          end if;
           program_counter <= (others => '0');
 
         when processor =>
