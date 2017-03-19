@@ -776,11 +776,11 @@ architecture arch of pipeline is
           instr_memory_writedata <= program_in;
           if clock'event and clock = '1' then
             instruction_line_in_counter <= instruction_line_in_counter + 4;
+            instr_memory_memwrite <= '0';
           end if;
           program_counter <= (others => '0');
 
         when processor =>
-          instr_memory_memwrite <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
