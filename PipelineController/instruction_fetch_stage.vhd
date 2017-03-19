@@ -47,11 +47,11 @@ architecture arch of instruction_fetch_stage is
 	        read_instruction_address <= program_counter;
 	        instruction_out <= instruction_in;
         end if;
-      end if;
 
-      read_instruction <= '1';
-      read_instruction_address <= program_counter;
-      updated_program_counter <= program_counter;
+        read_instruction <= '1';
+        read_instruction_address <= program_counter;
+        updated_program_counter <= program_counter;
+      end if;
     end process;
 
 end architecture;
