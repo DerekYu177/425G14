@@ -32,7 +32,6 @@ architecture arch of instruction_fetch_stage is
     begin
       if (reset = '1') then
         read_instruction <= '0';
-        read_instruction_address <= (others => '0');
         updated_program_counter <= (others => '0');
         program_counter <= (others => '0');
         program_counter_valid <= '0';
