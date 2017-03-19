@@ -47,13 +47,13 @@ begin
 			end if;
 		elsif clock'event and clock = '0' then
 			read_address_reg <= to_integer(unsigned(read_address));
-			
-			readdata <= mem_block(read_address_reg) 
-				& mem_block(read_address_reg + 1) 
-				& mem_block(read_address_reg + 2) 
-				& mem_block(read_address_reg + 3);
 		end if;
 	end process;
+
+	readdata <= mem_block(read_address_reg)
+		& mem_block(read_address_reg + 1)
+		& mem_block(read_address_reg + 2)
+		& mem_block(read_address_reg + 3);
 
 	waitreq_w_proc: process(memwrite)
 	begin
