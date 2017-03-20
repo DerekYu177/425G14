@@ -767,8 +767,8 @@ architecture arch of pipeline is
           null;
 
         when fini =>
-          out_to_testbench <= '1';
-          next_state <= memory_save;
+          -- out_to_testbench <= '1';
+          -- next_state <= memory_save;
 
       end case;
 
