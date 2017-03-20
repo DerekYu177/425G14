@@ -30,7 +30,6 @@ architecture arch of pipeline is
   signal present_state, next_state : state_type;
 
   -- INTERNAL CONTROL SIGNALS --
-  signal updated_program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
@@ -751,7 +750,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (to_integer(unsigned(updated_program_counter)) >= 30) then
+          if (to_integer(unsigned(if_id_pc_value_in)) >= 30) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
@@ -779,7 +778,6 @@ architecture arch of pipeline is
 
         when init =>
           global_reset <= '0';
-          updated_program_counter <= (others => '0');
           initializing <= '1';
 
         when instruction_load =>
