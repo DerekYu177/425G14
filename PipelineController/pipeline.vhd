@@ -33,6 +33,7 @@ architecture arch of pipeline is
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
+  signal out_to_testbench : std_logic := '0';
 
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
@@ -759,8 +760,20 @@ architecture arch of pipeline is
           null;
 
         when fini =>
+          out_to_testbench <= '1';
           next_state <= memory_save;
 
+      end case;
+
+      if clock'event and clock = '1' then
+        present_state <= next_state;
+      end if;
+
+    end process;
+
+    write_out : process(clock, present_state, out_to_testbench)
+    begin
+      case present_state is
         when memory_save =>
           if memory_line_counter = data_size-8 then
             memory_out_finished <= '1';
@@ -770,9 +783,7 @@ architecture arch of pipeline is
           end if;
 
         when memory_save_increment =>
-          if clock'event and clock = '1' then
-            next_state <= memory_save;
-          end if;
+          next_state <= memory_save;
 
         when register_save =>
           if register_line_counter = register_size-2 then
@@ -783,20 +794,13 @@ architecture arch of pipeline is
           end if;
 
         when register_save_increment =>
-          if clock'event and clock = '1' then
-            next_state <= register_save;
-          end if;
+          next_state <= register_save;
 
         when terminate =>
           null;
-
       end case;
-
-      if clock'event and clock = '1' then
-        present_state <= next_state;
-      end if;
-
     end process;
+
 
     pipeline_functional_logic : process (clock, reset, present_state, program_in)
     begin
