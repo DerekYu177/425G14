@@ -672,7 +672,7 @@ architecture arch of pipeline is
       ALU_next_pc_valid => id_ex_pc_valid_out,
       load_store_address_in => id_ex_address_value_out,
       load_store_address_out => ex_mem_address_value_in,
-      load_store_address_valid => ex_mem_address_valid_out,
+      load_store_address_valid => ex_mem_address_valid_in,
       jump_address => ex_mem_pc_value_in,
       jump_taken => ex_mem_pc_valid_in,
       ALU_output => ex_mem_data_1_in,
