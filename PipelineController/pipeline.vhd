@@ -716,8 +716,8 @@ architecture arch of pipeline is
       write_lo => reg_write_lo,
 
       write_data => mem_wb_data_1_out,
-      write_address => mem_wb_pc_value_out,
-      write_address_valid => mem_wb_pc_valid_out,
+      write_address => mem_wb_address_value_out,
+      write_address_valid => mem_wb_address_valid_out,
       store_register => mem_wb_store_register_out,
 
       hi_data => mem_wb_hi_data_out,
