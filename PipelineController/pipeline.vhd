@@ -809,7 +809,7 @@ architecture arch of pipeline is
 
         when fini =>
           program_execution_finished <= '1';
-          data_memory_memread <= '1';
+          -- data_memory_memread <= '1';
           -- register does not require memread
 
           if (clock'event and clock = '1') then
@@ -819,10 +819,10 @@ architecture arch of pipeline is
             memory_out <= data_memory_readdata_fini;
             register_out <= reg_readdata_fini;
 
-            memory_line_counter <= memory_line_counter + 1;
+            memory_line_counter <= memory_line_counter + 4;
             register_line_counter <= register_line_counter + 1;
 
-            if ((memory_line_counter >= data_size) and (register_line_counter >= register_size)) then
+            if ((memory_line_counter >= data_size) and (register_line_counter = register_size)) then
               memory_out_finished <= '1';
               register_out_finished <= '1';
             end if;
