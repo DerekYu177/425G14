@@ -762,7 +762,7 @@ architecture arch of pipeline is
           next_state <= memory_save;
 
         when memory_save =>
-          if memory_line_counter = memory_size then
+          if memory_line_counter = data_size then
             memory_out_finished <= '1';
             next_state <= register_save;
           else
@@ -782,6 +782,9 @@ architecture arch of pipeline is
 
         when register_save_increment =>
           next_state <= register_save;
+
+        when terminate =>
+          null;
 
       end case;
 
