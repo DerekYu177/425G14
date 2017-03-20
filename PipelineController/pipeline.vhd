@@ -24,7 +24,7 @@ architecture arch of pipeline is
 
   -- STATE DEFINITION --
   type state_type is (
-    clear, init, instruction_load, instruction_load_increment, processor, fini
+    clear, init, instruction_load, instruction_load_increment, processor, fini, register_save, register_save_increment, memory_save, memory_save_increment, terminate
   );
 
   signal present_state, next_state : state_type;
@@ -759,7 +759,30 @@ architecture arch of pipeline is
           null;
 
         when fini =>
-          next_state <= fini;
+          next_state <= memory_save;
+
+        when memory_save =>
+          if memory_line_counter = memory_size then
+            memory_out_finished <= '1';
+            next_state <= register_save;
+          else
+            next_state <= memory_save_increment;
+          end if;
+
+        when memory_save_increment =>
+          next_state <= memory_save;
+
+        when register_save =>
+          if register_line_counter = register_size then
+            register_out_finished <= '1';
+            next_state <= terminate;
+          else
+            next_state <= register_save_increment;
+          end if;
+
+        when register_save_increment =>
+          next_state <= register_save;
+
       end case;
 
       if clock'event and clock = '1' then
@@ -812,21 +835,23 @@ architecture arch of pipeline is
           -- data_memory_memread <= '1';
           -- register does not require memread
 
-          if (clock'event and clock = '1') then
-            data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
-            reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+        when memory_save =>
+          data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
+          memory_out <= data_memory_readdata_fini;
 
-            memory_out <= data_memory_readdata_fini;
-            register_out <= reg_readdata_fini;
+        when memory_save_increment =>
+          memory_line_counter <= memory_line_counter + 4;
 
-            memory_line_counter <= memory_line_counter + 4;
-            register_line_counter <= register_line_counter + 1;
+        when register_save =>
+          reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+          register_out <= reg_readreg_fini;
 
-            if ((memory_line_counter >= data_size) and (register_line_counter = register_size)) then
-              memory_out_finished <= '1';
-              register_out_finished <= '1';
-            end if;
-          end if;
+        when register_save_increment =>
+          register_line_counter <= register_line_counter + 1;
+
+        when terminate =>
+          null;
+
       end case;
     end process;
 
