@@ -34,6 +34,7 @@ architecture arch of pipeline is
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
   signal out_to_testbench : std_logic := '0';
+  signal write_to_file : std_logic := '0';
 
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
@@ -232,6 +233,8 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
+      write_to_file : in std_logic;
+
   		address : in std_logic_vector(31 downto 0);
       address_read_fini : in std_logic_vector(31 downto 0);
   		memwrite : in std_logic;
@@ -255,6 +258,8 @@ architecture arch of pipeline is
   		data_in_lo : in std_logic_vector(31 downto 0);
   		write_hi : in std_logic;
   		write_lo : in std_logic;
+
+      write_to_file : in std_logic;
 
   		regwrite : in std_logic;
   		readdata1 : out std_logic_vector(31 downto 0);
@@ -450,6 +455,7 @@ architecture arch of pipeline is
       clock,
       global_reset,
       data_memory_writedata,
+      write_to_file,
       data_memory_address,
       data_memory_address_fini,
       data_memory_memwrite,
@@ -472,6 +478,7 @@ architecture arch of pipeline is
       reg_data_in_lo,
       reg_write_hi,
       reg_write_lo,
+      write_to_file,
       reg_regwrite,
       reg_readdata1,
       reg_readdata2,
@@ -846,6 +853,7 @@ architecture arch of pipeline is
         when fini =>
           program_execution_finished <= '1';
           initializing <= '1';
+          write_to_file <= '1';
 
         when memory_save =>
           data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
