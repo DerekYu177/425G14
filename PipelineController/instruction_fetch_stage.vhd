@@ -32,7 +32,6 @@ architecture arch of instruction_fetch_stage is
     begin
       if (reset = '1') then
         read_instruction <= '0';
-        updated_program_counter <= (others => '0');
         program_counter <= (others => '0');
         program_counter_valid <= '0';
       elsif (initializing = '0' and clock'event and clock = '0') then
@@ -44,10 +43,10 @@ architecture arch of instruction_fetch_stage is
 
         program_counter_valid <= '1';
         read_instruction <= '1';
-        updated_program_counter <= program_counter;
       end if;
     end process;
 
+  updated_program_counter <= program_counter;
   read_instruction_address <= program_counter;
   instruction_out <= instruction_in;
 
