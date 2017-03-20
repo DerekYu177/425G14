@@ -35,17 +35,14 @@ begin
       data_out <= (others => '0');
       data_out_address <= (others => '0');
       data_out_address_valid <= '0';
-    elsif clock'event then
-      if (load_memory_valid = '1' and data_in_address_valid = '1') then
+    elsif (load_memory_valid = '1' and data_in_address_valid = '1') then
         data_memory_address <= data_in;
         data_memory_memread <= '1';
 
         data_out <= data_memory_readdata;
         data_out_address <= data_in_address;
         data_out_address_valid <= '1';
-      end if;
-
-      if (store_memory_valid = '1' and data_in_address_valid = '1') then
+    elsif (store_memory_valid = '1' and data_in_address_valid = '1') then
         data_memory_writedata <= data_in;
         data_memory_address <= data_in_address;
         data_memory_memwrite <= '1';
@@ -53,14 +50,11 @@ begin
         data_out <= (others => '0');
         data_out_address <= (others => '0');
         data_out_address_valid <= '0';
-      end if;
-
-      if (data_in_address_valid = '1' and store_memory_valid = '0' and load_memory_valid = '0') then
+    elsif (data_in_address_valid = '1' and store_memory_valid = '0' and load_memory_valid = '0') then
         -- data is not meant for the MEM and is instead meant for the WB.
         data_out <= data_in;
         data_out_address <= data_in_address;
         data_out_address_valid <= data_in_address_valid;
-      end if;
     end if;
   end process;
 end architecture;
