@@ -770,7 +770,7 @@ architecture arch of pipeline is
           end if;
 
         when memory_save_increment =>
-          if clock'event clock = '1' then
+          if clock'event and clock = '1' then
             next_state <= memory_save;
           end if;
 
