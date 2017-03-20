@@ -846,7 +846,7 @@ architecture arch of pipeline is
 
         when register_save =>
           reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
-          register_out <= reg_readreg_fini;
+          register_out <= reg_readdata_fini;
 
         when register_save_increment =>
           register_line_counter <= register_line_counter + 1;
