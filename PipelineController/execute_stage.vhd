@@ -251,6 +251,8 @@ ALU_NPC <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + 4, 3
 						when others =>
 							report"No funct of R-type matched matched";
 							ALU_output <= (others => '0');
+							report "henry owes me pho";
+							load_store_address_valid <= '0';
 					end case;
 
 				--We still refer the immediate field as 'Operand 2', since the sign extension should be done by other control during the DECODE stage
@@ -354,7 +356,8 @@ ALU_NPC <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + 4, 3
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
 				when others =>
-					null;
+					report "henry owes me pho";
+					load_store_address_valid <= '0';
 			end case;
 		end if;
 	end process;
