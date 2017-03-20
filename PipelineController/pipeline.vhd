@@ -752,7 +752,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (to_integer(unsigned(program_counter)) >= 10000) then
+          if (to_integer(unsigned(program_counter)) >= 30) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
