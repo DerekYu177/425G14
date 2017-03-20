@@ -767,6 +767,7 @@ architecture arch of pipeline is
           null;
 
         when fini =>
+          null;
           -- out_to_testbench <= '1';
           -- next_state <= memory_save;
 
@@ -779,38 +780,6 @@ architecture arch of pipeline is
         present_state <= next_state;
       end if;
 
-    end process;
-
-    write_out : process(clock, present_state, out_to_testbench)
-    begin
-      if clock = '1' then
-        case present_state is
-          when memory_save =>
-            if memory_line_counter = data_size-8 then
-              memory_out_finished <= '1';
-              next_state <= register_save;
-            else
-              next_state <= memory_save_increment;
-            end if;
-
-          when memory_save_increment =>
-            next_state <= memory_save;
-
-          when register_save =>
-            if register_line_counter = register_size-2 then
-              register_out_finished <= '1';
-              next_state <= terminate;
-            else
-              next_state <= register_save_increment;
-            end if;
-
-          when register_save_increment =>
-            next_state <= register_save;
-
-          when terminate =>
-            null;
-        end case;
-      end if;
     end process;
 
 
@@ -858,22 +827,22 @@ architecture arch of pipeline is
           initializing <= '1';
           write_to_file <= '1';
 
-        when memory_save =>
-          data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
-          memory_out <= data_memory_readdata_fini;
-
-        when memory_save_increment =>
-          memory_line_counter <= memory_line_counter + 4;
-
-        when register_save =>
-          reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
-          register_out <= reg_readdata_fini;
-
-        when register_save_increment =>
-          register_line_counter <= register_line_counter + 1;
-
-        when terminate =>
-          null;
+        -- when memory_save =>
+        --   data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
+        --   memory_out <= data_memory_readdata_fini;
+        --
+        -- when memory_save_increment =>
+        --   memory_line_counter <= memory_line_counter + 4;
+        --
+        -- when register_save =>
+        --   reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+        --   register_out <= reg_readdata_fini;
+        --
+        -- when register_save_increment =>
+        --   register_line_counter <= register_line_counter + 1;
+        --
+        -- when terminate =>
+        --   null;
 
         when others =>
          null;
