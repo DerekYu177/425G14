@@ -770,7 +770,9 @@ architecture arch of pipeline is
           end if;
 
         when memory_save_increment =>
-          next_state <= memory_save;
+          if clock = '1' then
+            next_state <= memory_save;
+          end if;
 
         when register_save =>
           if register_line_counter = register_size-2 then
@@ -781,7 +783,9 @@ architecture arch of pipeline is
           end if;
 
         when register_save_increment =>
-          next_state <= register_save;
+          if clock = '1' then
+            next_state <= register_save;
+          end if;
 
         when terminate =>
           null;
