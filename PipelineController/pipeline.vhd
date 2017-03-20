@@ -751,7 +751,6 @@ architecture arch of pipeline is
           -- this is where forwarding and hazard detection will take place --
 
           if (to_integer(unsigned(if_id_pc_value_in)) >= 120) then
-            program_execution_finished <= '1';
             next_state <= fini;
           else
             -- what should the next state be here?
@@ -809,6 +808,7 @@ architecture arch of pipeline is
           mem_wb_lo_store_in <= ex_mem_lo_store_out;
 
         when fini =>
+          program_execution_finished <= '1';
           data_memory_memread <= '1';
           -- register does not require memread
 
