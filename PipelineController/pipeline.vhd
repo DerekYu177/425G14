@@ -775,6 +775,7 @@ architecture arch of pipeline is
         when clear =>
           instruction_line_in_counter <= 0;
           global_reset <= '1';
+          program_execution_finished <= '0';
 
         when init =>
           global_reset <= '0';
