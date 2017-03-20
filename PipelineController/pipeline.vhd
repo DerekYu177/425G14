@@ -770,6 +770,9 @@ architecture arch of pipeline is
           -- out_to_testbench <= '1';
           -- next_state <= memory_save;
 
+        when others =>
+          null;
+
       end case;
 
       if clock'event and clock = '1' then
@@ -871,6 +874,9 @@ architecture arch of pipeline is
 
         when terminate =>
           null;
+
+        when others =>
+         null;
 
       end case;
     end process;
