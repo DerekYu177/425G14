@@ -30,7 +30,6 @@ architecture arch of pipeline is
   signal present_state, next_state : state_type;
 
   -- INTERNAL CONTROL SIGNALS --
-  signal program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal updated_program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
@@ -321,11 +320,11 @@ architecture arch of pipeline is
 
       -- pipeline interface --
   		ALU_instruction : in std_logic_vector(31 downto 0);
-     		ALU_operand1 : in std_logic_vector(31 downto 0);
-      		ALU_operand2 : in std_logic_vector(31 downto 0);
+      ALU_operand1 : in std_logic_vector(31 downto 0);
+      ALU_operand2 : in std_logic_vector(31 downto 0);
   		ALU_next_pc : in std_logic_vector(31 downto 0); -- for branching
-      		ALU_next_pc_valid : in std_logic;
-      		load_store_address_in: in std_logic_vector(31 downto 0);
+      ALU_next_pc_valid : in std_logic;
+      load_store_address_in: in std_logic_vector(31 downto 0);
   		load_store_address_out: out std_logic_vector(31 downto 0);
   		load_store_address_valid : out std_logic;
   		jump_address : out std_logic_vector(31 downto 0);
@@ -752,7 +751,7 @@ architecture arch of pipeline is
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (to_integer(unsigned(program_counter)) >= 30) then
+          if (to_integer(unsigned(updated_program_counter)) >= 30) then
             program_execution_finished <= '1';
             next_state <= fini;
           else
@@ -780,7 +779,7 @@ architecture arch of pipeline is
 
         when init =>
           global_reset <= '0';
-          program_counter <= (others => '0');
+          updated_program_counter <= (others => '0');
           initializing <= '1';
 
         when instruction_load =>
