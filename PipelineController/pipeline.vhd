@@ -33,7 +33,7 @@ architecture arch of pipeline is
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
-
+  alias finishing : initializing;
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
   signal memory_line_counter : integer := 0;
@@ -835,8 +835,7 @@ architecture arch of pipeline is
 
         when fini =>
           program_execution_finished <= '1';
-          -- data_memory_memread <= '1';
-          -- register does not require memread
+          finishing <= '1';
 
         when memory_save =>
           data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
