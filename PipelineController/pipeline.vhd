@@ -773,7 +773,7 @@ architecture arch of pipeline is
           next_state <= memory_save;
 
         when register_save =>
-          if register_line_counter = register_size then
+          if register_line_counter = register_size-1 then
             register_out_finished <= '1';
             next_state <= terminate;
           else
