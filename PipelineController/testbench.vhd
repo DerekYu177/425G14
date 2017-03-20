@@ -34,6 +34,7 @@ constant clock_period : time := 1 ns;
 constant data_size : integer := 32;
 constant memory_size : integer := 8192;
 constant register_size : integer := 32;
+constant byte_size : integer := 8;
 
 -- read/write control signal
 signal write_finished : boolean := false;
@@ -110,7 +111,8 @@ begin
       file register_file : text;
       file memory : text;
       variable line_number_register, line_number_memory : line;
-      variable line_content_register, line_content_memory : string(1 to data_size); -- could there be a big/little endian conflict here?
+      variable line_content_register : string(1 to data_size); -- could there be a big/little endian conflict here?
+      variable line_content_memory : string(1 to byte_size);
       variable i,j : integer := 0;
   begin
     if program_execution_finished = '1' then
@@ -123,7 +125,7 @@ begin
 
           if (register_out_finished = '0') then
             -- convert from std_logic_vector back to string
-            for i in 1 to data_size loop          --
+            for i in 0 to data_size-1 loop
               if (register_out(i) = '0') then
                 line_content_register(data_size - i) := '0';
               else
@@ -140,11 +142,11 @@ begin
 
           if (memory_out_finished = '0') then
             -- convert from std_logic_vector back to string
-            for j in 1 to data_size loop          --
+            for j in 0 to byte_size loop
               if (memory_out(j) = '0') then
-                line_content_memory(data_size - j) := '0';
+                line_content_memory(byte_size - j) := '0';
               else
-                line_content_memory(data_size - j) := '1';
+                line_content_memory(byte_size - j) := '1';
               end if;
             end loop;
 

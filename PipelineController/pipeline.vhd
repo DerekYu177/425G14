@@ -24,16 +24,16 @@ architecture arch of pipeline is
 
   -- STATE DEFINITION --
   type state_type is (
-    clear, init, processor, fini
+    clear, init, instruction_load, instruction_load_increment, processor, fini, register_save, register_save_increment, memory_save, memory_save_increment, terminate
   );
 
   signal present_state, next_state : state_type;
 
   -- INTERNAL CONTROL SIGNALS --
-  signal program_counter : std_logic_vector(31 downto 0) := (others => '0');
-  signal updated_program_counter : std_logic_vector(31 downto 0) := (others => '0');
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
+  signal initializing : std_logic := '1';
+  signal out_to_testbench : std_logic := '0';
 
   -- read/write control signal
   signal instruction_line_in_counter : integer := 0;
@@ -185,9 +185,9 @@ architecture arch of pipeline is
   signal data_memory_readdata_fini : std_logic_vector(31 downto 0) := (others => '0');
   signal data_memory_waitrequest : std_logic := '0';
 
-  signal reg_writedata : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg1 : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_readreg2 : std_logic_vector(31 downto 0) := (others => '0');
+  signal reg_writedata : std_logic_vector(31 downto 0);
+  signal reg_readreg1 : std_logic_vector(31 downto 0);
+  signal reg_readreg2 : std_logic_vector(31 downto 0);
   signal reg_readreg_fini : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_writereg : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_data_in_hi : std_logic_vector(31 downto 0) := (others => '0');
@@ -271,6 +271,7 @@ architecture arch of pipeline is
     port(
       clock : in std_logic;
       reset : in std_logic;
+      initializing : in std_logic;
 
       -- instruction memory interface --
       read_instruction_address : out std_logic_vector(31 downto 0);
@@ -319,11 +320,11 @@ architecture arch of pipeline is
 
       -- pipeline interface --
   		ALU_instruction : in std_logic_vector(31 downto 0);
-     		ALU_operand1 : in std_logic_vector(31 downto 0);
-      		ALU_operand2 : in std_logic_vector(31 downto 0);
+      ALU_operand1 : in std_logic_vector(31 downto 0);
+      ALU_operand2 : in std_logic_vector(31 downto 0);
   		ALU_next_pc : in std_logic_vector(31 downto 0); -- for branching
-      		ALU_next_pc_valid : in std_logic;
-      		load_store_address_in: in std_logic_vector(31 downto 0);
+      ALU_next_pc_valid : in std_logic;
+      load_store_address_in: in std_logic_vector(31 downto 0);
   		load_store_address_out: out std_logic_vector(31 downto 0);
   		load_store_address_valid : out std_logic;
   		jump_address : out std_logic_vector(31 downto 0);
@@ -627,6 +628,7 @@ architecture arch of pipeline is
     port map(
       clock => clock,
       reset => global_reset,
+      initializing => initializing,
       read_instruction_address => instr_memory_read_address,
       read_instruction => instr_memory_memread,
       instruction_in => instr_memory_readdata,
@@ -671,7 +673,7 @@ architecture arch of pipeline is
       ALU_next_pc_valid => id_ex_pc_valid_out,
       load_store_address_in => id_ex_address_value_out,
       load_store_address_out => ex_mem_address_value_in,
-      load_store_address_valid => ex_mem_address_valid_out,
+      load_store_address_valid => ex_mem_address_valid_in,
       jump_address => ex_mem_pc_value_in,
       jump_taken => ex_mem_pc_valid_in,
       ALU_output => ex_mem_data_1_in,
@@ -715,8 +717,8 @@ architecture arch of pipeline is
       write_lo => reg_write_lo,
 
       write_data => mem_wb_data_1_out,
-      write_address => mem_wb_pc_value_out,
-      write_address_valid => mem_wb_pc_valid_out,
+      write_address => mem_wb_address_value_out,
+      write_address_valid => mem_wb_address_valid_out,
       store_register => mem_wb_store_register_out,
 
       hi_data => mem_wb_hi_data_out,
@@ -734,17 +736,22 @@ architecture arch of pipeline is
           next_state <= init;
 
         when init =>
-          next_state <= init;
+          next_state <= instruction_load;
 
+        when instruction_load =>
           if program_in_finished = '1' then
             next_state <= processor;
+          else
+            next_state <= instruction_load_increment;
           end if;
+
+        when instruction_load_increment =>
+          next_state <= instruction_load;
 
         when processor =>
           -- this is where forwarding and hazard detection will take place --
 
-          if (to_integer(unsigned(program_counter)) >= 10000) then
-            program_execution_finished <= '1';
+          if (to_integer(unsigned(if_id_pc_value_in)) >= 120) then
             next_state <= fini;
           else
             -- what should the next state be here?
@@ -753,7 +760,9 @@ architecture arch of pipeline is
           null;
 
         when fini =>
-          next_state <= fini;
+          out_to_testbench <= '1';
+          next_state <= memory_save;
+
       end case;
 
       if clock'event and clock = '1' then
@@ -762,25 +771,63 @@ architecture arch of pipeline is
 
     end process;
 
+    write_out : process(clock, present_state, out_to_testbench)
+    begin
+      if clock = '1' then
+        case present_state is
+          when memory_save =>
+            if memory_line_counter = data_size-8 then
+              memory_out_finished <= '1';
+              next_state <= register_save;
+            else
+              next_state <= memory_save_increment;
+            end if;
+
+          when memory_save_increment =>
+            next_state <= memory_save;
+
+          when register_save =>
+            if register_line_counter = register_size-2 then
+              register_out_finished <= '1';
+              next_state <= terminate;
+            else
+              next_state <= register_save_increment;
+            end if;
+
+          when register_save_increment =>
+            next_state <= register_save;
+
+          when terminate =>
+            null;
+        end case;
+      end if;
+    end process;
+
+
     pipeline_functional_logic : process (clock, reset, present_state, program_in)
     begin
       case present_state is
         when clear =>
           instruction_line_in_counter <= 0;
           global_reset <= '1';
+          program_execution_finished <= '0';
 
         when init =>
           global_reset <= '0';
+          initializing <= '1';
+
+        when instruction_load =>
           instr_memory_memwrite <= '1';
           instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
           instr_memory_writedata <= program_in;
-          if clock'event and clock = '1' then
-            instruction_line_in_counter <= instruction_line_in_counter + 4;
-          end if;
-          program_counter <= (others => '0');
+
+        when instruction_load_increment =>
+          instr_memory_memwrite <= '0';
+          instruction_line_in_counter <= instruction_line_in_counter + 4;
 
         when processor =>
           instr_memory_memwrite <= '0';
+          initializing <= '0';
           -- forward from one PRB to another. NOT FORWARDING in ECSE425 sense --
           id_ex_scratch_in <= if_id_scratch_out;
           id_ex_pc_value_in <= if_id_pc_value_out;
@@ -797,24 +844,26 @@ architecture arch of pipeline is
           mem_wb_lo_store_in <= ex_mem_lo_store_out;
 
         when fini =>
-          data_memory_memread <= '1';
-          -- register does not require memread
+          program_execution_finished <= '1';
+          initializing <= '1';
 
-          if (clock'event and clock = '1') then
-            data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
-            reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+        when memory_save =>
+          data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
+          memory_out <= data_memory_readdata_fini;
 
-            memory_out <= data_memory_readdata_fini;
-            register_out <= reg_readdata_fini;
+        when memory_save_increment =>
+          memory_line_counter <= memory_line_counter + 4;
 
-            memory_line_counter <= memory_line_counter + 1;
-            register_line_counter <= register_line_counter + 1;
+        when register_save =>
+          reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+          register_out <= reg_readdata_fini;
 
-            if ((memory_line_counter >= data_size) and (register_line_counter >= register_size)) then
-              memory_out_finished <= '1';
-              register_out_finished <= '1';
-            end if;
-          end if;
+        when register_save_increment =>
+          register_line_counter <= register_line_counter + 1;
+
+        when terminate =>
+          null;
+
       end case;
     end process;
 

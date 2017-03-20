@@ -56,18 +56,20 @@ begin
 					mem_block(to_integer(unsigned(writereg))) <= writedata;
 				end if;
 			end if;
-			if write_hi = '1' then
-				hi_reg <= data_in_hi;
-			end if;
-			if write_lo = '1' then
-				lo_reg <= data_in_lo;
-			end if;
 
 		elsif clock'event and clock = '0' then --read on falling edge
 			read_address_reg1 <= to_integer(unsigned(readreg1));
 			read_address_reg2 <= to_integer(unsigned(readreg2));
 			read_address_reg_fini <= to_integer(unsigned(readreg_fini));
 		end if;
+
+		if write_hi = '1' then
+			hi_reg <= data_in_hi;
+		end if;
+		if write_lo = '1' then
+			lo_reg <= data_in_lo;
+		end if;
+		
 	end process;
 	readdata1 <= mem_block(read_address_reg1);
 	readdata2 <= mem_block(read_address_reg2);
