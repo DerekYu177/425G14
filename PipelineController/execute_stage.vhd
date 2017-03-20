@@ -354,6 +354,7 @@ ALU_NPC <= std_logic_vector(to_unsigned(to_integer(unsigned(ALU_next_pc)) + 4, 3
 					ALU_LO_store_out <= '0';
 					ALU_HI_store_out <= '0';
 				when others =>
+					report "henry owes me pho";
 					null;
 			end case;
 		end if;
