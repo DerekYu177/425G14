@@ -827,25 +827,25 @@ architecture arch of pipeline is
           initializing <= '1';
           write_to_file <= '1';
 
-        -- when memory_save =>
-        --   data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
-        --   memory_out <= data_memory_readdata_fini;
-        --
-        -- when memory_save_increment =>
-        --   memory_line_counter <= memory_line_counter + 4;
-        --
-        -- when register_save =>
-        --   reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
-        --   register_out <= reg_readdata_fini;
-        --
-        -- when register_save_increment =>
-        --   register_line_counter <= register_line_counter + 1;
-        --
-        -- when terminate =>
-        --   null;
+        when memory_save =>
+          data_memory_address_fini <= std_logic_vector(to_unsigned(memory_line_counter, 32));
+          memory_out <= data_memory_readdata_fini;
+
+        when memory_save_increment =>
+          memory_line_counter <= memory_line_counter + 4;
+
+        when register_save =>
+          reg_readreg_fini <= std_logic_vector(to_unsigned(register_line_counter, 32));
+          register_out <= reg_readdata_fini;
+
+        when register_save_increment =>
+          register_line_counter <= register_line_counter + 1;
+
+        when terminate =>
+          null;
 
         when others =>
-         null;
+          null;
 
       end case;
     end process;

@@ -17,7 +17,7 @@ entity registers is
 		data_in_lo : in std_logic_vector(31 downto 0);
 		write_hi : in std_logic;
 		write_lo : in std_logic;
-		
+
 		write_to_file : in std_logic;
 
 		regwrite : in std_logic;
@@ -78,20 +78,20 @@ begin
 	readdata_fini <= mem_block(read_address_reg_fini);
 	data_out_hi <= hi_reg;
 	data_out_lo <= lo_reg;
-	
-	file_proc : process(write_to_file)
-		file txtfile : text;
-		variable l : line;
-	begin
-		if write_to_file = '1' then
-			file_open(txtfile, "register_file.txt", write_mode);
-			for y in 0 to 31 loop
-				for x in 0 to 31 loop
-					write(l, mem_block(y)(31 - x));
-				end loop;
-			end loop;
-			file_close(txtfile);
-		end if;
-	end process;
+
+	-- file_proc : process(write_to_file)
+	-- 	file txtfile : text;
+	-- 	variable l : line;
+	-- begin
+	-- 	if write_to_file = '1' then
+	-- 		file_open(txtfile, "register_file.txt", write_mode);
+	-- 		for y in 0 to 31 loop
+	-- 			for x in 0 to 31 loop
+	-- 				write(l, mem_block(y)(31 - x));
+	-- 			end loop;
+	-- 		end loop;
+	-- 		file_close(txtfile);
+	-- 	end if;
+	-- end process;
 
 end behavior;

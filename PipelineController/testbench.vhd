@@ -165,6 +165,39 @@ begin
     end if;
   end process write_register_memory_files;
 
+  write_out : process(clock, present_state, out_to_testbench)
+  begin
+    if clock = '1' then
+      case present_state is
+        when memory_save =>
+          if memory_line_counter = data_size-8 then
+            memory_out_finished <= '1';
+            next_state <= register_save;
+          else
+            next_state <= memory_save_increment;
+          end if;
+
+        when memory_save_increment =>
+          next_state <= memory_save;
+
+        when register_save =>
+          if register_line_counter = register_size-2 then
+            register_out_finished <= '1';
+            next_state <= terminate;
+          else
+            next_state <= register_save_increment;
+          end if;
+
+        when register_save_increment =>
+          next_state <= register_save;
+
+        when terminate =>
+          null;
+      end case;
+    end if;
+  end process;
+
+
   test_process : process
   begin
     report "simulation starting";

@@ -14,7 +14,7 @@ entity data_memory is
 		clock : in std_logic;
 		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
-		
+
 		write_to_file : in std_logic;
 
 		address : in std_logic_vector(31 downto 0);
@@ -80,20 +80,20 @@ begin
 		end if;
 	end process;
 	waitrequest <= write_waitreq_reg and read_waitreq_reg;
-	
-	file_proc : process(write_to_file)
-		file txtfile : text;
-		variable l : line;
-	begin
-		if write_to_file = '1' then
-			file_open(txtfile, "memory.txt", write_mode);
-			for y in 0 to 8191 loop
-				for x in 0 to 7 loop
-					write(l, mem_block(y)(7 - x));
-				end loop;
-			end loop;
-			file_close(txtfile);
-		end if;
-	end process;
+
+	-- file_proc : process(write_to_file)
+	-- 	file txtfile : text;
+	-- 	variable l : line;
+	-- begin
+	-- 	if write_to_file = '1' then
+	-- 		file_open(txtfile, "memory.txt", write_mode);
+	-- 		for y in 0 to 8191 loop
+	-- 			for x in 0 to 7 loop
+	-- 				write(l, mem_block(y)(7 - x));
+	-- 			end loop;
+	-- 		end loop;
+	-- 		file_close(txtfile);
+	-- 	end if;
+	-- end process;
 
 end behavior;
