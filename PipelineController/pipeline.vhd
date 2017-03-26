@@ -33,7 +33,6 @@ architecture arch of pipeline is
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
-  signal out_to_testbench : std_logic := '0';
   signal write_to_file : std_logic := '0';
 
   -- read/write control signal
@@ -45,6 +44,7 @@ architecture arch of pipeline is
   constant data_size : integer := 8192;
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
+  constant test_instruction_number : integer := 120;
 
 
   -- pipeline main register IO --
@@ -756,23 +756,39 @@ architecture arch of pipeline is
           next_state <= instruction_load;
 
         when processor =>
-          -- this is where forwarding and hazard detection will take place --
-
-          if (to_integer(unsigned(if_id_pc_value_in)) >= 120) then
+          if (to_integer(unsigned(if_id_pc_value_in)) >= test_instruction_number) then
             next_state <= fini;
           else
-            -- what should the next state be here?
             next_state <= processor;
           end if;
-          null;
 
         when fini =>
-          null;
-          -- out_to_testbench <= '1';
-          -- next_state <= memory_save;
+          next_state <= memory_save;
 
-        when others =>
-          null;
+          when memory_save =>
+            if memory_line_counter = data_size - 8 then
+              memory_out_finished <= '1';
+              next_state <= register_save;
+            else
+              next_state <= memory_save_increment;
+            end if;
+
+          when memory_save_increment =>
+            next_state <= memory_save;
+
+          when register_save =>
+            if register_line_counter = register_size - 2 then
+              register_out_finished <= '1';
+              next_state <= terminate;
+            else
+              next_state <= register_save_increment;
+            end if;
+
+          when register_save_increment =>
+            next_state <= register_save;
+
+          when terminate =>
+            null;
 
       end case;
 
