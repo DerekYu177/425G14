@@ -15,8 +15,6 @@ entity data_memory is
 		reset : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
-		write_to_file : in std_logic;
-
 		address : in std_logic_vector(31 downto 0);
 		address_read_fini : in std_logic_vector(31 downto 0);
 		memwrite : in std_logic;

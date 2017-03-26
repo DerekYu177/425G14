@@ -18,8 +18,6 @@ entity registers is
 		write_hi : in std_logic;
 		write_lo : in std_logic;
 
-		write_to_file : in std_logic;
-
 		regwrite : in std_logic;
 		readdata1 : out std_logic_vector(31 downto 0);
 		readdata2 : out std_logic_vector(31 downto 0);
