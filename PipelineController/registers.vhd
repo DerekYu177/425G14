@@ -71,6 +71,7 @@ begin
 			read_address_reg_fini <= to_integer(unsigned(readreg_fini));
 		end if;
 	end process;
+
 	readdata1 <= mem_block(read_address_reg1);
 	readdata2 <= mem_block(read_address_reg2);
 	readdata_fini <= mem_block(read_address_reg_fini);

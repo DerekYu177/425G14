@@ -232,7 +232,6 @@ architecture arch of pipeline is
       reset : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
-
   		address : in std_logic_vector(31 downto 0);
       address_read_fini : in std_logic_vector(31 downto 0);
   		memwrite : in std_logic;
@@ -256,7 +255,6 @@ architecture arch of pipeline is
   		data_in_lo : in std_logic_vector(31 downto 0);
   		write_hi : in std_logic;
   		write_lo : in std_logic;
-
 
   		regwrite : in std_logic;
   		readdata1 : out std_logic_vector(31 downto 0);

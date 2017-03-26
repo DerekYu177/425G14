@@ -59,10 +59,10 @@ begin
 		& mem_block(read_address_reg + 2)
 		& mem_block(read_address_reg + 3);
 
-	readdata_fini <= mem_block(read_address_reg)
-		& mem_block(read_address_reg + 1)
-		& mem_block(read_address_reg + 2)
-		& mem_block(read_address_reg + 3);
+	readdata_fini <= mem_block(read_address_reg_fini)
+		& mem_block(read_address_reg_fini + 1)
+		& mem_block(read_address_reg_fini + 2)
+		& mem_block(read_address_reg_fini + 3);
 
 	waitreq_w_proc: process(memwrite)
 	begin
