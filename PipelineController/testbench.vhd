@@ -36,8 +36,9 @@ constant memory_size : integer := 8192;
 constant register_size : integer := 32;
 constant byte_size : integer := 8;
 
--- read/write control signal
+-- read/write
 signal write_finished : boolean := false;
+file register_file, memory : text;
 
 -- input port map signals
 signal clock : std_logic := '0';
@@ -108,50 +109,34 @@ begin
   end process read_program;
 
   write_register_memory_files : process(program_execution_finished)
-      file register_file : text;
-      file memory : text;
-      variable line_number_register, line_number_memory : line;
-      variable line_content_register : string(1 to data_size); -- could there be a big/little endian conflict here?
-      variable line_content_memory : string(1 to byte_size);
-      variable i,j : integer := 0;
+      -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
+      variable l_register, l_memory : line;
+      variable v_register_out, v_memory_out : std_logic_vector(31 downto 0);
+      
   begin
     if program_execution_finished = '1' then
 
-      file_open(register_file, "register_file.txt", WRITE_MODE);
-      file_open(memory, "memory.txt", WRITE_MODE);
+      file_open(register_file, "register_file.txt", write_mode);
+      file_open(memory, "memory.txt", write_mode);
 
       if clock'event and clock = '1' then
         while (not write_finished) loop
 
           if (register_out_finished = '0') then
-            -- convert from std_logic_vector back to string
-            for i in 0 to data_size-1 loop
-              if (register_out(i) = '0') then
-                line_content_register(data_size - i) := '0';
-              else
-                line_content_register(data_size - i) := '1';
-              end if;
-            end loop;
+            v_register_out <= register_out;
 
-            write(line_number_register, line_content_register);
-            writeline(register_file, line_number_register);
+            write(l_register, v_register_out);
+            writeline(register_file, l_register);
           else
             -- register write finished
             file_close(register_file);
           end if;
 
           if (memory_out_finished = '0') then
-            -- convert from std_logic_vector back to string
-            for j in 0 to byte_size loop
-              if (memory_out(j) = '0') then
-                line_content_memory(byte_size - j) := '0';
-              else
-                line_content_memory(byte_size - j) := '1';
-              end if;
-            end loop;
+            v_memory_out <= memory_out;
 
-            write(line_number_memory, line_content_memory);
-            writeline(memory, line_number_memory);
+            write(l_memory, v_memory_out);
+            writeline(memory, l_memory);
           else
             -- memory write finished
             file_close(memory);
@@ -160,6 +145,7 @@ begin
           if (register_out_finished = '1' and memory_out_finished = '1') then
             write_finished <= true;
           end if;
+
         end loop;
       end if;
     end if;
