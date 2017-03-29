@@ -112,7 +112,7 @@ begin
       -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
       variable l_register, l_memory : line;
       variable v_register_out, v_memory_out : std_logic_vector(31 downto 0);
-      
+
   begin
     if program_execution_finished = '1' then
 
@@ -123,7 +123,7 @@ begin
         while (not write_finished) loop
 
           if (register_out_finished = '0') then
-            v_register_out <= register_out;
+            v_register_out := register_out;
 
             write(l_register, v_register_out);
             writeline(register_file, l_register);
@@ -133,7 +133,7 @@ begin
           end if;
 
           if (memory_out_finished = '0') then
-            v_memory_out <= memory_out;
+            v_memory_out := memory_out;
 
             write(l_memory, v_memory_out);
             writeline(memory, l_memory);
