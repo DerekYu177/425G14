@@ -66,7 +66,7 @@ architecture arch of instruction_decode_stage is
   signal itype_rs: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(25 downto 21);
   signal itype_rt: std_logic_vector(31 downto 0) := (31 downto 5 => '0') & instruction(20 downto 16);
   signal immediate: std_logic_vector(15 downto 0) := instruction(15 downto 0);
-  signal blank_immediate_header : std_logic_vector(15 downto 0) := (others => '0');
+  signal blank_immediate_header : std_logic_vector(15 downto 0) := (others => instruction(15));
   signal extended_immediate: std_logic_vector(31 downto 0);
   signal extended_immediate_shifted: std_logic_vector(31 downto 0);
 
@@ -133,7 +133,7 @@ architecture arch of instruction_decode_stage is
   itype_rs <= (31 downto 5 => '0') & instruction(25 downto 21);
   itype_rt <= (31 downto 5 => '0') & instruction(20 downto 16);
   immediate <= instruction(15 downto 0);
-  blank_immediate_header <= (others => '0');
+  blank_immediate_header <= (others => instruction(15));
 
   -- J-type decomposition
   -- For j and jal
@@ -397,7 +397,7 @@ architecture arch of instruction_decode_stage is
 
 --  process(reg_1_set, reg_2_set, reg_hi_set, reg_lo_set)
 --  begin
---    
+--
 --    if reg_1_set = '1' then
 --      id_ex_reg_1 <= register_1;
 --    end if;
