@@ -1,10 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.std_logic_textio.all;
-
-library std;
 use std.textio.all;
+use ieee.std_logic_textio.all;
 
 entity pipeline_tb is
 end pipeline_tb;
@@ -37,8 +35,12 @@ constant register_size : integer := 32;
 constant byte_size : integer := 8;
 
 -- read/write
-signal write_finished : boolean := false;
 file register_file, memory : text;
+signal register_open_file : std_logic := '0';
+signal memory_open_file : std_logic := '0';
+signal initialization : std_logic := '0';
+constant c_width : natural := 32;
+constant b_width : natural := 8;
 
 -- input port map signals
 signal clock : std_logic := '0';
@@ -108,48 +110,48 @@ begin
     wait;
   end process read_program;
 
-  write_register_memory_files : process(program_execution_finished)
-      -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
-      variable l_register, l_memory : line;
-      variable v_register_out, v_memory_out : std_logic_vector(31 downto 0);
+  write_register_files : process(program_execution_finished, clock)
+    -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
+    variable v_register_line, v_memory_line : line;
 
   begin
+
     if program_execution_finished = '1' then
 
-      file_open(register_file, "register_file.txt", write_mode);
-      file_open(memory, "memory.txt", write_mode);
+      if register_open_file = '0' and initialization = '0' then
+        register_open_file <= '1';
+        memory_open_file <= '1';
+        initialization <= '1';
+        file_open(register_file, "register_file.txt", write_mode);
+        file_open(memory, "memory.txt", write_mode);
+      end if;
 
       if clock'event and clock = '1' then
-        while (not write_finished) loop
 
-          if (register_out_finished = '0') then
-            v_register_out := register_out;
+        if register_out_finished = '0' then
+          write(v_register_line, register_out, right, c_width);
+          writeline(register_file, v_register_line);
+        end if;
 
-            write(l_register, v_register_out);
-            writeline(register_file, l_register);
-          else
-            -- register write finished
-            file_close(register_file);
-          end if;
+        if memory_out_finished = '0' then
+          write (v_memory_line, memory_out, right, b_width);
+          writeline(memory, v_memory_line);
+        end if;
 
-          if (memory_out_finished = '0') then
-            v_memory_out := memory_out;
-
-            write(l_memory, v_memory_out);
-            writeline(memory, l_memory);
-          else
-            -- memory write finished
-            file_close(memory);
-          end if;
-
-          if (register_out_finished = '1' and memory_out_finished = '1') then
-            write_finished <= true;
-          end if;
-
-        end loop;
       end if;
+
+      if register_open_file = '1' and register_out_finished = '1' then
+        register_open_file <= '0';
+        file_close(register_file);
+      end if;
+
+      if memory_open_file = '1' and memory_out_finished = '1' then
+        memory_open_file <= '0';
+        file_close(memory);
+      end if;
+
     end if;
-  end process write_register_memory_files;
+  end process write_register_files;
 
   test_process : process
   begin
