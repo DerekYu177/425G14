@@ -36,7 +36,6 @@ constant byte_size : integer := 8;
 
 -- Input control signals
 file program : text;
-signal write_line_2 : std_logic := '0';
 signal input_initalize_flag : std_logic := '0';
 signal r_line_content_1 : std_logic_vector(31 downto 0);
 signal r_line_content_2 : std_logic_vector(31 downto 0);
@@ -94,9 +93,8 @@ begin
     wait for clock_period / 2;
   end process;
 
-  read_program_state_logic : process (clock, present_state)
+  read_program_state_logic : process(clock, present_state)
   begin
-
     case present_state is
       when input_initialize =>
         next_state <= read_1;
@@ -112,8 +110,8 @@ begin
         next_state <= read_1;
 
       when end_read =>
-        file_close(program);
-        program_in_finished <= '1';
+        null;
+
     end case;
 
     if clock'event and clock = '1' then
@@ -122,7 +120,7 @@ begin
 
   end process read_program_state_logic;
 
-  read_program_functional_logic : process(clock, present_state)
+  read_program_functional_logic : process(present_state)
     variable v_program_line_1, v_program_line_2 : line;
     variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
   begin
@@ -132,9 +130,13 @@ begin
         file_open(program, "program.txt", read_mode);
 
       when read_1 =>
-        readline(program, v_program_line_1);
-        read(v_program_line_1, v_line_content_1);
-        r_line_content_1 <= v_line_content_1;
+        reset <= '0';
+
+        if not endfile(program) then
+          readline(program, v_program_line_1);
+          read(v_program_line_1, v_line_content_1);
+          r_line_content_1 <= v_line_content_1;
+        end if;
 
         if input_initalize_flag = '1' then
           program_in <= r_line_content_2;
@@ -144,14 +146,17 @@ begin
 
       when read_2 =>
         program_in <= r_line_content_1;
-        readline(program, v_program_line_2);
-        read(v_program_line_2, v_line_content_2);
-        r_line_content_2 <= v_line_content_2;
+
+        if not endfile(program) then
+          readline(program, v_program_line_2);
+          read(v_program_line_2, v_line_content_2);
+          r_line_content_2 <= v_line_content_2;
+        end if;
 
       when end_read =>
-        null;
+        file_close(program);
+        program_in_finished <= '1';
 
-      end case;
     end case;
   end process read_program_functional_logic;
 
