@@ -34,11 +34,17 @@ constant memory_size : integer := 8192;
 constant register_size : integer := 32;
 constant byte_size : integer := 8;
 
--- read/write
+-- Input control signals
+file program : text;
+signal io_togle_debug : std_logic := '0';
+signal r_line_content_1 : std_logic_vector(31 downto 0);
+signal r_line_content_2 : std_logic_vector(31 downto 0);
+
+-- Output control signals
 file register_file, memory : text;
 signal register_open_file : std_logic := '0';
 signal memory_open_file : std_logic := '0';
-signal initialization : std_logic := '0';
+signal output_initialization : std_logic := '0';
 constant c_width : natural := 32;
 constant b_width : natural := 8;
 
@@ -79,35 +85,40 @@ begin
   end process;
 
   read_program : process
-    file program : text; -- open read_mode is "program.txt"
-    variable line_number : line;
-    variable line_content : std_logic_vector(31 downto 0);
+    variable v_program_line_1, v_program_line_2 : line;
+    variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
   begin
+
     reset <= '1';
+    file_open(program, "program.txt", read_mode);
 
-    report "opening program";
-    file_open(program, "program.txt", READ_MODE);
+    while not(endfile(program)) loop
 
-    report "endfile? : " & boolean'image(endfile(program));
-    while (not endfile(program)) loop
-      wait until clock'event and clock = '1';
+      wait until clock = '0';
+      readline(program, v_program_line_1);
+      read(v_program_line_1, v_line_content_1);
 
-      report "reading line from program";
-      readline(program, line_number);
-      read(line_number, line_content);
+      if not endfile(program) then
+        readline(program, v_program_line_2);
+        read(v_program_line_2, v_line_content_2);
+      end if;
 
-      report "writing program line to pipeline";
-      program_in <= line_content;
+      io_togle_debug <= '1';
+
+      wait until clock = '1';
+      r_line_content_1 <= v_line_content_1;
+      r_line_content_2 <= v_line_content_2;
+
+      program_in <= r_line_content_1;
+      io_togle_debug <= '0';
 
       wait for clock_period;
 
     end loop;
 
-    report "end of file";
     file_close(program);
-    reset <= '0';
     program_in_finished <= '1';
-    wait;
+
   end process read_program;
 
   write_register_files : process(program_execution_finished, clock)
@@ -118,10 +129,10 @@ begin
 
     if program_execution_finished = '1' then
 
-      if register_open_file = '0' and initialization = '0' then
+      if register_open_file = '0' and output_initialization = '0' then
         register_open_file <= '1';
         memory_open_file <= '1';
-        initialization <= '1';
+        output_initialization <= '1';
         file_open(register_file, "register_file.txt", write_mode);
         file_open(memory, "memory.txt", write_mode);
       end if;

@@ -40,7 +40,8 @@ architecture arch of pipeline is
   signal initializing : std_logic := '1';
 
   -- read/write control signal
-  signal instruction_line_in_counter : integer := 0;
+  signal present_instruction_line_in_counter : integer := 0;
+  signal next_instruction_line_in_counter : integer := 0;
   signal present_memory_line_counter : integer := 0;
   signal next_memory_line_counter : integer := 0;
   signal present_register_line_counter : integer := 0;
@@ -797,6 +798,7 @@ architecture arch of pipeline is
 
       if clock'event and clock = '1' then
         present_state <= next_state;
+        present_instruction_line_in_counter <= next_instruction_line_in_counter;
         present_memory_line_counter <= next_memory_line_counter;
         present_register_line_counter <= next_register_line_counter;
       end if;
@@ -808,7 +810,6 @@ architecture arch of pipeline is
     begin
       case present_state is
         when clear =>
-          instruction_line_in_counter <= 0;
           global_reset <= '1';
           program_execution_finished <= '0';
 
@@ -818,12 +819,21 @@ architecture arch of pipeline is
 
         when instruction_load =>
           instr_memory_memwrite <= '1';
-          instr_memory_write_address <= std_logic_vector(to_unsigned(instruction_line_in_counter,32));
+          instr_memory_write_address <= std_logic_vector(to_unsigned(present_instruction_line_in_counter,32));
           instr_memory_writedata <= program_in;
 
+          if program_in_finished = '0' then
+            next_instruction_line_in_counter <= present_instruction_line_in_counter + 4;
+          end if;
+
         when instruction_load_increment =>
-          instr_memory_memwrite <= '0';
-          instruction_line_in_counter <= instruction_line_in_counter + 4;
+          instr_memory_memwrite <= '1';
+          instr_memory_write_address <= std_logic_vector(to_unsigned(present_instruction_line_in_counter,32));
+          instr_memory_writedata <= program_in;
+
+          if program_in_finished = '0' then
+            next_instruction_line_in_counter <= present_instruction_line_in_counter + 4;
+          end if;
 
         when processor =>
           instr_memory_memwrite <= '0';
