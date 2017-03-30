@@ -95,8 +95,6 @@ begin
   end process;
 
   read_program_state_logic : process (clock, present_state)
-    variable v_program_line_1, v_program_line_2 : line;
-    variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
   begin
 
     case present_state is
@@ -125,6 +123,8 @@ begin
   end process read_program_state_logic;
 
   read_program_functional_logic : process(clock, present_state)
+    variable v_program_line_1, v_program_line_2 : line;
+    variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
   begin
     case present_state is
       when input_initialize =>
