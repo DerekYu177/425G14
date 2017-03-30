@@ -36,7 +36,7 @@ constant byte_size : integer := 8;
 
 -- Input control signals
 file program : text;
-signal io_togle_debug : std_logic := '0';
+signal write_line_2 : std_logic := '0';
 signal r_line_content_1 : std_logic_vector(31 downto 0);
 signal r_line_content_2 : std_logic_vector(31 downto 0);
 
@@ -101,18 +101,20 @@ begin
       if not endfile(program) then
         readline(program, v_program_line_2);
         read(v_program_line_2, v_line_content_2);
+        write_line_2 <= '1';
       end if;
-
-      io_togle_debug <= '1';
 
       wait until clock = '1';
       r_line_content_1 <= v_line_content_1;
       r_line_content_2 <= v_line_content_2;
 
       program_in <= r_line_content_1;
-      io_togle_debug <= '0';
 
-      wait for clock_period;
+      if write_line_2 = '1' then
+        write_line_2 <= '0';
+        wait for clock_period;
+        program_in <= r_line_content_2;
+      end if;
 
     end loop;
 
