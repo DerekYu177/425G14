@@ -774,6 +774,9 @@ architecture arch of pipeline is
           end if;
 
         when memory_register_save_increment =>
+          -- the location where the data is first available
+          register_out_finished <= '0';
+          memory_out_finished <= '0';
           next_state <= memory_register_save;
 
         when memory_save =>
@@ -851,16 +854,38 @@ architecture arch of pipeline is
           data_memory_address_fini <= std_logic_vector(to_unsigned(present_memory_line_counter, 32));
           memory_out <= data_memory_readdata_fini;
 
+          if not (next_register_line_counter = register_size - 1) then
+            next_register_line_counter <= present_register_line_counter + 1;
+            next_memory_line_counter <= present_memory_line_counter + 4;
+          end if;
+
         when memory_register_save_increment =>
-          next_register_line_counter <= present_register_line_counter + 1;
-          next_memory_line_counter <= present_memory_line_counter + 4;
+          reg_readreg_fini <= std_logic_vector(to_unsigned(present_register_line_counter, 32));
+          register_out <= reg_readdata_fini;
+
+          data_memory_address_fini <= std_logic_vector(to_unsigned(present_memory_line_counter, 32));
+          memory_out <= data_memory_readdata_fini;
+
+          if not (next_register_line_counter = register_size - 1) then
+            next_register_line_counter <= present_register_line_counter + 1;
+            next_memory_line_counter <= present_memory_line_counter + 4;
+          end if;
 
         when memory_save =>
           data_memory_address_fini <= std_logic_vector(to_unsigned(present_memory_line_counter, 32));
           memory_out <= data_memory_readdata_fini;
 
+          if not (next_memory_line_counter = data_size - 4) then
+            next_memory_line_counter <= present_memory_line_counter + 4;
+          end if;
+
         when memory_save_increment =>
-          next_memory_line_counter <= present_memory_line_counter + 4;
+          data_memory_address_fini <= std_logic_vector(to_unsigned(present_memory_line_counter, 32));
+          memory_out <= data_memory_readdata_fini;
+
+          if not (next_memory_line_counter = data_size - 4) then
+            next_memory_line_counter <= present_memory_line_counter + 4;
+          end if;
 
         when terminate =>
           null;

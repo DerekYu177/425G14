@@ -36,10 +36,11 @@ constant byte_size : integer := 8;
 
 -- read/write
 file register_file, memory : text;
-signal open_file : std_logic := '0';
+signal register_open_file : std_logic := '0';
+signal memory_open_file : std_logic := '0';
 signal initialization : std_logic := '0';
 constant c_width : natural := 32;
-constant opening_line : std_logic_vector(c_width-1 downto 0) := (others => '1');
+constant b_width : natural := 8;
 
 -- input port map signals
 signal clock : std_logic := '0';
@@ -109,54 +110,20 @@ begin
     wait;
   end process read_program;
 
-  -- write_register_memory_files : process(program_execution_finished, clock)
-  --     -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
-  --     variable v_register_line, v_memory_line : line;
-  --
-  -- begin
-  --   if program_execution_finished = '1' then
-  --
-  --     if open_file = '0' then
-  --       open_file <= '1';
-  --       file_open(register_file, "register_file.txt", write_mode);
-  --       file_open(memory, "memory.txt", write_mode);
-  --     end if;
-  --
-  --     if clock'event and clock = '1' then
-  --
-  --       if (register_out_finished = '0') then
-  --         write(v_register_line, register_out);
-  --         writeline(register_file, v_register_line);
-  --       end if;
-  --
-  --       if (memory_out_finished = '0') then
-  --         write(v_memory_line, memory_out);
-  --         writeline(memory, v_memory_line);
-  --       end if;
-  --     end if;
-  --
-  --     if open_file = '1' and memory_out_finished = '1' and register_out_finished = '1' then
-  --       file_close(memory);
-  --       file_close(register_file);
-  --     end if;
-  --
-  --   end if;
-  -- end process write_register_memory_files;
-
   write_register_files : process(program_execution_finished, clock)
-      -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
-      variable v_register_line, v_memory_line : line;
+    -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
+    variable v_register_line, v_memory_line : line;
 
   begin
+
     if program_execution_finished = '1' then
 
-      if open_file = '0' and initialization = '0' then
-        open_file <= '1';
+      if register_open_file = '0' and initialization = '0' then
+        register_open_file <= '1';
+        memory_open_file <= '1';
         initialization <= '1';
         file_open(register_file, "register_file.txt", write_mode);
-
-        write(v_register_line, opening_line, right, c_width);
-        writeline(register_file, v_register_line);
+        file_open(memory, "memory.txt", write_mode);
       end if;
 
       if clock'event and clock = '1' then
@@ -166,14 +133,21 @@ begin
           writeline(register_file, v_register_line);
         end if;
 
+        if memory_out_finished = '0' then
+          write (v_memory_line, memory_out, right, b_width);
+          writeline(memory, v_memory_line);
+        end if;
+
       end if;
 
-      if open_file = '1' and register_out_finished = '1' then
-        write(v_register_line, opening_line, right, c_width);
-        writeline(register_file, v_register_line);
-
-        open_file <= '0';
+      if register_open_file = '1' and register_out_finished = '1' then
+        register_open_file <= '0';
         file_close(register_file);
+      end if;
+
+      if memory_open_file = '1' and memory_out_finished = '1' then
+        memory_open_file <= '0';
+        file_close(memory);
       end if;
 
     end if;
