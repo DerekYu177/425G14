@@ -38,6 +38,7 @@ architecture arch of pipeline is
   signal jump_taken : std_logic := '0';
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
+  signal stall_flag : std_logic := '0';
 
   -- read/write control signal
   signal present_instruction_line_in_counter : integer := 0;
@@ -52,7 +53,6 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
   constant test_instruction_number : integer := 120;
-
 
   -- pipeline main register IO --
   signal if_id_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -436,6 +436,19 @@ architecture arch of pipeline is
     );
   end component;
 
+  component stall_unit is
+    port(
+    clock : in std_logic;
+    reset : in std_logic;
+
+    if_id_out: in std_logic_vector(31 downto 0);
+    id_ex_out: in std_logic_vector(31 downto 0);
+    instruction_chosen: out std_logic_vector(31 downto 0);
+
+    stall: out std_logic
+    );
+  end component;
+
   begin
 
     -- COMPONENTS --
@@ -733,6 +746,15 @@ architecture arch of pipeline is
       lo_data => mem_wb_lo_data_out,
       hi_store => mem_wb_hi_store_out,
       lo_store => mem_wb_lo_store_out
+    );
+
+    stall_module : stall_unit
+    port map(
+      clock => clock,
+      reset => global_reset,
+      if_id_out => if_id_scratch_out,
+      id_ex_out => id_ex_scratch_out,
+      stall => stall_flag
     );
 
     -- BEGIN PROCESSES --
