@@ -39,6 +39,10 @@ architecture arch of pipeline is
   signal global_reset : std_logic := '0';
   signal initializing : std_logic := '1';
 
+  -- stall signals
+  signal stall_flag : std_logic := '0';
+  signal stall_instruction_chosen : std_logic_vector(31 downto 0) := (others => '0');
+
   -- read/write control signal
   signal present_instruction_line_in_counter : integer := 0;
   signal next_instruction_line_in_counter : integer := 0;
@@ -52,7 +56,6 @@ architecture arch of pipeline is
   constant instruction_size : integer := 1024;
   constant register_size : integer := 32;
   constant test_instruction_number : integer := 120;
-
 
   -- pipeline main register IO --
   signal if_id_data_1_in : std_logic_vector(31 downto 0) := (others => '0');
@@ -292,7 +295,11 @@ architecture arch of pipeline is
       jump_taken : in std_logic;
       instruction_out : out std_logic_vector(31 downto 0);
       updated_program_counter : out std_logic_vector(31 downto 0);
-      program_counter_valid : out std_logic
+      program_counter_valid : out std_logic;
+
+      -- stall interface --
+      stall : in std_logic;
+      stall_instruction : in std_logic_vector(31 downto 0)
     );
   end component;
 
@@ -433,6 +440,19 @@ architecture arch of pipeline is
     stage_2_store_register : out std_logic;
     stage_2_hi_store : out std_logic;
     stage_2_lo_store : out std_logic
+    );
+  end component;
+
+  component stall_unit is
+    port(
+    clock : in std_logic;
+    reset : in std_logic;
+
+    if_id_out: in std_logic_vector(31 downto 0);
+    id_ex_out: in std_logic_vector(31 downto 0);
+    instruction_chosen: out std_logic_vector(31 downto 0);
+
+    stall: out std_logic
     );
   end component;
 
@@ -646,7 +666,10 @@ architecture arch of pipeline is
       jump_taken => ex_mem_pc_valid_in,
       instruction_out => if_id_scratch_in,
       updated_program_counter => if_id_pc_value_in,
-      program_counter_valid => if_id_pc_valid_in
+      program_counter_valid => if_id_pc_valid_in,
+
+      stall => stall_flag,
+      stall_instruction => stall_instruction_chosen
     );
 
     instruction_decode_module : instruction_decode_stage
@@ -733,6 +756,16 @@ architecture arch of pipeline is
       lo_data => mem_wb_lo_data_out,
       hi_store => mem_wb_hi_store_out,
       lo_store => mem_wb_lo_store_out
+    );
+
+    stall_module : stall_unit
+    port map(
+      clock => clock,
+      reset => global_reset,
+      if_id_out => if_id_scratch_out,
+      id_ex_out => id_ex_scratch_out,
+      instruction_chosen => stall_instruction_chosen,
+      stall => stall_flag
     );
 
     -- BEGIN PROCESSES --

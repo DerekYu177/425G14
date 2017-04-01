@@ -36,15 +36,24 @@ constant byte_size : integer := 8;
 
 -- Input control signals
 file program : text;
-signal io_togle_debug : std_logic := '0';
+signal input_initalize_flag : std_logic := '0';
 signal r_line_content_1 : std_logic_vector(31 downto 0);
 signal r_line_content_2 : std_logic_vector(31 downto 0);
+
+-- input FSM --
+type input_state_type is (
+  input_initialize,
+  read_1, read_2,
+  end_read
+);
+
+signal present_state, next_state : input_state_type;
 
 -- Output control signals
 file register_file, memory : text;
 signal register_open_file : std_logic := '0';
 signal memory_open_file : std_logic := '0';
-signal output_initialization : std_logic := '0';
+signal output_initialize_flag : std_logic := '0';
 constant c_width : natural := 32;
 constant b_width : natural := 8;
 
@@ -84,42 +93,73 @@ begin
     wait for clock_period / 2;
   end process;
 
-  read_program : process
+  read_program_state_logic : process(clock, present_state)
+  begin
+    case present_state is
+      when input_initialize =>
+        next_state <= read_1;
+
+      when read_1 =>
+        if endfile(program) then
+          next_state <= end_read;
+        else
+          next_state <= read_2;
+        end if;
+
+      when read_2 =>
+        next_state <= read_1;
+
+      when end_read =>
+        null;
+
+    end case;
+
+    if clock'event and clock = '1' then
+      present_state <= next_state;
+    end if;
+
+  end process read_program_state_logic;
+
+  read_program_functional_logic : process(present_state)
     variable v_program_line_1, v_program_line_2 : line;
     variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
   begin
+    case present_state is
+      when input_initialize =>
+        reset <= '1';
+        file_open(program, "program.txt", read_mode);
 
-    reset <= '1';
-    file_open(program, "program.txt", read_mode);
+      when read_1 =>
+        reset <= '0';
 
-    while not(endfile(program)) loop
+        if not endfile(program) then
+          readline(program, v_program_line_1);
+          read(v_program_line_1, v_line_content_1);
+          r_line_content_1 <= v_line_content_1;
+        end if;
 
-      wait until clock = '0';
-      readline(program, v_program_line_1);
-      read(v_program_line_1, v_line_content_1);
+        if input_initalize_flag = '1' then
+          program_in <= r_line_content_2;
+        else
+          input_initalize_flag <= '1';
+        end if;
 
-      if not endfile(program) then
-        readline(program, v_program_line_2);
-        read(v_program_line_2, v_line_content_2);
-      end if;
+      when read_2 =>
+        program_in <= r_line_content_1;
 
-      io_togle_debug <= '1';
+        if not endfile(program) then
+          readline(program, v_program_line_2);
+          read(v_program_line_2, v_line_content_2);
+          r_line_content_2 <= v_line_content_2;
+        end if;
 
-      wait until clock = '1';
-      r_line_content_1 <= v_line_content_1;
-      r_line_content_2 <= v_line_content_2;
+      when end_read =>
+        program_in <= r_line_content_1;
+        file_close(program);
+        program_in_finished <= '1';
 
-      program_in <= r_line_content_1;
-      io_togle_debug <= '0';
-
-      wait for clock_period;
-
-    end loop;
-
-    file_close(program);
-    program_in_finished <= '1';
-
-  end process read_program;
+    end case;
+  end process read_program_functional_logic;
 
   write_register_files : process(program_execution_finished, clock)
     -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
@@ -129,10 +169,10 @@ begin
 
     if program_execution_finished = '1' then
 
-      if register_open_file = '0' and output_initialization = '0' then
+      if register_open_file = '0' and output_initialize_flag = '0' then
         register_open_file <= '1';
         memory_open_file <= '1';
-        output_initialization <= '1';
+        output_initialize_flag <= '1';
         file_open(register_file, "register_file.txt", write_mode);
         file_open(memory, "memory.txt", write_mode);
       end if;

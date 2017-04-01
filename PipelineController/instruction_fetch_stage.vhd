@@ -19,7 +19,11 @@ entity instruction_fetch_stage is
   jump_taken : in std_logic;
   instruction_out : out std_logic_vector(31 downto 0);
   updated_program_counter : out std_logic_vector(31 downto 0);
-  program_counter_valid : out std_logic
+  program_counter_valid : out std_logic;
+
+  -- stall interface --
+  stall : in std_logic;
+  stall_instruction : in std_logic_vector(31 downto 0)
   );
 end instruction_fetch_stage;
 
@@ -34,7 +38,9 @@ architecture arch of instruction_fetch_stage is
         read_instruction <= '0';
         program_counter <= (others => '0');
         program_counter_valid <= '0';
-      elsif (initializing = '0' and clock'event and clock = '0') then
+      elsif (stall = '1') then
+        null;
+      elsif (stall = '0' and initializing = '0' and clock'event and clock = '0') then
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
         else
@@ -48,6 +54,14 @@ architecture arch of instruction_fetch_stage is
 
   updated_program_counter <= program_counter;
   read_instruction_address <= program_counter;
-  instruction_out <= instruction_in;
+
+  update_instruction_out : process (clock)
+  begin
+    if stall = '1' then
+      instruction_out <= stall_instruction;
+    else
+      instruction_out <= instruction_in;
+    end if;
+  end process;
 
 end architecture;
