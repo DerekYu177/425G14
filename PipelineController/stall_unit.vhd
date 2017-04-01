@@ -65,16 +65,16 @@ begin
 
 			stall_evicted <= '1';
       stall <= '0';
-      instruction_chosen <= (others <= '0');
-      stalled_instruction <= (others <= '0');
+      instruction_chosen <= (others => '0');
+      stalled_instruction <= (others => '0');
 
 		else
 			if stall_evicted = '0' then -- there is a stalled instruction, must evict it no matter what
       -- Note: this also means that just prior to this situation, a stall has been issued, hence the previous instruction is for sure a ADD $0 $0 $0
       -- IF was previously forbidden from issuing new instruction into ID as well
-          report "Stalled instruction exists, STALL EVICTION in action"
+          report "Stalled instruction exists, STALL EVICTION in action";
           instruction_chosen <= stalled_instruction;
-          stalled_instruction <= (others <= '0');
+          stalled_instruction <= (others => '0');
 
           -- put the flag down to allow IF to pass in next instruction
           stall <= '0';

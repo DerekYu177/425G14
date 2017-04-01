@@ -154,6 +154,7 @@ begin
         end if;
 
       when end_read =>
+        program_in <= r_line_content_1;
         file_close(program);
         program_in_finished <= '1';
 

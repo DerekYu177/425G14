@@ -30,7 +30,6 @@ end instruction_fetch_stage;
 architecture arch of instruction_fetch_stage is
 
   signal program_counter : std_logic_vector(31 downto 0) := (others => '0');
-  signal t_instruction_out : std_logic_vector(31 downto 0) := (others => '0');
 
   begin
     async_reset : process(reset, clock, jump_taken)
@@ -40,7 +39,7 @@ architecture arch of instruction_fetch_stage is
         program_counter <= (others => '0');
         program_counter_valid <= '0';
       elsif (stall = '1') then
-        t_instruction_out <= stall_instruction;
+        null;
       elsif (stall = '0' and initializing = '0' and clock'event and clock = '0') then
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
@@ -50,13 +49,19 @@ architecture arch of instruction_fetch_stage is
 
         program_counter_valid <= '1';
         read_instruction <= '1';
-
-        t_instruction_out <= instruction_in;
       end if;
     end process;
 
   updated_program_counter <= program_counter;
   read_instruction_address <= program_counter;
-  instruction_out <= t_instruction_out;
+
+  update_instruction_out : process (clock)
+  begin
+    if stall = '1' then
+      instruction_out <= stall_instruction;
+    else
+      instruction_out <= instruction_in;
+    end if;
+  end process;
 
 end architecture;
