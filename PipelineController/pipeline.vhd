@@ -36,7 +36,7 @@ architecture arch of pipeline is
 
   -- INTERNAL CONTROL SIGNALS --
   signal jump_taken : std_logic := '0';
-  signal register_memory_reset : std_logic := '0';
+  signal memory_reset : std_logic := '0';
   signal initializing : std_logic := '1';
 
   -- stall signals
@@ -462,7 +462,7 @@ architecture arch of pipeline is
     instruction_memory_module :  instruction_memory
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
       instr_memory_writedata,
       instr_memory_write_address,
       instr_memory_read_address,
@@ -475,7 +475,7 @@ architecture arch of pipeline is
     data_memory_module : data_memory
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
       data_memory_writedata,
       data_memory_address,
       data_memory_address_fini,
@@ -489,7 +489,7 @@ architecture arch of pipeline is
     registers_module : registers
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
       reg_writedata,
       reg_readreg1,
       reg_readreg2,
@@ -510,7 +510,7 @@ architecture arch of pipeline is
     if_id_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
 
       if_id_data_1_in,
       if_id_data_2_in,
@@ -546,7 +546,7 @@ architecture arch of pipeline is
     id_ex_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
 
       id_ex_data_1_in,
       id_ex_data_2_in,
@@ -582,7 +582,7 @@ architecture arch of pipeline is
     ex_mem_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
 
       ex_mem_data_1_in,
       ex_mem_data_2_in,
@@ -618,7 +618,7 @@ architecture arch of pipeline is
     mem_wb_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      register_memory_reset,
+      memory_reset,
 
       mem_wb_data_1_in,
       mem_wb_data_2_in,
@@ -841,11 +841,11 @@ architecture arch of pipeline is
     begin
       case present_state is
         when clear =>
-          register_memory_reset <= '1';
+          memory_reset <= '1';
           program_execution_finished <= '0';
 
         when init =>
-          register_memory_reset <= '0';
+          memory_reset <= '0';
           initializing <= '1';
 
         when instruction_load =>

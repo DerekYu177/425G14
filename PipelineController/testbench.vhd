@@ -69,6 +69,7 @@ signal memory_out_finished : std_logic := '0';
 signal register_out_finished : std_logic := '0';
 signal memory_out : std_logic_vector(31 downto 0);
 signal register_out : std_logic_vector(31 downto 0);
+signal program_terminated : std_logic := '0';
 
 begin
 
@@ -93,73 +94,32 @@ begin
     wait for clock_period / 2;
   end process;
 
-  read_program_state_logic : process(clock, present_state)
+  io : process
+    variable v_program_line_1: line;
+    variable v_line_content_1: std_logic_vector(31 downto 0);
+    variable v_register_line, v_memory_line : line;
   begin
-    case present_state is
-      when input_initialize =>
-        next_state <= read_1;
+    file_open(program, "program.txt", read_mode);
+    reset <= '1';
 
-      when read_1 =>
-        if endfile(program) then
-          next_state <= end_read;
-        else
-          next_state <= read_2;
-        end if;
+    wait for clock_period/2;
 
-      when read_2 =>
-        next_state <= read_1;
+    while not endfile(program) loop
+      reset <= '0';
+      readline(program, v_program_line_1);
+      read(v_program_line_1, v_line_content_1);
+      r_line_content_1 <= v_line_content_1;
+      program_in <= r_line_content_1;
+      wait for clock_period;
+    end loop;
 
-      when end_read =>
-        null;
+    file_close(program);
 
-    end case;
+    program_in_finished <= '1';
+    wait until program_execution_finished = '1';
+    wait until program_terminated = '1';
 
-    if clock'event and clock = '1' then
-      present_state <= next_state;
-    end if;
-
-  end process read_program_state_logic;
-
-  read_program_functional_logic : process(present_state)
-    variable v_program_line_1, v_program_line_2 : line;
-    variable v_line_content_1, v_line_content_2 : std_logic_vector(31 downto 0);
-  begin
-    case present_state is
-      when input_initialize =>
-        reset <= '1';
-        file_open(program, "program.txt", read_mode);
-
-      when read_1 =>
-        reset <= '0';
-
-        if not endfile(program) then
-          readline(program, v_program_line_1);
-          read(v_program_line_1, v_line_content_1);
-          r_line_content_1 <= v_line_content_1;
-        end if;
-
-        if input_initalize_flag = '1' then
-          program_in <= r_line_content_2;
-        else
-          input_initalize_flag <= '1';
-        end if;
-
-      when read_2 =>
-        program_in <= r_line_content_1;
-
-        if not endfile(program) then
-          readline(program, v_program_line_2);
-          read(v_program_line_2, v_line_content_2);
-          r_line_content_2 <= v_line_content_2;
-        end if;
-
-      when end_read =>
-        program_in <= r_line_content_1;
-        file_close(program);
-        program_in_finished <= '1';
-
-    end case;
-  end process read_program_functional_logic;
+  end process;
 
   write_register_files : process(program_execution_finished, clock)
     -- Based on https://www.nandland.com/vhdl/examples/example-file-io.html
@@ -201,18 +161,11 @@ begin
         file_close(memory);
       end if;
 
+      if register_out_finished = '1' and memory_out_finished = '1' then
+        program_terminated <= '1';
+      end if;
+
     end if;
   end process write_register_files;
-
-  test_process : process
-  begin
-    report "simulation starting";
-    -- first try reading from a program with a single line of text
-    -- wait the appropriate amount of clock cycles for program to be sent
-    wait until program_in_finished = '1';
-    -- wait until the pipeline is finished with it's calculation
-    wait until program_execution_finished = '1';
-    -- we'll have to manually check the file?
-    end process;
 
 end architecture behavior;
