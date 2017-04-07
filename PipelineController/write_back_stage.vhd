@@ -39,7 +39,8 @@ begin
       reg_regwrite <= '0';
       reg_writedata <= (others => '0');
       reg_writereg_address <= (others => '0');
-    elsif clock'event then
+    elsif clock'event and clock = '1' then
+      -- write rising edge read falling edge
       if (store_register = '1' and write_address_valid = '1') then
         reg_regwrite <= '1';
         reg_writedata <= write_data;

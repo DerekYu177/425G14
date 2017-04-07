@@ -100,22 +100,25 @@ begin
     variable v_register_line, v_memory_line : line;
   begin
     file_open(program, "program.txt", read_mode);
-    reset <= '1';
 
+    reset <= '1';
     wait for clock_period/2;
+    reset <= '0';
+
+    wait for clock_period;
 
     while not endfile(program) loop
-      reset <= '0';
       readline(program, v_program_line_1);
       read(v_program_line_1, v_line_content_1);
       r_line_content_1 <= v_line_content_1;
-      program_in <= r_line_content_1;
+      program_in <= v_line_content_1;
       wait for clock_period;
     end loop;
 
     file_close(program);
 
     program_in_finished <= '1';
+
     wait until program_execution_finished = '1';
     wait until program_terminated = '1';
 

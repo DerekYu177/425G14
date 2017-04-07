@@ -11,6 +11,7 @@ entity instruction_memory is
 	port(
 		clock : in std_logic;
 		reset : in std_logic;
+		program_in_finished : in std_logic;
 		writedata : in std_logic_vector(31 downto 0);
 
 		write_address : in std_logic_vector(31 downto 0);
@@ -27,8 +28,8 @@ architecture behavior of instruction_memory is
 	type mem is array(ram_size-1 downto 0) of std_logic_vector(7 downto 0);
 	signal mem_block: mem;
 	signal read_address_reg: integer := 0;
-	signal write_waitreq_reg: std_logic := '1';
-	signal read_waitreq_reg: std_logic := '1';
+	signal write_waitreq_reg: std_logic := '0';
+	signal read_waitreq_reg: std_logic := '0';
 
 begin
 	mem_process : process(clock)
@@ -37,14 +38,11 @@ begin
 			for i in 0 to ram_size-1 loop
 				mem_block(i) <= std_logic_vector(to_unsigned(0, 8));
 			end loop;
-
-		elsif clock'event and clock = '1' then
-			if memwrite = '1' then
-				mem_block(to_integer(unsigned(write_address))) <= writedata(31 downto 24);
-				mem_block(to_integer(unsigned(write_address))+1) <= writedata(23 downto 16);
-				mem_block(to_integer(unsigned(write_address))+2) <= writedata(15 downto 8);
-				mem_block(to_integer(unsigned(write_address))+3) <= writedata(7 downto 0);
-			end if;
+		elsif memwrite = '1' and program_in_finished = '0' then
+			mem_block(to_integer(unsigned(write_address))) <= writedata(31 downto 24);
+			mem_block(to_integer(unsigned(write_address))+1) <= writedata(23 downto 16);
+			mem_block(to_integer(unsigned(write_address))+2) <= writedata(15 downto 8);
+			mem_block(to_integer(unsigned(write_address))+3) <= writedata(7 downto 0);
 		elsif clock'event and clock = '0' then
 			read_address_reg <= to_integer(unsigned(read_address));
 		end if;
