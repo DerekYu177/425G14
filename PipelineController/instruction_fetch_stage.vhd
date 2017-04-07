@@ -54,9 +54,11 @@ architecture arch of instruction_fetch_stage is
   updated_program_counter <= program_counter;
   read_instruction_address <= program_counter;
 
-  update_instruction_out : process (clock)
+  update_instruction_out : process (clock, reset)
   begin
-    if stall = '1' then
+    if reset = '1' then
+      instruction_out <= (others => '0');
+    elsif stall = '1' then
       instruction_out <= stall_instruction;
     else
       instruction_out <= instruction_in;

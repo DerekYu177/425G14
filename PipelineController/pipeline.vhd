@@ -221,6 +221,7 @@ architecture arch of pipeline is
   	port(
   		clock : in std_logic;
       reset : in std_logic;
+      program_in_finished : in std_logic;
   		writedata : in std_logic_vector(31 downto 0);
 
   		write_address : in std_logic_vector(31 downto 0);
@@ -463,6 +464,7 @@ architecture arch of pipeline is
     port map(
       clock,
       memory_reset,
+      program_in_finished,
       instr_memory_writedata,
       instr_memory_write_address,
       instr_memory_read_address,
@@ -775,7 +777,11 @@ architecture arch of pipeline is
           next_state <= init;
 
         when init =>
-          next_state <= instruction_load;
+          if reset = '0' then
+            next_state <= instruction_load;
+          else
+            next_state <= init;
+          end if;
 
         when instruction_load =>
           if program_in_finished = '1' then
