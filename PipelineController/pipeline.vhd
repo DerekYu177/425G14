@@ -36,7 +36,7 @@ architecture arch of pipeline is
 
   -- INTERNAL CONTROL SIGNALS --
   signal jump_taken : std_logic := '0';
-  signal global_reset : std_logic := '0';
+  signal memory_reset : std_logic := '0';
   signal initializing : std_logic := '1';
 
   -- stall signals
@@ -282,7 +282,6 @@ architecture arch of pipeline is
     port(
       clock : in std_logic;
       reset : in std_logic;
-      initializing : in std_logic;
 
       -- instruction memory interface --
       read_instruction_address : out std_logic_vector(31 downto 0);
@@ -463,7 +462,7 @@ architecture arch of pipeline is
     instruction_memory_module :  instruction_memory
     port map(
       clock,
-      global_reset,
+      memory_reset,
       instr_memory_writedata,
       instr_memory_write_address,
       instr_memory_read_address,
@@ -476,7 +475,7 @@ architecture arch of pipeline is
     data_memory_module : data_memory
     port map(
       clock,
-      global_reset,
+      memory_reset,
       data_memory_writedata,
       data_memory_address,
       data_memory_address_fini,
@@ -490,7 +489,7 @@ architecture arch of pipeline is
     registers_module : registers
     port map(
       clock,
-      global_reset,
+      memory_reset,
       reg_writedata,
       reg_readreg1,
       reg_readreg2,
@@ -511,7 +510,7 @@ architecture arch of pipeline is
     if_id_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      global_reset,
+      memory_reset,
 
       if_id_data_1_in,
       if_id_data_2_in,
@@ -547,7 +546,7 @@ architecture arch of pipeline is
     id_ex_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      global_reset,
+      memory_reset,
 
       id_ex_data_1_in,
       id_ex_data_2_in,
@@ -583,7 +582,7 @@ architecture arch of pipeline is
     ex_mem_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      global_reset,
+      memory_reset,
 
       ex_mem_data_1_in,
       ex_mem_data_2_in,
@@ -619,7 +618,7 @@ architecture arch of pipeline is
     mem_wb_pipeline_bus : pipeline_register_bus
     port map(
       clock,
-      global_reset,
+      memory_reset,
 
       mem_wb_data_1_in,
       mem_wb_data_2_in,
@@ -655,8 +654,7 @@ architecture arch of pipeline is
     instruction_fetch_module : instruction_fetch_stage
     port map(
       clock => clock,
-      reset => global_reset,
-      initializing => initializing,
+      reset => initializing,
       read_instruction_address => instr_memory_read_address,
       read_instruction => instr_memory_memread,
       instruction_in => instr_memory_readdata,
@@ -675,7 +673,7 @@ architecture arch of pipeline is
     instruction_decode_module : instruction_decode_stage
     port map(
       clock => clock,
-      reset => global_reset,
+      reset => initializing,
       read_1_address => reg_readreg1,
       read_2_address => reg_readreg2,
       register_1 => reg_readdata1,
@@ -696,7 +694,7 @@ architecture arch of pipeline is
     execute_module : execute_stage
     port map(
       clock => clock,
-      reset => global_reset,
+      reset => initializing,
       ALU_instruction => id_ex_scratch_out,
       ALU_operand1 => id_ex_data_1_out,
       ALU_operand2 => id_ex_data_2_out,
@@ -717,7 +715,7 @@ architecture arch of pipeline is
     memory_module : memory_stage
     port map(
       clock => clock,
-      reset => global_reset,
+      reset => initializing,
       data_memory_writedata => data_memory_writedata,
       data_memory_address => data_memory_address,
       data_memory_memwrite => data_memory_memwrite,
@@ -738,7 +736,7 @@ architecture arch of pipeline is
     write_back_module : write_back_stage
     port map(
       clock => clock,
-      reset => global_reset,
+      reset => initializing,
       reg_writedata => reg_writedata,
       reg_writereg_address => reg_writereg,
       reg_regwrite => reg_regwrite,
@@ -761,7 +759,7 @@ architecture arch of pipeline is
     stall_module : stall_unit
     port map(
       clock => clock,
-      reset => global_reset,
+      reset => initializing,
       if_id_out => if_id_scratch_out,
       id_ex_out => id_ex_scratch_out,
       instruction_chosen => stall_instruction_chosen,
@@ -843,11 +841,11 @@ architecture arch of pipeline is
     begin
       case present_state is
         when clear =>
-          global_reset <= '1';
+          memory_reset <= '1';
           program_execution_finished <= '0';
 
         when init =>
-          global_reset <= '0';
+          memory_reset <= '0';
           initializing <= '1';
 
         when instruction_load =>
