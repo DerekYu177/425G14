@@ -6,7 +6,6 @@ entity instruction_fetch_stage is
   port(
   clock : in std_logic;
   reset : in std_logic;
-  initializing : in std_logic;
 
   -- instruction memory interface --
   read_instruction_address : out std_logic_vector(31 downto 0);
@@ -40,7 +39,7 @@ architecture arch of instruction_fetch_stage is
         program_counter_valid <= '0';
       elsif (stall = '1') then
         null;
-      elsif (stall = '0' and initializing = '0' and clock'event and clock = '0') then
+      elsif (stall = '0' and clock'event and clock = '0') then
         if (jump_taken = '1') then
           program_counter <= jump_program_counter;
         else
