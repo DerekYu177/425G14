@@ -128,7 +128,7 @@ architecture arch of instruction_decode_stage is
 
   -- TODO: add load/store logic here so we know how to approach the register file
 
-  pipeline_output : process(clock, reset, instruction)
+  pipeline_output : process(reset, instruction)
   begin
   if reset = '1' then
     load_store_address_valid <= '0'; -- still unused!
@@ -258,7 +258,7 @@ architecture arch of instruction_decode_stage is
     end if;
   end process;
 
-  register_output : process(clock, reset)
+  register_output : process(reset, instruction)
   begin
     if reset = '1' then
       read_1_address <= (others => '0');
@@ -273,7 +273,6 @@ architecture arch of instruction_decode_stage is
                 read_2_address <= rtype_rt;
 
               when funct_sll | funct_srl | funct_sra =>
-              -- By convention, it's the 2nd operand that is used for shifting
                 read_1_address <= (others => '0');
                 read_2_address <= rtype_rt;
 
@@ -288,20 +287,7 @@ architecture arch of instruction_decode_stage is
 
           end case;
 
-        --All I-type operations
-        when I_type_op_addi | I_type_op_andi | I_type_op_ori | I_type_op_xori =>
-          read_1_address <= itype_rs;
-          read_2_address <= (others => '0');
-
-        when I_type_op_slti =>
-          read_1_address <= itype_rs;
-          read_2_address <= (others => '0');
-
-        when I_type_op_lw =>
-          read_1_address <= itype_rs;
-          read_2_address <= (others => '0');
-
-        when I_type_op_sw =>
+        when I_type_op_addi | I_type_op_andi | I_type_op_ori | I_type_op_xori | I_type_op_slti | I_type_op_lw | I_type_op_sw =>
           read_1_address <= itype_rs;
           read_2_address <= (others => '0');
 
