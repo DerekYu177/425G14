@@ -31,9 +31,6 @@ architecture behavior of registers is
 
 	type mem is array(31 downto 0) of std_logic_vector(31 downto 0);
 	signal mem_block: mem;
-	signal read_address_reg1: integer range 0 to 31;
-	signal read_address_reg2 : integer range 0 to 31;
-	signal read_address_reg_fini : integer range 0 to 31;
 
 	signal hi_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
 	signal lo_reg: std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(0, 32));
@@ -64,33 +61,13 @@ begin
 			if write_lo = '1' then
 				lo_reg <= data_in_lo;
 			end if;
-
-		elsif clock'event and clock = '0' then --read on falling edge
-			read_address_reg1 <= to_integer(unsigned(readreg1));
-			read_address_reg2 <= to_integer(unsigned(readreg2));
-			read_address_reg_fini <= to_integer(unsigned(readreg_fini));
 		end if;
 	end process;
 
-	readdata1 <= mem_block(read_address_reg1);
-	readdata2 <= mem_block(read_address_reg2);
-	readdata_fini <= mem_block(read_address_reg_fini);
+	readdata1 <= mem_block(to_integer(unsigned(readreg1)));
+	readdata2 <= mem_block(to_integer(unsigned(readreg2)));
+	readdata_fini <= mem_block(to_integer(unsigned(readreg_fini)));
 	data_out_hi <= hi_reg;
 	data_out_lo <= lo_reg;
-
-	-- file_proc : process(write_to_file)
-	-- 	file txtfile : text;
-	-- 	variable l : line;
-	-- begin
-	-- 	if write_to_file = '1' then
-	-- 		file_open(txtfile, "register_file.txt", write_mode);
-	-- 		for y in 0 to 31 loop
-	-- 			for x in 0 to 31 loop
-	-- 				write(l, mem_block(y)(31 - x));
-	-- 			end loop;
-	-- 		end loop;
-	-- 		file_close(txtfile);
-	-- 	end if;
-	-- end process;
 
 end behavior;
