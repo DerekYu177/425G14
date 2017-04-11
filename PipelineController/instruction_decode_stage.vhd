@@ -128,7 +128,7 @@ architecture arch of instruction_decode_stage is
 
   -- TODO: add load/store logic here so we know how to approach the register file
 
-  pipeline_output : process(reset, instruction)
+  pipeline_output : process(reset, instruction, clock)
   begin
   if reset = '1' then
     load_store_address_valid <= '0'; -- still unused!
@@ -258,7 +258,7 @@ architecture arch of instruction_decode_stage is
     end if;
   end process;
 
-  register_output : process(reset, instruction)
+  register_output : process(reset, op_code, rtype_rs, rtype_rt, itype_rs, itype_rt)
   begin
     if reset = '1' then
       read_1_address <= (others => '0');
